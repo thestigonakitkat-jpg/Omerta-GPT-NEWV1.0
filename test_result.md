@@ -121,23 +121,67 @@ backend:
         comment: "✅ All backend tests passed: POST /api/notes creates notes with correct TTL and views_left, GET /api/notes/{id} properly decrements view count and purges after limit reached, TTL expiry works correctly (410 expired), invalid note IDs return 404 not_found_or_expired, /api/status regression test passed. Implementation follows cryptgeon semantics with immediate purging after views_left reaches 0."
 
 frontend:
-  - task: "Security foundation scaffolding (to be added later)"
-    implemented: false
-    working: "NA"
-    file: "/app/frontend/app/index.tsx"
+  - task: "Chats: Secure Note create/open (client AES-GCM, cards, 2FA modal)"
+    implemented: true
+    working: false
+    file: "/app/frontend/app/(tabs)/chats/index.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "Stage 2: Implemented client-side AES-GCM encryption, Secure Note cards with tap-to-open. For test: toggle off Require 2FA, create a note, open it, verify views_left decrements and viewer shows plaintext."
+  - task: "Clipboard auto-clear (10s + on background)"
+    implemented: true
+    working: false
+    file: "/app/frontend/src/utils/clipboard.ts"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "Copy opened note text, assert clipboard has value, then after 10s it is cleared. Also simulate background if possible."
+  - task: "Tabs navigation visible and index redirect"
+    implemented: true
+    working: false
+    file: "/app/frontend/app/(tabs)/_layout.tsx"
     stuck_count: 0
     priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "Index should Redirect to /tabs/chats; Tabs should show Chats, Vault, Settings."
+  - task: "Global anti-screenshot at root"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/app/_layout.tsx"
+    stuck_count: 0
+    priority: "low"
     needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
-        comment: "Phase 1 focuses on backend secure notes first; frontend security hooks to follow after backend verification."
+        comment: "expo-screen-capture not enforceable on web; verify on device later."
+  - task: "Unlock/PIN scaffolding components present"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/components/ScrambledPinPad.tsx"
+    stuck_count: 0
+    priority: "low"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "PIN flows will be integrated in next chunk; component compiles."
 
 metadata:
   created_by: "main_agent"
   version: "1.0"
-  test_sequence: 1
-  run_ui: false
+  test_sequence: 2
+  run_ui: true
 
 test_plan:
   current_focus:
