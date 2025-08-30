@@ -16,7 +16,7 @@ import asyncio
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
-# MongoDB connection (used for non-ephemeral tasks). Do NOT store notes/attachments here.
+# MongoDB connection (used for non-ephemeral tasks). Do NOT store notes/attachments/envelopes here.
 mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
@@ -67,6 +67,26 @@ class NoteReadResponse(BaseModel):
     views_left: int
     expires_at: datetime
 
+# Messaging envelopes (RAM-only, delete-on-delivery)
+UNDLV_TTL_SECONDS = 48 * 60 * 60
+
+class EnvelopeSend(BaseModel):
+    to_oid: str
+    from_oid: str
+    ciphertext: str  # opaque string, client handles E2EE
+    ts: Optional[datetime] = None
+
+class Envelope(BaseModel):
+    id: str
+    to_oid: str
+    from_oid: str
+    ciphertext: str
+    ts: datetime
+    expires_at: datetime
+
+class EnvelopePollResponse(BaseModel):
+    messages: List[Dict]
+
 # ---------------------------
 # RAM-only stores and housekeeping
 # ---------------------------
@@ -89,19 +109,28 @@ class RamNote:
 # In-memory dict: id -> RamNote
 NOTES_STORE: Dict[str, RamNote] = {}
 
+# Envelopes by recipient OID
+ENVELOPES: Dict[str, List[Envelope]] = {}
+
 _cleanup_stop = asyncio.Event()
 
 async def cleanup_notes_loop():
     try:
         while not _cleanup_stop.is_set():
-            now = datetime.now(timezone.utc)
+            # Sweep notes
             to_delete = []
             for k, v in list(NOTES_STORE.items()):
                 if v.expired() or v.views_left <= 0:
                     to_delete.append(k)
             for k in to_delete:
                 NOTES_STORE.pop(k, None)
-            await asyncio.sleep(30)  # sweep every 30s
+
+            # Sweep envelopes by TTL
+            now = datetime.now(timezone.utc)
+            for oid, lst in list(ENVELOPES.items()):
+                new_lst = [e for e in lst if e.expires_at > now]
+                ENVELOPES[oid] = new_lst
+            await asyncio.sleep(30)
     except Exception as e:
         logger.exception("cleanup_notes_loop error: %s", e)
 
@@ -124,7 +153,7 @@ async def get_status_checks():
     status_checks = await db.status_checks.find().to_list(1000)
     return [StatusCheck(**status_check) for status_check in status_checks]
 
-# Secure Notes endpoints (RAM-only, key delivered via E2EE chat payload; server never sees keys)
+# Secure Notes endpoints (RAM-only)
 @api_router.post("/notes", response_model=NoteCreateResponse)
 async def create_note(payload: NoteCreate):
     note_id = str(uuid.uuid4())
@@ -160,11 +189,42 @@ async def read_note(note_id: str):
         expires_at=note.expires_at,
     )
 
-    # If after increment views_left == 0, purge immediately (mirrors cryptogeon semantics)
+    # If after increment views_left == 0, purge immediately (mirror cryptgeon semantics)
     if note.views_left <= 0:
         NOTES_STORE.pop(note_id, None)
 
     return resp
+
+# Messaging envelopes (RAM-only delete-on-delivery)
+@api_router.post("/envelopes/send")
+async def send_envelope(payload: EnvelopeSend):
+    env = Envelope(
+        id=str(uuid.uuid4()),
+        to_oid=payload.to_oid,
+        from_oid=payload.from_oid,
+        ciphertext=payload.ciphertext,
+        ts=payload.ts or datetime.now(timezone.utc),
+        expires_at=datetime.now(timezone.utc) + timedelta(seconds=UNDLV_TTL_SECONDS),
+    )
+    ENVELOPES.setdefault(env.to_oid, []).append(env)
+    return {"id": env.id}
+
+@api_router.get("/envelopes/poll", response_model=EnvelopePollResponse)
+async def poll_envelopes(oid: str, max: int = 50):
+    lst = ENVELOPES.get(oid, [])
+    if not lst:
+        return {"messages": []}
+    # deliver up to max and delete them (delete-on-delivery)
+    deliver = lst[:max]
+    ENVELOPES[oid] = lst[max:]
+    return {"messages": [
+        {
+            "id": e.id,
+            "from_oid": e.from_oid,
+            "ciphertext": e.ciphertext,
+            "ts": e.ts.isoformat(),
+        } for e in deliver
+    ]}
 
 # Include the router in the main app
 app.include_router(api_router)
@@ -186,7 +246,7 @@ logger = logging.getLogger(__name__)
 
 @app.on_event("startup")
 async def on_startup():
-    # Start background cleanup for RAM-only notes
+    # Start background cleanup for RAM-only stores
     asyncio.create_task(cleanup_notes_loop())
 
 @app.on_event("shutdown")

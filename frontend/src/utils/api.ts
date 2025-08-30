@@ -1,7 +1,7 @@
 import Constants from "expo-constants";
 
-// Use backend URL from environment variables
-const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || Constants.expoConfig?.extra?.backendUrl || "https://app-builder-check.preview.emergentagent.com";
+// Backend base URL; use env or Constants
+const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || Constants.expoConfig?.extra?.backendUrl || "";
 const API = `${BACKEND_URL}/api`;
 
 export type SecureNoteMeta = { [k: string]: any };
@@ -28,4 +28,27 @@ export async function readNote(id: string) {
     throw new Error(`Open failed (${res.status}): ${txt}`);
   }
   return (await res.json()) as SecureNoteRead;
+}
+
+// Messaging envelopes (preview, plaintext as placeholder)
+export async function sendEnvelope(payload: { to_oid: string; from_oid: string; ciphertext: string }) {
+  const res = await fetch(`${API}/envelopes/send`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const txt = await res.text();
+    throw new Error(`send failed (${res.status}): ${txt}`);
+  }
+  return await res.json();
+}
+
+export async function pollEnvelopes(oid: string) {
+  const res = await fetch(`${API}/envelopes/poll?oid=${encodeURIComponent(oid)}`);
+  if (!res.ok) {
+    const txt = await res.text();
+    throw new Error(`poll failed (${res.status}): ${txt}`);
+  }
+  return (await res.json()) as { messages: { id: string; from_oid: string; ciphertext: string; ts: string }[] };
 }

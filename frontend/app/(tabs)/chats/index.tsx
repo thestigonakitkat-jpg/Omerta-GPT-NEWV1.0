@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from "react";
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, Alert, FlatList, ActivityIndicator, Switch, Modal } from "react-native";
+import React, { useMemo, useState, useEffect } from "react";
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, Alert, FlatList, Switch, Modal } from "react-native";
 import { createNote, readNote, SecureNoteMeta, SecureNoteRead } from "../../../src/utils/api";
 import { safeCopyToClipboard } from "../../../src/utils/clipboard";
 import { aesGcmEncrypt, aesGcmDecrypt } from "../../../src/utils/crypto";
@@ -8,6 +8,8 @@ import { verifyTotpCode } from "../../../src/utils/totp";
 import { useRouter, useFocusEffect } from "expo-router";
 import ChatsPinGate from "./_pinGate";
 import { useSecurity } from "../../../src/state/security";
+import { useContacts } from "../../../src/state/contacts";
+import HandshakeBadge from "../../../src/components/HandshakeBadge";
 
 interface LocalNoteItem {
   id: string;
@@ -16,12 +18,15 @@ interface LocalNoteItem {
   meta?: SecureNoteMeta | null;
 }
 
+const demoOids = ["ALPHAOID1234", "BETAOID5678"];
+
 export default function ChatsScreen() {
   const router = useRouter();
   const sec = useSecurity();
+  const contacts = useContacts();
   const [needPin, setNeedPin] = useState(false);
   const [noteText, setNoteText] = useState("");
-  const [ttl, setTtl] = useState(300); // 5 minutes default
+  const [ttl, setTtl] = useState(300);
   const [readLimit, setReadLimit] = useState(1);
   const [creating, setCreating] = useState(false);
   const [items, setItems] = useState<LocalNoteItem[]>([]);
@@ -98,6 +103,17 @@ export default function ChatsScreen() {
     (onOpen as any)._pendingId = undefined;
   };
 
+  const renderChatItem = ({ item }: { item: string }) => (
+    <TouchableOpacity style={styles.chatRow} onPress={() => router.push(`/chat/${item}`)}>
+      <View style={styles.avatar}><Text style={styles.avatarText}>{item.charAt(0)}</Text></View>
+      <View style={{ flex: 1 }}>
+        <Text style={styles.cardTitle}>Conversation with {item}</Text>
+        <Text style={styles.meta}>Tap to open sample chat</Text>
+      </View>
+      {contacts.isVerified(item) && <HandshakeBadge small />}
+    </TouchableOpacity>
+  );
+
   const renderItem = ({ item }: { item: LocalNoteItem }) => (
     <TouchableOpacity style={styles.card} onPress={() => onOpen(item.id)}>
       <View style={styles.cardHeader}>
@@ -113,9 +129,8 @@ export default function ChatsScreen() {
     <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
       <ChatsPinGate visible={needPin} onAuthed={() => { setNeedPin(false); }} />
       <View style={styles.container}>
-        <TouchableOpacity style={[styles.btn, { backgroundColor: '#334155' }]} onPress={() => router.push('/chat/demo')}>
-          <Text style={styles.btnText}>Open Sample Chat (Preview)</Text>
-        </TouchableOpacity>
+        <Text style={styles.h1}>Chats (Preview)</Text>
+        <FlatList data={demoOids} renderItem={renderChatItem} keyExtractor={(it) => it} horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingVertical: 6 }} />
 
         <Text style={styles.h1}>Create Secure Note</Text>
         <TextInput
@@ -158,24 +173,6 @@ export default function ChatsScreen() {
         <View style={{ height: 24 }} />
         <Text style={styles.h1}>Incoming Secure Notes</Text>
         <FlatList data={items} renderItem={renderItem} keyExtractor={(it) => it.id} ListEmptyComponent={<Text style={styles.empty}>No notes yet.</Text>} />
-
-        {opened && (
-          <View style={styles.viewer}>
-            <Text style={styles.viewerTitle}>Secure Note (opened)</Text>
-            <Text style={styles.viewerBody}>{opened.ciphertext}</Text>
-            <View style={{ height: 12 }} />
-            <View style={styles.row}>
-              <TouchableOpacity style={[styles.btn, { flex: 1 }]} onPress={() => { safeCopyToClipboard(opened.ciphertext); Alert.alert("Copied", "Clipboard will clear in 10s"); }}>
-                <Text style={styles.btnText}>Copy</Text>
-              </TouchableOpacity>
-              <View style={{ width: 12 }} />
-              <TouchableOpacity style={[styles.btn, { flex: 1, backgroundColor: "#ef4444" }]} onPress={() => setOpened(null)}>
-                <Text style={styles.btnText}>Close</Text>
-              </TouchableOpacity>
-            </View>
-            <Text style={styles.meta}>Views left: {opened.views_left} | Expires: {new Date(opened.expires_at).toLocaleString()}</Text>
-          </View>
-        )}
 
         <Modal visible={totpVisible} transparent animationType="fade">
           <View style={styles.modalBackdrop}>
@@ -222,9 +219,9 @@ const styles = StyleSheet.create({
   badge: { color: "#22c55e", fontSize: 16, marginTop: 2 },
   meta: { color: "#9ca3af", marginTop: 4 },
   empty: { color: "#6b7280", textAlign: "center", marginTop: 16 },
-  viewer: { position: "absolute", left: 16, right: 16, bottom: 16, backgroundColor: "#0f172a", borderRadius: 12, padding: 16, borderWidth: 1, borderColor: "#1f2937" },
-  viewerTitle: { color: "#fff", fontWeight: "700", marginBottom: 8 },
-  viewerBody: { color: "#e5e7eb" },
   modalBackdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.6)", alignItems: "center", justifyContent: "center" },
   modalCard: { width: "86%", backgroundColor: "#111827", borderRadius: 12, padding: 16, borderWidth: 1, borderColor: "#1f2937" },
+  chatRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#111827', padding: 12, borderRadius: 12, borderWidth: 1, borderColor: '#1f2937', marginRight: 12 },
+  avatar: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#1f2937', alignItems: 'center', justifyContent: 'center', marginRight: 10 },
+  avatarText: { color: '#fff', fontWeight: '700' },
 });
