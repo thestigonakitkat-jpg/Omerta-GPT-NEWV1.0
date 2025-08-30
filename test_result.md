@@ -101,3 +101,50 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+user_problem_statement: "Build an end-to-end encrypted mobile app (Expo) with FastAPI backend and RAM-only secure note service (cryptgeon-style)."
+
+backend:
+  - task: "RAM-only Secure Notes endpoints (/api/notes)"
+    implemented: true
+    working: false
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "Implemented POST /api/notes and GET /api/notes/{id} with TTL and read-limit enforcement in RAM-only store and background cleanup. Ready for testing."
+
+frontend:
+  - task: "Security foundation scaffolding (to be added later)"
+    implemented: false
+    working: "NA"
+    file: "/app/frontend/app/index.tsx"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Phase 1 focuses on backend secure notes first; frontend security hooks to follow after backend verification."
+
+metadata:
+  created_by: "main_agent"
+  version: "1.0"
+  test_sequence: 1
+  run_ui: false
+
+test_plan:
+  current_focus:
+    - "Test POST /api/notes creates id with correct TTL and views_left"
+    - "Test GET /api/notes/{id} returns ciphertext/meta and decrements views, purges on limit/expiry"
+  stuck_tasks:
+    - "None yet"
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+  - agent: "main"
+    message: "Please run backend tests for the secure notes endpoints: create with ttl_seconds=60 and read_limit=2, read twice verifying 2->1->0 views and 410 after limit; also test TTL expiry (short TTL like 2s then 410). Verify no persistence beyond RAM by process lifecycle (if possible)."

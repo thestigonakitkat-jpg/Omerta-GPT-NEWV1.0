@@ -1,20 +1,22 @@
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI, APIRouter, HTTPException
+from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
 from pathlib import Path
-from pydantic import BaseModel, Field
-from typing import List
+from pydantic import BaseModel, Field, validator
+from typing import List, Optional, Dict
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
+import asyncio
 
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
-# MongoDB connection
+# MongoDB connection (used for non-ephemeral tasks). Do NOT store notes/attachments here.
 mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
@@ -25,17 +27,87 @@ app = FastAPI()
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
 
-
-# Define Models
+# ---------------------------
+# Models
+# ---------------------------
 class StatusCheck(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     client_name: str
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class StatusCheckCreate(BaseModel):
     client_name: str
 
-# Add your routes to the router instead of directly to app
+# Secure Note (RAM-only, Cryptgeon-style)
+MAX_TTL_SECONDS = 7 * 24 * 60 * 60  # up to one week
+MIN_READ_LIMIT = 1
+MAX_READ_LIMIT = 3
+
+class NoteCreate(BaseModel):
+    ciphertext: str  # base64 or opaque string, server does not inspect
+    meta: Optional[Dict] = None
+    ttl_seconds: int = Field(..., gt=0, le=MAX_TTL_SECONDS)
+    read_limit: int = Field(1, ge=MIN_READ_LIMIT, le=MAX_READ_LIMIT)
+
+    @validator('ciphertext')
+    def non_empty_cipher(cls, v: str):
+        if not v or not isinstance(v, str):
+            raise ValueError("ciphertext must be a non-empty string")
+        return v
+
+class NoteCreateResponse(BaseModel):
+    id: str
+    expires_at: datetime
+    views_left: int
+
+class NoteReadResponse(BaseModel):
+    id: str
+    ciphertext: str
+    meta: Optional[Dict] = None
+    views_left: int
+    expires_at: datetime
+
+# ---------------------------
+# RAM-only stores and housekeeping
+# ---------------------------
+class RamNote:
+    def __init__(self, note_id: str, ciphertext: str, meta: Optional[Dict], read_limit: int, ttl_seconds: int):
+        self.id = note_id
+        self.ciphertext = ciphertext
+        self.meta = meta
+        self.read_limit = read_limit
+        self.views = 0
+        self.expires_at = datetime.now(timezone.utc) + timedelta(seconds=ttl_seconds)
+
+    @property
+    def views_left(self) -> int:
+        return max(self.read_limit - self.views, 0)
+
+    def expired(self) -> bool:
+        return datetime.now(timezone.utc) >= self.expires_at
+
+# In-memory dict: id -> RamNote
+NOTES_STORE: Dict[str, RamNote] = {}
+
+_cleanup_stop = asyncio.Event()
+
+async def cleanup_notes_loop():
+    try:
+        while not _cleanup_stop.is_set():
+            now = datetime.now(timezone.utc)
+            to_delete = []
+            for k, v in list(NOTES_STORE.items()):
+                if v.expired() or v.views_left <= 0:
+                    to_delete.append(k)
+            for k in to_delete:
+                NOTES_STORE.pop(k, None)
+            await asyncio.sleep(30)  # sweep every 30s
+    except Exception as e:
+        logger.exception("cleanup_notes_loop error: %s", e)
+
+# ---------------------------
+# Routes
+# ---------------------------
 @api_router.get("/")
 async def root():
     return {"message": "Hello World"}
@@ -51,6 +123,48 @@ async def create_status_check(input: StatusCheckCreate):
 async def get_status_checks():
     status_checks = await db.status_checks.find().to_list(1000)
     return [StatusCheck(**status_check) for status_check in status_checks]
+
+# Secure Notes endpoints (RAM-only, key delivered via E2EE chat payload; server never sees keys)
+@api_router.post("/notes", response_model=NoteCreateResponse)
+async def create_note(payload: NoteCreate):
+    note_id = str(uuid.uuid4())
+    note = RamNote(
+        note_id=note_id,
+        ciphertext=payload.ciphertext,
+        meta=payload.meta,
+        read_limit=payload.read_limit,
+        ttl_seconds=payload.ttl_seconds,
+    )
+    NOTES_STORE[note_id] = note
+    return NoteCreateResponse(id=note_id, expires_at=note.expires_at, views_left=note.views_left)
+
+@api_router.get("/notes/{note_id}", response_model=NoteReadResponse)
+async def read_note(note_id: str):
+    note = NOTES_STORE.get(note_id)
+    if not note:
+        raise HTTPException(status_code=404, detail="not_found_or_expired")
+    if note.expired():
+        NOTES_STORE.pop(note_id, None)
+        raise HTTPException(status_code=410, detail="expired")
+    if note.views_left <= 0:
+        NOTES_STORE.pop(note_id, None)
+        raise HTTPException(status_code=410, detail="view_limit_reached")
+
+    # Serve and decrement views
+    note.views += 1
+    resp = NoteReadResponse(
+        id=note.id,
+        ciphertext=note.ciphertext,
+        meta=note.meta,
+        views_left=note.views_left,
+        expires_at=note.expires_at,
+    )
+
+    # If after increment views_left == 0, purge immediately (mirrors cryptogeon semantics)
+    if note.views_left <= 0:
+        NOTES_STORE.pop(note_id, None)
+
+    return resp
 
 # Include the router in the main app
 app.include_router(api_router)
@@ -70,6 +184,12 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+@app.on_event("startup")
+async def on_startup():
+    # Start background cleanup for RAM-only notes
+    asyncio.create_task(cleanup_notes_loop())
+
 @app.on_event("shutdown")
-async def shutdown_db_client():
+async def on_shutdown():
+    _cleanup_stop.set()
     client.close()
