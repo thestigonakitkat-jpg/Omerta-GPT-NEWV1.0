@@ -5,6 +5,7 @@ import { safeCopyToClipboard } from "../../../src/utils/clipboard";
 import { aesGcmEncrypt, aesGcmDecrypt } from "../../../src/utils/crypto";
 import { saveNoteKey, getNoteKey, purgeNoteKey } from "../../../src/state/notesKeys";
 import { verifyTotpCode } from "../../../src/utils/totp";
+import { useRouter } from "expo-router";
 
 interface LocalNoteItem {
   id: string;
@@ -14,6 +15,7 @@ interface LocalNoteItem {
 }
 
 export default function ChatsScreen() {
+  const router = useRouter();
   const [noteText, setNoteText] = useState("");
   const [ttl, setTtl] = useState(300); // 5 minutes default
   const [readLimit, setReadLimit] = useState(1);
@@ -68,7 +70,6 @@ export default function ChatsScreen() {
       const needs2FA = Boolean(it?.meta && (it.meta as any).require2fa);
       if (needs2FA) {
         setTotpVisible(true);
-        // Store target id temporarily in state
         (onOpen as any)._pendingId = id;
       } else {
         await doOpen(id);
@@ -81,17 +82,10 @@ export default function ChatsScreen() {
 
   const onVerifyTotp = async () => {
     const id = (onOpen as any)._pendingId as string | undefined;
-    if (!id) {
-      setTotpVisible(false);
-      return;
-    }
+    if (!id) { setTotpVisible(false); return; }
     const ok = await verifyTotpCode(totpCode.trim());
-    if (!ok) {
-      Alert.alert("2FA failed", "Incorrect code");
-      return;
-    }
-    setTotpVisible(false);
-    setTotpCode("");
+    if (!ok) { Alert.alert("2FA failed", "Incorrect code"); return; }
+    setTotpVisible(false); setTotpCode("");
     await doOpen(id);
     (onOpen as any)._pendingId = undefined;
   };
@@ -110,6 +104,10 @@ export default function ChatsScreen() {
   return (
     <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
       <View style={styles.container}>
+        <TouchableOpacity style={[styles.btn, { backgroundColor: '#334155' }]} onPress={() => router.push('/chat/demo')}>
+          <Text style={styles.btnText}>Open Sample Chat (Preview)</Text>
+        </TouchableOpacity>
+
         <Text style={styles.h1}>Create Secure Note</Text>
         <TextInput
           style={styles.textarea}
@@ -201,7 +199,7 @@ export default function ChatsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16, backgroundColor: "#0b0b0b" },
-  h1: { color: "#fff", fontSize: 18, fontWeight: "600", marginBottom: 8 },
+  h1: { color: "#fff", fontSize: 18, fontWeight: "600", marginBottom: 8, marginTop: 12 },
   textarea: { minHeight: 100, borderColor: "#1f2937", borderWidth: 1, borderRadius: 8, padding: 12, color: "#fff" },
   row: { flexDirection: "row", alignItems: "center", marginTop: 12 },
   label: { color: "#9ca3af", marginRight: 8 },
