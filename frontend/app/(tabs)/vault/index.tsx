@@ -4,6 +4,7 @@ import * as FileSystem from "expo-file-system";
 import * as DocumentPicker from "expo-document-picker";
 import { encryptBackupBlob, decryptBackupBlob } from "../../../src/utils/crypto";
 import VaultPinGate from "./_pinGate";
+import { useVault } from "../../../src/state/vault";
 
 export default function VaultScreen() {
   const [needPin, setNeedPin] = useState(true);
@@ -11,21 +12,22 @@ export default function VaultScreen() {
   const [passphrase, setPassphrase] = useState("");
   const [pin, setPin] = useState("");
   const [showCreds, setShowCreds] = useState(false);
+  const vault = useVault();
 
   const openCreds = () => setShowCreds(true);
   const closeCreds = () => setShowCreds(false);
 
+  const snapshot = () => ({ created: Date.now(), items: vault.items });
+
   const onExport = async () => {
     try {
       setBusy(true);
-      const snapshot = { created: Date.now(), items: [] };
-      const blob = await encryptBackupBlob(snapshot, passphrase, pin);
+      const blob = await encryptBackupBlob(snapshot(), passphrase, pin);
       const json = JSON.stringify(blob);
 
       if (Platform.OS === 'android' && FileSystem.StorageAccessFramework) {
         const perm = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
         if (!perm.granted) { Alert.alert('Permission', 'Directory permission required'); return; }
-        // Try to create .nomedia for stealth
         try {
           const nm = await FileSystem.StorageAccessFramework.createFileAsync(perm.directoryUri, ".nomedia", 'application/octet-stream');
           await FileSystem.StorageAccessFramework.writeAsStringAsync(nm, "", { encoding: FileSystem.EncodingType.UTF8 });
@@ -59,8 +61,9 @@ export default function VaultScreen() {
         json = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.UTF8 });
       }
       const blob = JSON.parse(json);
-      const data = decryptBackupBlob(blob, passphrase, pin);
-      Alert.alert('Restore', `Decrypted backup created=${new Date(data.created).toLocaleString()}`);
+      const data = await decryptBackupBlob(blob, passphrase, pin);
+      vault.setItems(data.items || []);
+      Alert.alert('Restore', `Decrypted backup with ${vault.items.length} items.`);
     } catch (e: any) {
       Alert.alert('Import failed', e?.message || 'Error');
     } finally {
@@ -72,7 +75,7 @@ export default function VaultScreen() {
     <View style={styles.container}>
       <VaultPinGate visible={needPin} onAuthed={() => setNeedPin(false)} />
       <Text style={styles.text}>Vault</Text>
-      <Text style={styles.sub}>Encrypted SD backup uses PBKDF2-SHA256 (placeholder) + AES-256-GCM. Argon2id will replace PBKDF2 next.</Text>
+      <Text style={styles.sub}>Encrypted SD backup uses Argon2id (adaptive when available) + AES-256-GCM. If Argon2id isn't supported on this platform, it falls back to strong PBKDF2.</Text>
 
       <TouchableOpacity disabled={busy} style={styles.btn} onPress={openCreds}>
         <Text style={styles.btnText}>{busy ? 'Working...' : 'Create Encrypted Backup (SD)'}</Text>
