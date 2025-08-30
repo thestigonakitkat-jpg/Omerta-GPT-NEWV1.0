@@ -6,7 +6,7 @@ import * as DocumentPicker from "expo-document-picker";
 import { aesGcmEncrypt, aesGcmDecrypt } from "../../../src/utils/crypto";
 
 export default function VaultScreen() {
-  const sec = useSecurity();
+  // const sec = useSecurity();
   const [busy, setBusy] = useState(false);
 
   const onExport = async () => {
