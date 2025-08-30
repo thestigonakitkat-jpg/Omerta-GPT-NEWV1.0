@@ -125,35 +125,44 @@ frontend:
     implemented: true
     working: false
     file: "/app/frontend/app/(tabs)/chats/index.tsx"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: false
         agent: "main"
         comment: "Stage 2: Implemented client-side AES-GCM encryption, Secure Note cards with tap-to-open. For test: toggle off Require 2FA, create a note, open it, verify views_left decrements and viewer shows plaintext."
+      - working: false
+        agent: "testing"
+        comment: "❌ Secure note creation fails - no card appears after clicking Create Secure Note button. UI loads correctly with textarea, TTL/read limit inputs, and 2FA toggle (OFF), but backend integration appears broken. Need to check API calls and error handling."
   - task: "Clipboard auto-clear (10s + on background)"
     implemented: true
-    working: false
+    working: "NA"
     file: "/app/frontend/src/utils/clipboard.ts"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: false
         agent: "main"
         comment: "Copy opened note text, assert clipboard has value, then after 10s it is cleared. Also simulate background if possible."
+      - working: "NA"
+        agent: "testing"
+        comment: "Cannot test clipboard functionality due to secure note creation failure. Clipboard utility code exists and appears correct with 10s auto-clear and background detection."
   - task: "Tabs navigation visible and index redirect"
     implemented: true
-    working: false
+    working: true
     file: "/app/frontend/app/(tabs)/_layout.tsx"
     stuck_count: 0
     priority: "medium"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: false
         agent: "main"
         comment: "Index should Redirect to /tabs/chats; Tabs should show Chats, Vault, Settings."
+      - working: true
+        agent: "testing"
+        comment: "✅ Perfect! Root URL redirects to /chats, all three tabs (Chats, Vault, Settings) are visible with proper icons, header titles display correctly. Navigation works smoothly between tabs."
   - task: "Global anti-screenshot at root"
     implemented: true
     working: "NA"
@@ -185,15 +194,17 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Test POST /api/notes creates id with correct TTL and views_left"
-    - "Test GET /api/notes/{id} returns ciphertext/meta and decrements views, purges on limit/expiry"
+    - "Fix secure note creation - API integration issue"
+    - "Debug why Create Secure Note button doesn't create cards"
   stuck_tasks:
-    - "None yet"
+    - "Chats: Secure Note create/open (client AES-GCM, cards, 2FA modal)"
   test_all: false
-  test_priority: "high_first"
+  test_priority: "stuck_first"
 
 agent_communication:
   - agent: "main"
     message: "Please run backend tests for the secure notes endpoints: create with ttl_seconds=60 and read_limit=2, read twice verifying 2->1->0 views and 410 after limit; also test TTL expiry (short TTL like 2s then 410). Verify no persistence beyond RAM by process lifecycle (if possible)."
   - agent: "testing"
     message: "✅ Backend testing completed successfully! All 5 tests passed: 1) POST /api/notes creates notes with correct TTL and views_left=2, 2) GET /api/notes/{id} properly decrements view count (2→1→0) and purges immediately after views_left reaches 0 (returns 404 on third read), 3) TTL expiry correctly returns 410 expired after timeout, 4) Invalid note IDs return 404 not_found_or_expired, 5) /api/status regression test passed. The implementation follows cryptgeon semantics with immediate RAM purging. Backend is ready for production use."
+  - agent: "testing"
+    message: "🔧 FIXED @noble/hashes dependency issues by replacing with expo-crypto. App now loads successfully! ✅ Routing & tabs work perfectly. ❌ CRITICAL: Secure note creation fails - Create button doesn't produce cards. Backend APIs work but frontend integration broken. Need to debug API calls in chats screen."
