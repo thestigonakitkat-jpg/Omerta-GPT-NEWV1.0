@@ -5,51 +5,80 @@ import { Ionicons } from "@expo/vector-icons";
 import { useContacts } from "../../src/state/contacts";
 import HandshakeBadge from "../../src/components/HandshakeBadge";
 import { useTheme } from "../../src/state/theme";
+import { getOrCreateOID } from "../../src/state/identity";
+import { pollEnvelopes, sendEnvelope } from "../../src/utils/api";
 
  type Msg = { id: string; text: string; me: boolean; ts: number; status: "sent"|"delivered"|"read" };
 
 export default function ChatRoom() {
   const { id } = useLocalSearchParams();
+  const peerOid = Array.isArray(id) ? id[0] : (id || "");
   const router = useRouter();
   const contacts = useContacts();
-  const isVerified = contacts.isVerified(id);
+  const isVerified = contacts.isVerified(peerOid);
   const { colors } = useTheme();
   const [messages, setMessages] = useState<Msg[]>([{
     id: "m1", text: "Welcome to OMERTA. This is a preview of the chat UI.", me: false, ts: Date.now()-60000, status: "read"
-  }, {
-    id: "m2", text: "Messages are end-to-end encrypted. Screenshots are blocked.", me: false, ts: Date.now()-45000, status: "read"
-  }, {
-    id: "m3", text: "Type a message below and press send to see bubbles like WhatsApp/Signal.", me: false, ts: Date.now()-30000, status: "read"
   }]);
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(false);
   const listRef = useRef<FlatList<Msg>>(null);
+  const myOidRef = useRef<string>("");
 
   useEffect(() => { scrollToEnd(); }, []);
+  useEffect(() => {
+    (async () => { myOidRef.current = await getOrCreateOID(); })();
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    const iv = setInterval(async () => {
+      try {
+        if (!myOidRef.current) return;
+        const res = await pollEnvelopes(myOidRef.current);
+        if (!mounted) return;
+        if (res.messages?.length) {
+          setMessages((prev) => {
+            const next = [...prev];
+            res.messages.forEach((m) => {
+              // Show only messages from this peer in this chat
+              if (peerOid && m.from_oid !== peerOid) return;
+              next.push({ id: m.id, text: m.ciphertext, me: false, ts: Date.parse(m.ts) || Date.now(), status: "delivered" });
+            });
+            return next;
+          });
+          scrollToEnd();
+        }
+      } catch {}
+    }, 2000);
+    return () => { mounted = false; clearInterval(iv); };
+  }, [peerOid]);
 
   const scrollToEnd = () => setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 50);
 
-  const onSend = () => {
+  const onSend = async () => {
     const txt = input.trim();
     if (!txt) return;
     const newMsg: Msg = { id: Math.random().toString(36).slice(2), text: txt, me: true, ts: Date.now(), status: "sent" };
     setMessages((prev) => [...prev, newMsg]);
     setInput("");
     scrollToEnd();
-    setTimeout(() => { setMessages((prev) => prev.map(m => m.id === newMsg.id ? { ...m, status: "delivered" } : m)); }, 400);
-    setTimeout(() => { setMessages((prev) => prev.map(m => m.id === newMsg.id ? { ...m, status: "read" } : m)); }, 900);
-    setTimeout(() => {
-      setTyping(true);
-      const reply: Msg = { id: Math.random().toString(36).slice(2), text: "Got it.", me: false, ts: Date.now()+500, status: "delivered" };
-      setTimeout(() => { setMessages((prev) => [...prev, reply]); setTyping(false); scrollToEnd(); }, 1200);
-    }, 1200);
+
+    // Send via envelopes (plaintext placeholder for now; Signal sessions will replace this)
+    try {
+      const from = myOidRef.current || (await getOrCreateOID());
+      if (peerOid) await sendEnvelope({ to_oid: peerOid, from_oid: from, ciphertext: txt });
+      // Simulate delivery/read locally
+      setTimeout(() => { setMessages((prev) => prev.map(m => m.id === newMsg.id ? { ...m, status: "delivered" } : m)); }, 200);
+      setTimeout(() => { setMessages((prev) => prev.map(m => m.id === newMsg.id ? { ...m, status: "read" } : m)); }, 600);
+    } catch {}
   };
 
   const renderItem = ({ item }: { item: Msg }) => (
     <View style={[styles.row, item.me ? styles.rowMe : styles.rowOther]}>
       {!item.me && (
         <View style={[styles.avatar, { backgroundColor: colors.border }]}>
-          <Text style={styles.avatarText}>A</Text>
+          <Text style={styles.avatarText}>{peerOid?.charAt(0) || 'A'}</Text>
         </View>
       )}
       <View style={[styles.bubble, item.me ? { backgroundColor: colors.accent, borderBottomRightRadius: 4 } : { backgroundColor: colors.card, borderBottomLeftRadius: 4 }]}>
@@ -86,9 +115,9 @@ export default function ChatRoom() {
             <Ionicons name="chevron-back" size={22} color={colors.text} />
           </TouchableOpacity>
           <View style={styles.headerInfo}>
-            <View style={[styles.headerAvatar, { backgroundColor: colors.card }]}><Text style={[styles.headerAvatarText, { color: colors.text }]}>A</Text></View>
+            <View style={[styles.headerAvatar, { backgroundColor: colors.card }]}><Text style={[styles.headerAvatarText, { color: colors.text }]}>{peerOid?.charAt(0) || 'A'}</Text></View>
             <View>
-              <Text style={[styles.headerTitle, { color: colors.text }]}>Alias</Text>
+              <Text style={[styles.headerTitle, { color: colors.text }]}>{peerOid || 'Alias'}</Text>
               <Text style={[styles.headerSub, { color: colors.sub }]}>{typing ? "typing…" : "online"}</Text>
             </View>
           </View>
