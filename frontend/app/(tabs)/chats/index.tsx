@@ -5,7 +5,9 @@ import { safeCopyToClipboard } from "../../../src/utils/clipboard";
 import { aesGcmEncrypt, aesGcmDecrypt } from "../../../src/utils/crypto";
 import { saveNoteKey, getNoteKey, purgeNoteKey } from "../../../src/state/notesKeys";
 import { verifyTotpCode } from "../../../src/utils/totp";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
+import ChatsPinGate from "./_pinGate";
+import { useSecurity } from "../../../src/state/security";
 
 interface LocalNoteItem {
   id: string;
@@ -16,6 +18,8 @@ interface LocalNoteItem {
 
 export default function ChatsScreen() {
   const router = useRouter();
+  const sec = useSecurity();
+  const [needPin, setNeedPin] = useState(false);
   const [noteText, setNoteText] = useState("");
   const [ttl, setTtl] = useState(300); // 5 minutes default
   const [readLimit, setReadLimit] = useState(1);
@@ -28,13 +32,17 @@ export default function ChatsScreen() {
   const [totpVisible, setTotpVisible] = useState(false);
   const [totpCode, setTotpCode] = useState("");
 
+  useFocusEffect(React.useCallback(() => {
+    if (!sec.isChatsSessionActive()) setNeedPin(true);
+    return () => {};
+  }, [sec.isChatsSessionActive()]));
+
   const canCreate = useMemo(() => noteText.trim().length > 0 && readLimit >= 1 && readLimit <= 3 && ttl > 0 && ttl <= 604800, [noteText, readLimit, ttl]);
 
   const onCreate = async () => {
     if (!canCreate) return;
     try {
       setCreating(true);
-      // Client-side AES-GCM encrypt. Key is stored locally to simulate E2EE chat payload delivery.
       const enc = await aesGcmEncrypt(noteText);
       const res = await createNote({ ciphertext: enc.ciphertextB64, ttl_seconds: ttl, read_limit: readLimit, meta: { t: "chat", require2fa: require2FA } });
       saveNoteKey(res.id, enc.key, enc.nonce);
@@ -103,6 +111,7 @@ export default function ChatsScreen() {
 
   return (
     <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
+      <ChatsPinGate visible={needPin} onAuthed={() => { setNeedPin(false); }} />
       <View style={styles.container}>
         <TouchableOpacity style={[styles.btn, { backgroundColor: '#334155' }]} onPress={() => router.push('/chat/demo')}>
           <Text style={styles.btnText}>Open Sample Chat (Preview)</Text>

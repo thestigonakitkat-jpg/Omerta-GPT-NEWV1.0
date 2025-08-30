@@ -1,43 +1,53 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Platform, TextInput, Modal } from "react-native";
 import * as FileSystem from "expo-file-system";
-import * as DocumentPicker from "expo-document-picker";
-// import { useSecurity } from "../../../src/state/security";
-import { aesGcmEncrypt, aesGcmDecrypt } from "../../../src/utils/crypto";
+import { encryptBackupBlob, decryptBackupBlob } from "../../../src/utils/crypto";
+import VaultPinGate from "./_pinGate";
 
 export default function VaultScreen() {
-  // const sec = useSecurity();
+  const [needPin, setNeedPin] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [passphrase, setPassphrase] = useState("");
+  const [pin, setPin] = useState("");
+  const [showCreds, setShowCreds] = useState(false);
+
+  const openCreds = () => setShowCreds(true);
+  const closeCreds = () => setShowCreds(false);
 
   const onExport = async () => {
     try {
       setBusy(true);
-      // Placeholder: encrypt a small header; real Vault data to be integrated later
-      const plaintext = JSON.stringify({ v: 1, created: Date.now() });
-      const enc = await aesGcmEncrypt(plaintext);
-      const blob = enc.ciphertextB64; // opaque content
-      const name = `${Math.random().toString(36).slice(2)}.bin`;
-      const path = FileSystem.documentDirectory + name;
-      await FileSystem.writeAsStringAsync(path, blob, { encoding: FileSystem.EncodingType.UTF8 });
-      Alert.alert("Exported", `Saved encrypted blob as ${name} (testing mode).`);
+      // Placeholder Vault snapshot
+      const snapshot = { created: Date.now(), items: [] };
+      const blob = await encryptBackupBlob(snapshot, passphrase, pin);
+      const json = JSON.stringify(blob);
+
+      if (Platform.OS === 'android' && FileSystem.StorageAccessFramework) {
+        const perm = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
+        if (!perm.granted) { Alert.alert('Permission', 'Directory permission required'); return; }
+        const fileUri = await FileSystem.StorageAccessFramework.createFileAsync(perm.directoryUri, `${Math.random().toString(36).slice(2)}.bin`, 'application/octet-stream');
+        await FileSystem.StorageAccessFramework.writeAsStringAsync(fileUri, json, { encoding: FileSystem.EncodingType.UTF8 });
+        Alert.alert('Exported', 'Encrypted backup saved (opaque file).');
+      } else {
+        const path = FileSystem.documentDirectory + `${Math.random().toString(36).slice(2)}.bin`;
+        await FileSystem.writeAsStringAsync(path, json, { encoding: FileSystem.EncodingType.UTF8 });
+        Alert.alert('Exported', `Saved to app storage: ${path}`);
+      }
     } catch (e: any) {
-      Alert.alert("Export failed", e?.message || "Error");
+      Alert.alert('Export failed', e?.message || 'Error');
     } finally {
       setBusy(false);
+      setPassphrase(""); setPin(""); setShowCreds(false);
     }
   };
 
   const onImport = async () => {
     try {
       setBusy(true);
-      const pick = await DocumentPicker.getDocumentAsync({ multiple: false });
-      if (pick.canceled || !pick.assets?.[0]) return;
-      const uri = pick.assets[0].uri;
-      const data = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.UTF8 });
-      // In real flow, derive key from passphrase + PIN using Argon2id (pending). For now we assume data contains AES-GCM blob we can decrypt if we had key.
-      Alert.alert("Imported", `Blob length ${data.length}`);
+      // For demo, read last written file path is not tracked. Ask user to paste JSON into a text field? Here we skip and show placeholder.
+      Alert.alert('Import', 'Select the backup file via the system picker in a future step.');
     } catch (e: any) {
-      Alert.alert("Import failed", e?.message || "Error");
+      Alert.alert('Import failed', e?.message || 'Error');
     } finally {
       setBusy(false);
     }
@@ -45,14 +55,28 @@ export default function VaultScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>Vault (Phase 2 scaffolding)</Text>
-      <Text style={styles.sub}>SD-card backup will use Argon2id + AES-256-GCM. This build exports to app storage for testing only.</Text>
-      <TouchableOpacity disabled={busy} style={styles.btn} onPress={onExport}>
-        <Text style={styles.btnText}>{busy ? "Working..." : "Export Encrypted Backup (Test)"}</Text>
+      <VaultPinGate visible={needPin} onAuthed={() => setNeedPin(false)} />
+      <Text style={styles.text}>Vault</Text>
+      <Text style={styles.sub}>Encrypted SD backup uses PBKDF2-SHA256 (placeholder) + AES-256-GCM. We will swap to Argon2id in a native module next.</Text>
+
+      <TouchableOpacity disabled={busy} style={styles.btn} onPress={openCreds}>
+        <Text style={styles.btnText}>{busy ? 'Working...' : 'Create Encrypted Backup (SD)'}</Text>
       </TouchableOpacity>
-      <TouchableOpacity disabled={busy} style={[styles.btn, { backgroundColor: "#334155" }]} onPress={onImport}>
-        <Text style={styles.btnText}>Restore from File (Test)</Text>
+      <TouchableOpacity disabled={busy} style={[styles.btn, { backgroundColor: '#334155' }]} onPress={onImport}>
+        <Text style={styles.btnText}>Restore from Encrypted Backup</Text>
       </TouchableOpacity>
+
+      <Modal visible={showCreds} transparent animationType='fade'>
+        <View style={styles.backdrop}>
+          <View style={styles.card}>
+            <Text style={styles.h1}>Enter Passphrase + PIN</Text>
+            <TextInput style={styles.input} secureTextEntry placeholder='16+ char passphrase' placeholderTextColor='#6b7280' value={passphrase} onChangeText={setPassphrase} />
+            <TextInput style={styles.input} keyboardType='number-pad' placeholder='6-digit PIN' placeholderTextColor='#6b7280' value={pin} maxLength={6} onChangeText={setPin} />
+            <TouchableOpacity style={styles.btn} onPress={onExport}><Text style={styles.btnText}>Encrypt & Save</Text></TouchableOpacity>
+            <TouchableOpacity style={[styles.btn, { backgroundColor: '#374151' }]} onPress={closeCreds}><Text style={styles.btnText}>Cancel</Text></TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -63,4 +87,8 @@ const styles = StyleSheet.create({
   sub: { color: "#9ca3af", marginTop: 8, marginBottom: 16 },
   btn: { marginTop: 12, backgroundColor: "#22c55e", paddingVertical: 12, borderRadius: 10, alignItems: "center" },
   btnText: { color: "#000", fontWeight: "800" },
+  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center' },
+  card: { width: '86%', backgroundColor: '#111827', borderRadius: 12, padding: 16, borderColor: '#1f2937', borderWidth: 1 },
+  h1: { color: '#fff', fontWeight: '700', marginBottom: 12, textAlign: 'center' },
+  input: { height: 44, borderColor: '#1f2937', borderWidth: 1, borderRadius: 8, paddingHorizontal: 12, color: '#fff', marginBottom: 10 },
 });
