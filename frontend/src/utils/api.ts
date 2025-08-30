@@ -1,7 +1,8 @@
 import Constants from "expo-constants";
 
-// Use relative /api to comply with ingress and avoid env mismatches on web
-const API = `/api`;
+// Use backend URL from environment variables
+const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || Constants.expoConfig?.extra?.backendUrl || "https://app-builder-check.preview.emergentagent.com";
+const API = `${BACKEND_URL}/api`;
 
 export type SecureNoteMeta = { [k: string]: any };
 
