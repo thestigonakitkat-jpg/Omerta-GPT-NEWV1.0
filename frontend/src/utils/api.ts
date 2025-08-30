@@ -1,7 +1,7 @@
 import Constants from "expo-constants";
 
-const BASE = process.env.EXPO_PUBLIC_BACKEND_URL || Constants.expoConfig?.extra?.backendUrl || "";
-const API = `${BASE}/api`;
+// Use relative /api to comply with ingress and avoid env mismatches on web
+const API = `/api`;
 
 export type SecureNoteMeta = { [k: string]: any };
 
