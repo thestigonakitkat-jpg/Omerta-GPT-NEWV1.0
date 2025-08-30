@@ -5,7 +5,7 @@ import { useRouter } from "expo-router";
 
 export default function UnlockScreen() {
   const router = useRouter();
-  const sec = useSecurity();
+  // const sec = useSecurity();
   const [pass, setPass] = useState("");
   const [mode, setMode] = useState<"unlock"|"setup">("unlock");
 
