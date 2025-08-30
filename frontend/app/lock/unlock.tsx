@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, Alert, AppState } from "react-native";
 import { useRouter } from "expo-router";
-import { useSecurity } from "../../src/state/security";
+// import { useSecurity } from "../../src/state/security";
 
 export default function UnlockScreen() {
   const router = useRouter();
