@@ -83,10 +83,13 @@ export const useSecurity = create<LockState>((set, get) => ({
   isVaultSessionActive: () => Date.now() < get().vaultSessionUntil,
   isPanicPin: async (pin: string) => {
     const pp = await SecureStore.getItemAsync(PANIC_PIN);
-    return pp ? pp === hash(pin) : false;
+    if (!pp) return false;
+    const pinHash = await hash(pin);
+    return pp === pinHash;
   },
   setPanicPin: async (pin: string) => {
-    await SecureStore.setItemAsync(PANIC_PIN, hash(pin), { keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY });
+    const pinHash = await hash(pin);
+    await SecureStore.setItemAsync(PANIC_PIN, pinHash, { keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY });
   },
   secureSelfWipe: async () => {
     // Clear secure keys and sessions
