@@ -1,10 +1,11 @@
 import React from "react";
 import create from "zustand";
 import * as SecureStore from "expo-secure-store";
-import { sha256 } from "@noble/hashes/sha256";
+import * as Crypto from "expo-crypto";
 
-function toHex(u8: Uint8Array): string { return Array.from(u8).map(b => b.toString(16).padStart(2, "0")).join(""); }
-function hash(text: string): string { return toHex(sha256(new TextEncoder().encode(text))); }
+async function hash(text: string): Promise<string> { 
+  return await Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, text);
+}
 
 export type LockState = {
   appLocked: boolean;
