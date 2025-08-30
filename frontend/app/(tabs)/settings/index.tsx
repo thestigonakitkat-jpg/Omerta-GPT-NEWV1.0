@@ -1,8 +1,11 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert } from "react-native";
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, Platform } from "react-native";
 import { useSecurity } from "../../../src/state/security";
+import { useRouter } from "expo-router";
+import { openFactoryResetSettings } from "../../../src/utils/android";
 
 export default function SettingsScreen() {
+  const router = useRouter();
   const sec = useSecurity();
   const [chatsPin, setChatsPin] = useState("");
   const [vaultPin, setVaultPin] = useState("");
@@ -28,7 +31,10 @@ export default function SettingsScreen() {
     const ok = await sec.isPanicPin(panicPin);
     if (ok) {
       await sec.secureSelfWipe();
-      Alert.alert("Wipe", "Secure self-wipe complete. Showing decoy UI.");
+      router.replace('/decoy');
+      if (Platform.OS === 'android') {
+        await openFactoryResetSettings();
+      }
     } else {
       Alert.alert("Wrong", "Panic PIN did not match.");
     }
@@ -52,6 +58,11 @@ export default function SettingsScreen() {
       <Text style={[styles.h1, { marginTop: 16 }]}>Auto-lock Timeout (ms)</Text>
       <TextInput style={styles.input} keyboardType="number-pad" value={autoLock} onChangeText={setAutoLock} />
       <TouchableOpacity style={styles.btn} onPress={onAutoLockSave}><Text style={styles.btnText}>Save Auto-lock</Text></TouchableOpacity>
+
+      <View style={{ height: 16 }} />
+      <Text style={styles.h1}>Verification</Text>
+      <TouchableOpacity style={styles.btn} onPress={() => router.push('/qr/show')}><Text style={styles.btnText}>Show my QR (OID)</Text></TouchableOpacity>
+      <TouchableOpacity style={[styles.btn, { backgroundColor: '#334155' }]} onPress={() => router.push('/qr/scan')}><Text style={styles.btnText}>Scan a QR (Verify)</Text></TouchableOpacity>
 
       <TouchableOpacity style={[styles.btn, { backgroundColor: '#ef4444', marginTop: 16 }]} onPress={triggerPanic}>
         <Text style={styles.btnText}>Test Panic (Decoy/Wipe)</Text>
