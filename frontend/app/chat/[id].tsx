@@ -1,13 +1,16 @@
 import React, { useEffect, useRef, useState } from "react";
-import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, TextInput, TouchableOpacity, FlatList, Image } from "react-native";
+import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, TextInput, TouchableOpacity, FlatList } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { useContacts } from "../../src/state/contacts";
 
  type Msg = { id: string; text: string; me: boolean; ts: number; status: "sent"|"delivered"|"read" };
 
 export default function ChatRoom() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
+  const contacts = useContacts();
+  const isVerified = contacts.isVerified(id);
   const [messages, setMessages] = useState<Msg[]>([{
     id: "m1", text: "Welcome to OMERTA. This is a preview of the chat UI.", me: false, ts: Date.now()-60000, status: "read"
   }, {
@@ -30,21 +33,12 @@ export default function ChatRoom() {
     setMessages((prev) => [...prev, newMsg]);
     setInput("");
     scrollToEnd();
-    // Simulate delivery and reply
-    setTimeout(() => {
-      setMessages((prev) => prev.map(m => m.id === newMsg.id ? { ...m, status: "delivered" } : m));
-    }, 400);
-    setTimeout(() => {
-      setMessages((prev) => prev.map(m => m.id === newMsg.id ? { ...m, status: "read" } : m));
-    }, 900);
+    setTimeout(() => { setMessages((prev) => prev.map(m => m.id === newMsg.id ? { ...m, status: "delivered" } : m)); }, 400);
+    setTimeout(() => { setMessages((prev) => prev.map(m => m.id === newMsg.id ? { ...m, status: "read" } : m)); }, 900);
     setTimeout(() => {
       setTyping(true);
       const reply: Msg = { id: Math.random().toString(36).slice(2), text: "Got it.", me: false, ts: Date.now()+500, status: "delivered" };
-      setTimeout(() => {
-        setMessages((prev) => [...prev, reply]);
-        setTyping(false);
-        scrollToEnd();
-      }, 1200);
+      setTimeout(() => { setMessages((prev) => [...prev, reply]); setTyping(false); scrollToEnd(); }, 1200);
     }, 1200);
   };
 
@@ -91,10 +85,16 @@ export default function ChatRoom() {
           <View style={styles.headerInfo}>
             <View style={styles.headerAvatar}><Text style={styles.headerAvatarText}>A</Text></View>
             <View>
-              <Text style={styles.headerTitle}>Alias (Verified)</Text>
+              <Text style={styles.headerTitle}>Alias {isVerified ? '' : ''}</Text>
               <Text style={styles.headerSub}>{typing ? "typing…" : "online"}</Text>
             </View>
           </View>
+          {isVerified && (
+            <View style={styles.verifiedBadge}>
+              <Ionicons name="shield-checkmark" size={14} color="#22c55e" />
+              <Text style={styles.verifiedText}>VERIFIED CONTACT</Text>
+            </View>
+          )}
         </View>
 
         <FlatList
@@ -131,11 +131,13 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0b0b0b' },
   header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#1f2937' },
   back: { padding: 6, marginRight: 6 },
-  headerInfo: { flexDirection: 'row', alignItems: 'center' },
+  headerInfo: { flexDirection: 'row', alignItems: 'center', flex: 1 },
   headerAvatar: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#1f2937', alignItems: 'center', justifyContent: 'center', marginRight: 8 },
   headerAvatarText: { color: '#fff', fontWeight: '700' },
   headerTitle: { color: '#fff', fontWeight: '700' },
   headerSub: { color: '#9ca3af', fontSize: 12 },
+  verifiedBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#052e2b', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 20, borderWidth: 1, borderColor: '#064e3b' },
+  verifiedText: { color: '#22c55e', marginLeft: 6, fontSize: 10, fontWeight: '800' },
 
   row: { flexDirection: 'row', marginVertical: 4, paddingHorizontal: 8 },
   rowMe: { justifyContent: 'flex-end' },

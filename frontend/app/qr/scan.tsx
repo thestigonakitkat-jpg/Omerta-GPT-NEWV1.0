@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from "react-native";
 import { BarCodeScanner } from "expo-barcode-scanner";
+import { useContacts } from "../../src/state/contacts";
 
 export default function ScanQR() {
   const [hasPerm, setHasPerm] = useState<boolean | null>(null);
   const [scanned, setScanned] = useState(false);
+  const contacts = useContacts();
 
   useEffect(() => {
     (async () => {
@@ -18,6 +20,7 @@ export default function ScanQR() {
     try {
       const obj = JSON.parse(data);
       if (obj && obj.oid) {
+        contacts.markVerified(obj.oid);
         Alert.alert('Verified Contact', `OID ${obj.oid} verified.`);
       } else {
         Alert.alert('Invalid', 'QR did not contain an OID');
