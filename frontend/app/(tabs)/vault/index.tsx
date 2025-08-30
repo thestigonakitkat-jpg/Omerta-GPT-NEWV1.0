@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from "react-native";
 import * as FileSystem from "expo-file-system";
 import * as DocumentPicker from "expo-document-picker";
-import { useSecurity } from "../../../src/state/security";
+// import { useSecurity } from "../../../src/state/security";
 import { aesGcmEncrypt, aesGcmDecrypt } from "../../../src/utils/crypto";
 
 export default function VaultScreen() {
