@@ -44,32 +44,38 @@ export const useSecurity = create<LockState>((set, get) => ({
   unlockAppWithPassphrase: async (pass: string) => {
     const stored = await SecureStore.getItemAsync(PASS_KEY);
     if (!stored) return false;
-    const ok = stored === hash(pass);
+    const passHash = await hash(pass);
+    const ok = stored === passHash;
     if (ok) set({ appLocked: false });
     return ok;
   },
   setPassphrase: async (pass: string) => {
-    await SecureStore.setItemAsync(PASS_KEY, hash(pass), { keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY });
+    const passHash = await hash(pass);
+    await SecureStore.setItemAsync(PASS_KEY, passHash, { keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY });
   },
   verifyChatsPin: async (pin: string) => {
     const ph = await SecureStore.getItemAsync(CHATS_PIN);
     if (!ph) return false;
-    const ok = ph === hash(pin);
+    const pinHash = await hash(pin);
+    const ok = ph === pinHash;
     if (ok) get().startChatsSession();
     return ok;
   },
   verifyVaultPin: async (pin: string) => {
     const ph = await SecureStore.getItemAsync(VAULT_PIN);
     if (!ph) return false;
-    const ok = ph === hash(pin);
+    const pinHash = await hash(pin);
+    const ok = ph === pinHash;
     if (ok) get().startVaultSession();
     return ok;
   },
   setChatsPin: async (pin: string) => {
-    await SecureStore.setItemAsync(CHATS_PIN, hash(pin), { keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY });
+    const pinHash = await hash(pin);
+    await SecureStore.setItemAsync(CHATS_PIN, pinHash, { keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY });
   },
   setVaultPin: async (pin: string) => {
-    await SecureStore.setItemAsync(VAULT_PIN, hash(pin), { keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY });
+    const pinHash = await hash(pin);
+    await SecureStore.setItemAsync(VAULT_PIN, pinHash, { keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY });
   },
   startChatsSession: () => set({ chatsSessionUntil: Date.now() + get().autoLockMs }),
   startVaultSession: () => set({ vaultSessionUntil: Date.now() + get().autoLockMs }),
