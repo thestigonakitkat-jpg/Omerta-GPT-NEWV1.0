@@ -1,15 +1,24 @@
 import * as SecureStore from "expo-secure-store";
 import { hmac } from "@noble/hashes/hmac";
 import { sha1 } from "@noble/hashes/sha1";
+import { getRandomBytesAsync } from "expo-crypto";
 
 const SECRET_KEY = "totp_secret_v1";
 
+function toHex(u8: Uint8Array): string {
+  return Array.from(u8).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+function fromHex(hex: string): Uint8Array {
+  const out = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < out.length; i++) out[i] = parseInt(hex.substr(i * 2, 2), 16);
+  return out;
+}
+
 export async function getOrCreateTotpSecret(): Promise<Uint8Array> {
   const ex = await SecureStore.getItemAsync(SECRET_KEY);
-  if (ex) return Uint8Array.from(atob(ex), c => c.charCodeAt(0));
-  const rand = crypto.getRandomValues(new Uint8Array(20)); // 160-bit secret
-  const b64 = btoa(String.fromCharCode(...Array.from(rand)));
-  await SecureStore.setItemAsync(SECRET_KEY, b64, { keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY });
+  if (ex) return fromHex(ex);
+  const rand = new Uint8Array(await getRandomBytesAsync(20)); // 160-bit secret
+  await SecureStore.setItemAsync(SECRET_KEY, toHex(rand), { keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY });
   return rand;
 }
 
