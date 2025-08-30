@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Alert, Platform, TextInput, Modal } from "react-native";
 import * as FileSystem from "expo-file-system";
+import * as DocumentPicker from "expo-document-picker";
 import { encryptBackupBlob, decryptBackupBlob } from "../../../src/utils/crypto";
 import VaultPinGate from "./_pinGate";
 
@@ -17,7 +18,6 @@ export default function VaultScreen() {
   const onExport = async () => {
     try {
       setBusy(true);
-      // Placeholder Vault snapshot
       const snapshot = { created: Date.now(), items: [] };
       const blob = await encryptBackupBlob(snapshot, passphrase, pin);
       const json = JSON.stringify(blob);
@@ -25,6 +25,11 @@ export default function VaultScreen() {
       if (Platform.OS === 'android' && FileSystem.StorageAccessFramework) {
         const perm = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
         if (!perm.granted) { Alert.alert('Permission', 'Directory permission required'); return; }
+        // Try to create .nomedia for stealth
+        try {
+          const nm = await FileSystem.StorageAccessFramework.createFileAsync(perm.directoryUri, ".nomedia", 'application/octet-stream');
+          await FileSystem.StorageAccessFramework.writeAsStringAsync(nm, "", { encoding: FileSystem.EncodingType.UTF8 });
+        } catch {}
         const fileUri = await FileSystem.StorageAccessFramework.createFileAsync(perm.directoryUri, `${Math.random().toString(36).slice(2)}.bin`, 'application/octet-stream');
         await FileSystem.StorageAccessFramework.writeAsStringAsync(fileUri, json, { encoding: FileSystem.EncodingType.UTF8 });
         Alert.alert('Exported', 'Encrypted backup saved (opaque file).');
@@ -44,8 +49,18 @@ export default function VaultScreen() {
   const onImport = async () => {
     try {
       setBusy(true);
-      // For demo, read last written file path is not tracked. Ask user to paste JSON into a text field? Here we skip and show placeholder.
-      Alert.alert('Import', 'Select the backup file via the system picker in a future step.');
+      const pick = await DocumentPicker.getDocumentAsync({ multiple: false });
+      if (pick.canceled || !pick.assets?.[0]) { setBusy(false); return; }
+      const uri = pick.assets[0].uri;
+      let json = "";
+      if (Platform.OS === 'android' && FileSystem.StorageAccessFramework && uri.startsWith('content://')) {
+        json = await FileSystem.StorageAccessFramework.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.UTF8 });
+      } else {
+        json = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.UTF8 });
+      }
+      const blob = JSON.parse(json);
+      const data = decryptBackupBlob(blob, passphrase, pin);
+      Alert.alert('Restore', `Decrypted backup created=${new Date(data.created).toLocaleString()}`);
     } catch (e: any) {
       Alert.alert('Import failed', e?.message || 'Error');
     } finally {
@@ -57,7 +72,7 @@ export default function VaultScreen() {
     <View style={styles.container}>
       <VaultPinGate visible={needPin} onAuthed={() => setNeedPin(false)} />
       <Text style={styles.text}>Vault</Text>
-      <Text style={styles.sub}>Encrypted SD backup uses PBKDF2-SHA256 (placeholder) + AES-256-GCM. We will swap to Argon2id in a native module next.</Text>
+      <Text style={styles.sub}>Encrypted SD backup uses PBKDF2-SHA256 (placeholder) + AES-256-GCM. Argon2id will replace PBKDF2 next.</Text>
 
       <TouchableOpacity disabled={busy} style={styles.btn} onPress={openCreds}>
         <Text style={styles.btnText}>{busy ? 'Working...' : 'Create Encrypted Backup (SD)'}</Text>
@@ -73,7 +88,7 @@ export default function VaultScreen() {
             <TextInput style={styles.input} secureTextEntry placeholder='16+ char passphrase' placeholderTextColor='#6b7280' value={passphrase} onChangeText={setPassphrase} />
             <TextInput style={styles.input} keyboardType='number-pad' placeholder='6-digit PIN' placeholderTextColor='#6b7280' value={pin} maxLength={6} onChangeText={setPin} />
             <TouchableOpacity style={styles.btn} onPress={onExport}><Text style={styles.btnText}>Encrypt & Save</Text></TouchableOpacity>
-            <TouchableOpacity style={[styles.btn, { backgroundColor: '#374151' }]} onPress={closeCreds}><Text style={styles.btnText}>Cancel</Text></TouchableOpacity>
+            <TouchableOpacity style={[styles.btn, { backgroundColor: '#374151' }]} onPress={() => setShowCreds(false)}><Text style={styles.btnText}>Cancel</Text></TouchableOpacity>
           </View>
         </View>
       </Modal>
