@@ -107,15 +107,18 @@ user_problem_statement: "Build an end-to-end encrypted mobile app (Expo) with Fa
 backend:
   - task: "RAM-only Secure Notes endpoints (/api/notes)"
     implemented: true
-    working: false
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: false
         agent: "main"
         comment: "Implemented POST /api/notes and GET /api/notes/{id} with TTL and read-limit enforcement in RAM-only store and background cleanup. Ready for testing."
+      - working: true
+        agent: "testing"
+        comment: "✅ All backend tests passed: POST /api/notes creates notes with correct TTL and views_left, GET /api/notes/{id} properly decrements view count and purges after limit reached, TTL expiry works correctly (410 expired), invalid note IDs return 404 not_found_or_expired, /api/status regression test passed. Implementation follows cryptgeon semantics with immediate purging after views_left reaches 0."
 
 frontend:
   - task: "Security foundation scaffolding (to be added later)"
