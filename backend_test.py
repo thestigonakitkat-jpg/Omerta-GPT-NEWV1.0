@@ -120,22 +120,22 @@ def test_read_note_twice(note_id):
         print(f"❌ Second read error: {e}")
         return False
     
-    # Third read (should fail with 410)
+    # Third read (should fail with 404 since note is purged immediately after views_left reaches 0)
     try:
         print("\nThird read (should be purged):")
         response = requests.get(f"{BACKEND_URL}/notes/{note_id}")
         print(f"GET /api/notes/{note_id} - Status: {response.status_code}")
         
-        if response.status_code == 410:
+        if response.status_code == 404:
             data = response.json()
             print(f"Response: {json.dumps(data, indent=2)}")
-            if data.get("detail") == "view_limit_reached":
-                print("✅ Third read correctly returned 410 view_limit_reached")
+            if data.get("detail") == "not_found_or_expired":
+                print("✅ Third read correctly returned 404 not_found_or_expired (note was purged)")
                 return True
             else:
                 print(f"❌ Third read wrong error: {data.get('detail')}")
         else:
-            print(f"❌ Third read should have returned 410, got: {response.status_code}")
+            print(f"❌ Third read should have returned 404, got: {response.status_code}")
             
     except Exception as e:
         print(f"❌ Third read error: {e}")
