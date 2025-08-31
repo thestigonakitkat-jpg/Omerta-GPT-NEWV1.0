@@ -1,14 +1,15 @@
 import React, { useEffect, useRef, useState } from "react";
-import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, TextInput, TouchableOpacity, FlatList, Pressable } from "react-native";
+import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, TextInput, TouchableOpacity, FlatList, Pressable, Alert } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useContacts } from "../../src/state/contacts";
 import HandshakeBadge from "../../src/components/HandshakeBadge";
 import { useTheme } from "../../src/state/theme";
 import { getOrCreateOID } from "../../src/state/identity";
-import { pollEnvelopes, sendEnvelope } from "../../src/utils/api";
+import { pollEnvelopes, sendEnvelope, createNote } from "../../src/utils/api";
 import { useChatKeys } from "../../src/state/chatKeys";
 import { BlurView } from "expo-blur";
+import { connectWs, onWsMessage } from "../../src/utils/ws";
 
  type Msg = { id: string; text: string; me: boolean; ts: number; status: "sent"|"delivered"|"read" };
 
@@ -23,45 +24,56 @@ export default function ChatRoom() {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(false);
-  const [privacyTyping, setPrivacyTyping] = useState(false); // blur composer
+  const [privacyTyping, setPrivacyTyping] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [needsKeyShare, setNeedsKeyShare] = useState(false);
   const listRef = useRef<FlatList<Msg>>(null);
   const myOidRef = useRef<string>("");
 
   useEffect(() => { contacts.init?.(); }, []);
   useEffect(() => { scrollToEnd(); }, [messages.length]);
   useEffect(() => {
-    (async () => { myOidRef.current = await getOrCreateOID(); })();
-  }, []);
+    (async () => { myOidRef.current = await getOrCreateOID(); connectWs(myOidRef.current); })();
+    const off = onWsMessage((data) => {
+      if (data?.messages?.length) {
+        setMessages((prev) => {
+          const next = [...prev];
+          data.messages.forEach((m: any) => {
+            if (peerOid && m.from_oid !== peerOid) return;
+            next.push({ id: m.id, text: m.ciphertext, me: false, ts: Date.parse(m.ts) || Date.now(), status: "delivered" });
+          });
+          return next;
+        });
+      }
+    });
+    return () => { off?.(); };
+  }, [peerOid]);
 
   useEffect(() => {
-    let mounted = true;
-    const iv = setInterval(async () => {
-      try {
-        if (!myOidRef.current) return;
-        const res = await pollEnvelopes(myOidRef.current);
-        if (!mounted) return;
-        if (res.messages?.length) {
-          setMessages((prev) => {
-            const next = [...prev];
-            res.messages.forEach((m) => {
-              if (peerOid && m.from_oid !== peerOid) return;
-              next.push({ id: m.id, text: m.ciphertext, me: false, ts: Date.parse(m.ts) || Date.now(), status: "delivered" });
-            });
-            return next;
-          });
-        }
-      } catch {}
-    }, 2000);
-    return () => { mounted = false; clearInterval(iv); };
+    // Determine if we need to share a key
+    (async () => {
+      const info = await keys.ensureKey(peerOid);
+      // In a real app, track peer acceptance; for now show banner to send key via Secure Note
+      setNeedsKeyShare(true);
+    })();
   }, [peerOid]);
 
   const scrollToEnd = () => setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 50);
 
+  const shareKeyViaSecureNote = async () => {
+    const info = await keys.ensureKey(peerOid);
+    try {
+      const res = await createNote({ ciphertext: info.keyB64, ttl_seconds: 7*24*60*60, read_limit: 1, meta: { type: 'chat_key', to: peerOid } });
+      Alert.alert('Key shared', 'Encryption key sent as a Secure Note. Ask peer to open it.');
+      setNeedsKeyShare(false);
+    } catch (e: any) {
+      Alert.alert('Failed', e?.message || 'Could not create Secure Note');
+    }
+  };
+
   const onSend = async () => {
     const txt = input.trim();
     if (!txt) return;
-    // Require a chat key before sending (security-first)
     const info = await keys.ensureKey(peerOid);
     setInput("");
     const newMsg: Msg = { id: Math.random().toString(36).slice(2), text: txt, me: true, ts: Date.now(), status: "sent" };
@@ -70,8 +82,7 @@ export default function ChatRoom() {
 
     try {
       const from = myOidRef.current || (await getOrCreateOID());
-      // Interim: send plaintext placeholder; encryption wiring next
-      await sendEnvelope({ to_oid: peerOid, from_oid: from, ciphertext: txt });
+      await sendEnvelope({ to_oid: peerOid, from_oid: from, ciphertext: txt }); // TODO: encrypt with per-chat key
       keys.bumpCounter(peerOid);
       setTimeout(() => { setMessages((prev) => prev.map(m => m.id === newMsg.id ? { ...m, status: "delivered" } : m)); }, 200);
       setTimeout(() => { setMessages((prev) => prev.map(m => m.id === newMsg.id ? { ...m, status: "read" } : m)); }, 600);
@@ -81,11 +92,11 @@ export default function ChatRoom() {
   const HeaderSettings = () => (
     <View style={styles.settingsCard}> 
       <Text style={[styles.settingsTitle, { color: colors.text }]}>Chat Settings</Text>
-      <TouchableOpacity style={styles.rowBtn} onPress={async () => { await keys.forceRekey(peerOid); setSettingsOpen(false); }}>
+      <TouchableOpacity style={styles.rowBtn} onPress={async () => { await keys.forceRekey(peerOid); setNeedsKeyShare(true); setSettingsOpen(false); }}>
         <Ionicons name="key" size={16} color={colors.accent} />
         <Text style={[styles.rowText, { color: colors.text }]}>Get new key</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.rowBtn} onPress={() => { /* mark compromised flow placeholder */ setSettingsOpen(false); }}>
+      <TouchableOpacity style={styles.rowBtn} onPress={() => { setNeedsKeyShare(true); setSettingsOpen(false); }}>
         <Ionicons name="alert-circle" size={16} color="#f59e0b" />
         <Text style={[styles.rowText, { color: colors.text }]}>Mark previous key as compromised</Text>
       </TouchableOpacity>
@@ -129,6 +140,18 @@ export default function ChatRoom() {
     </View>
   );
 
+  const KeyShareBanner = () => (
+    needsKeyShare ? (
+      <View style={styles.banner}>
+        <Ionicons name="key" size={16} color={colors.accent} />
+        <Text style={[styles.bannerText, { color: colors.text }]}>Share encryption key with this contact</Text>
+        <TouchableOpacity style={[styles.bannerBtn, { borderColor: colors.accent }]} onPress={shareKeyViaSecureNote}>
+          <Text style={{ color: colors.accent, fontWeight: '700' }}>Send key</Text>
+        </TouchableOpacity>
+      </View>
+    ) : null
+  );
+
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
       <View style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -149,6 +172,8 @@ export default function ChatRoom() {
           </TouchableOpacity>
         </View>
         {settingsOpen && <HeaderSettings />}
+
+        <KeyShareBanner />
 
         <FlatList
           ref={listRef}
@@ -173,7 +198,7 @@ export default function ChatRoom() {
               multiline
             />
             {privacyTyping && (
-              <Pressable style={styles.blurWrap} onPressIn={() => { /* tap-hold to peek */ }}>
+              <Pressable style={styles.blurWrap}>
                 <BlurView intensity={60} tint="dark" style={styles.blur} />
               </Pressable>
             )}
@@ -217,4 +242,7 @@ const styles = StyleSheet.create({
   settingsTitle: { fontWeight: '700', marginBottom: 8 },
   rowBtn: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8 },
   rowText: { marginLeft: 8 },
+  banner: { flexDirection: 'row', alignItems: 'center', padding: 8, margin: 8, borderRadius: 10, borderWidth: 1, borderColor: '#1f2937' },
+  bannerText: { marginLeft: 8, flex: 1 },
+  bannerBtn: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, borderWidth: 1 },
 });

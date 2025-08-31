@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException
+from fastapi import FastAPI, APIRouter, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
@@ -112,6 +112,9 @@ NOTES_STORE: Dict[str, RamNote] = {}
 # Envelopes by recipient OID
 ENVELOPES: Dict[str, List[Envelope]] = {}
 
+# WebSocket subscribers per OID
+SUBS: Dict[str, List[WebSocket]] = {}
+
 _cleanup_stop = asyncio.Event()
 
 async def cleanup_notes_loop():
@@ -206,7 +209,33 @@ async def send_envelope(payload: EnvelopeSend):
         ts=payload.ts or datetime.now(timezone.utc),
         expires_at=datetime.now(timezone.utc) + timedelta(seconds=UNDLV_TTL_SECONDS),
     )
-    ENVELOPES.setdefault(env.to_oid, []).append(env)
+    # If there are active subscribers, push immediately and do not queue
+    subs = SUBS.get(env.to_oid, [])
+    delivered = False
+    if subs:
+        # build frame
+        frame = {
+            "id": env.id,
+            "from_oid": env.from_oid,
+            "ciphertext": env.ciphertext,
+            "ts": env.ts.isoformat(),
+        }
+        stale = []
+        for ws in subs:
+            try:
+                await ws.send_json({"messages": [frame]})
+                delivered = True
+            except Exception:
+                stale.append(ws)
+        # cleanup stale
+        for ws in stale:
+            try:
+                subs.remove(ws)
+            except ValueError:
+                pass
+        SUBS[env.to_oid] = subs
+    if not delivered:
+        ENVELOPES.setdefault(env.to_oid, []).append(env)
     return {"id": env.id}
 
 @api_router.get("/envelopes/poll", response_model=EnvelopePollResponse)
@@ -225,6 +254,56 @@ async def poll_envelopes(oid: str, max: int = 50):
             "ts": e.ts.isoformat(),
         } for e in deliver
     ]}
+
+# WebSocket for real-time delivery
+@app.websocket("/api/ws")
+async def ws_endpoint(ws: WebSocket):
+    await ws.accept()
+    # Expect a query param oid
+    oid = ws.query_params.get("oid")
+    if not oid:
+        await ws.close(code=1008)
+        return
+    SUBS.setdefault(oid, []).append(ws)
+    try:
+        # On connect: flush any queued envelopes for this oid (deliver and delete)
+        pending = ENVELOPES.get(oid, [])
+        if pending:
+            frames = [
+                {
+                    "id": e.id,
+                    "from_oid": e.from_oid,
+                    "ciphertext": e.ciphertext,
+                    "ts": e.ts.isoformat(),
+                } for e in pending
+            ]
+            ENVELOPES[oid] = []
+            await ws.send_json({"messages": frames})
+        # Keepalive loop
+        while True:
+            try:
+                # wait for ping/pong or small sleep
+                await asyncio.sleep(5)
+                await ws.send_json({"type": "ping", "t": datetime.now(timezone.utc).isoformat()})
+            except RuntimeError:
+                break
+    except WebSocketDisconnect:
+        pass
+    except Exception:
+        logger.exception("WebSocket error")
+    finally:
+        # Remove from subs
+        try:
+            arr = SUBS.get(oid, [])
+            if ws in arr:
+                arr.remove(ws)
+                SUBS[oid] = arr
+        except Exception:
+            pass
+        try:
+            await ws.close()
+        except Exception:
+            pass
 
 # Include the router in the main app
 app.include_router(api_router)
