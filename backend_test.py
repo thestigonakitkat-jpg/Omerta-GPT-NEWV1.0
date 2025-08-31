@@ -438,9 +438,9 @@ def test_secure_notes_regression():
 
 def main():
     """Run all backend tests"""
-    print("Starting Backend API Tests for RAM-only Secure Notes")
+    print("Starting Backend API Tests for RAM-only Secure Notes and Messaging Envelopes")
     print(f"Backend URL: {BACKEND_URL}")
-    print("=" * 60)
+    print("=" * 80)
     
     results = []
     
@@ -463,17 +463,31 @@ def main():
     # Test 5: Invalid note ID
     results.append(("Invalid note ID", test_invalid_note_id()))
     
+    # NEW ENVELOPE TESTS
+    # Test 6: Send envelope
+    envelope_id = test_send_envelope()
+    results.append(("Send envelope", envelope_id is not None))
+    
+    # Test 7: Poll envelopes with delete-on-delivery
+    results.append(("Poll delete-on-delivery", test_poll_envelopes_delete_on_delivery()))
+    
+    # Test 8: Envelope TTL behavior
+    results.append(("Envelope TTL behavior", test_envelope_ttl_behavior()))
+    
+    # Test 9: Secure notes regression
+    results.append(("Secure notes regression", test_secure_notes_regression()))
+    
     # Summary
-    print("\n" + "=" * 60)
+    print("\n" + "=" * 80)
     print("TEST RESULTS SUMMARY:")
-    print("=" * 60)
+    print("=" * 80)
     
     passed = 0
     total = len(results)
     
     for test_name, success in results:
         status = "✅ PASS" if success else "❌ FAIL"
-        print(f"{test_name:<25} {status}")
+        print(f"{test_name:<30} {status}")
         if success:
             passed += 1
     
