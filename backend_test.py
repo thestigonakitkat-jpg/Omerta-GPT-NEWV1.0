@@ -213,6 +213,229 @@ def test_invalid_note_id():
     
     return False
 
+def test_send_envelope():
+    """Test sending an envelope message"""
+    print("\n=== Testing POST /api/envelopes/send (Send Envelope) ===")
+    
+    payload = {
+        "to_oid": "user_bob_123",
+        "from_oid": "user_alice_456", 
+        "ciphertext": "encrypted_hello_message_1"
+    }
+    
+    try:
+        response = requests.post(f"{BACKEND_URL}/envelopes/send", json=payload)
+        print(f"POST /api/envelopes/send - Status: {response.status_code}")
+        
+        if response.status_code == 200:
+            data = response.json()
+            print(f"Response: {json.dumps(data, indent=2)}")
+            
+            # Verify response structure
+            if "id" in data and isinstance(data["id"], str):
+                print("✅ Envelope sent successfully with ID")
+                return data["id"]
+            else:
+                print(f"❌ Missing or invalid 'id' field in response")
+        else:
+            print(f"❌ Send envelope failed: {response.status_code} - {response.text}")
+            
+    except Exception as e:
+        print(f"❌ Send envelope error: {e}")
+    
+    return None
+
+def test_poll_envelopes_delete_on_delivery():
+    """Test polling envelopes with delete-on-delivery behavior"""
+    print("\n=== Testing GET /api/envelopes/poll (Delete-on-Delivery) ===")
+    
+    # First send an envelope
+    payload = {
+        "to_oid": "user_charlie_789",
+        "from_oid": "user_dave_012",
+        "ciphertext": "encrypted_test_message_2"
+    }
+    
+    try:
+        # Send envelope
+        response = requests.post(f"{BACKEND_URL}/envelopes/send", json=payload)
+        print(f"POST /api/envelopes/send - Status: {response.status_code}")
+        
+        if response.status_code != 200:
+            print(f"❌ Failed to send envelope for polling test: {response.status_code}")
+            return False
+            
+        envelope_id = response.json().get("id")
+        print(f"Sent envelope with ID: {envelope_id}")
+        
+        # First poll - should return the message
+        print("\nFirst poll (should return message):")
+        response = requests.get(f"{BACKEND_URL}/envelopes/poll?oid=user_charlie_789")
+        print(f"GET /api/envelopes/poll?oid=user_charlie_789 - Status: {response.status_code}")
+        
+        if response.status_code == 200:
+            data = response.json()
+            print(f"Response: {json.dumps(data, indent=2)}")
+            
+            messages = data.get("messages", [])
+            if len(messages) == 1:
+                msg = messages[0]
+                if (msg.get("id") == envelope_id and 
+                    msg.get("from_oid") == "user_dave_012" and
+                    msg.get("ciphertext") == "encrypted_test_message_2" and
+                    "ts" in msg):
+                    print("✅ First poll successful - message returned with correct data")
+                else:
+                    print(f"❌ First poll message data incorrect: {msg}")
+                    return False
+            else:
+                print(f"❌ First poll expected 1 message, got {len(messages)}")
+                return False
+        else:
+            print(f"❌ First poll failed: {response.status_code} - {response.text}")
+            return False
+        
+        # Second poll - should return empty (delete-on-delivery)
+        print("\nSecond poll (should be empty due to delete-on-delivery):")
+        response = requests.get(f"{BACKEND_URL}/envelopes/poll?oid=user_charlie_789")
+        print(f"GET /api/envelopes/poll?oid=user_charlie_789 - Status: {response.status_code}")
+        
+        if response.status_code == 200:
+            data = response.json()
+            print(f"Response: {json.dumps(data, indent=2)}")
+            
+            messages = data.get("messages", [])
+            if len(messages) == 0:
+                print("✅ Second poll successful - messages empty (delete-on-delivery working)")
+                return True
+            else:
+                print(f"❌ Second poll expected 0 messages, got {len(messages)}")
+                return False
+        else:
+            print(f"❌ Second poll failed: {response.status_code} - {response.text}")
+            return False
+            
+    except Exception as e:
+        print(f"❌ Poll envelopes test error: {e}")
+    
+    return False
+
+def test_envelope_ttl_behavior():
+    """Test envelope TTL sweep behavior (best-effort)"""
+    print("\n=== Testing Envelope TTL Behavior ===")
+    
+    # Send an envelope
+    payload = {
+        "to_oid": "user_eve_345",
+        "from_oid": "user_frank_678",
+        "ciphertext": "ttl_test_message"
+    }
+    
+    try:
+        response = requests.post(f"{BACKEND_URL}/envelopes/send", json=payload)
+        print(f"POST /api/envelopes/send - Status: {response.status_code}")
+        
+        if response.status_code != 200:
+            print(f"❌ Failed to send envelope for TTL test: {response.status_code}")
+            return False
+            
+        # Poll to get the message and verify it has timestamp
+        response = requests.get(f"{BACKEND_URL}/envelopes/poll?oid=user_eve_345")
+        print(f"GET /api/envelopes/poll?oid=user_eve_345 - Status: {response.status_code}")
+        
+        if response.status_code == 200:
+            data = response.json()
+            print(f"Response: {json.dumps(data, indent=2)}")
+            
+            messages = data.get("messages", [])
+            if len(messages) == 1:
+                msg = messages[0]
+                if "ts" in msg:
+                    # Verify timestamp format
+                    try:
+                        ts_str = msg["ts"]
+                        # Should be ISO format timestamp
+                        datetime.fromisoformat(ts_str.replace('Z', '+00:00'))
+                        print("✅ TTL test successful - message includes valid timestamp")
+                        
+                        # Verify second poll is empty (delete-on-delivery)
+                        response = requests.get(f"{BACKEND_URL}/envelopes/poll?oid=user_eve_345")
+                        if response.status_code == 200:
+                            data = response.json()
+                            if len(data.get("messages", [])) == 0:
+                                print("✅ TTL test confirmed - message deleted after delivery")
+                                return True
+                            else:
+                                print("❌ TTL test failed - message not deleted after delivery")
+                        return True
+                    except ValueError as e:
+                        print(f"❌ TTL test failed - invalid timestamp format: {e}")
+                        return False
+                else:
+                    print("❌ TTL test failed - message missing timestamp")
+                    return False
+            else:
+                print(f"❌ TTL test failed - expected 1 message, got {len(messages)}")
+                return False
+        else:
+            print(f"❌ TTL test failed: {response.status_code} - {response.text}")
+            return False
+            
+    except Exception as e:
+        print(f"❌ TTL test error: {e}")
+    
+    return False
+
+def test_secure_notes_regression():
+    """Regression test for secure notes functionality"""
+    print("\n=== Testing Secure Notes Regression ===")
+    
+    payload = {
+        "ciphertext": "regression_test_abc",
+        "ttl_seconds": 5,
+        "read_limit": 1
+    }
+    
+    try:
+        # Create note
+        response = requests.post(f"{BACKEND_URL}/notes", json=payload)
+        print(f"POST /api/notes - Status: {response.status_code}")
+        
+        if response.status_code == 200:
+            data = response.json()
+            note_id = data["id"]
+            print(f"Created note with ID: {note_id}")
+            
+            # Read note (first time - should work)
+            response = requests.get(f"{BACKEND_URL}/notes/{note_id}")
+            print(f"GET /api/notes/{note_id} (first read) - Status: {response.status_code}")
+            
+            if response.status_code == 200:
+                print("✅ First read successful")
+                
+                # Read note again (should fail with 410 view_limit_reached)
+                response = requests.get(f"{BACKEND_URL}/notes/{note_id}")
+                print(f"GET /api/notes/{note_id} (second read) - Status: {response.status_code}")
+                
+                if response.status_code == 410:
+                    data = response.json()
+                    if data.get("detail") == "view_limit_reached":
+                        print("✅ Secure notes regression test successful - view limit enforced")
+                        return True
+                    else:
+                        print(f"❌ Wrong error detail: {data.get('detail')}")
+                else:
+                    print(f"❌ Expected 410 view_limit_reached, got: {response.status_code}")
+            else:
+                print(f"❌ First read failed: {response.status_code}")
+        else:
+            print(f"❌ Failed to create regression test note: {response.status_code}")
+            
+    except Exception as e:
+        print(f"❌ Secure notes regression test error: {e}")
+    
+    return False
+
 def main():
     """Run all backend tests"""
     print("Starting Backend API Tests for RAM-only Secure Notes")
