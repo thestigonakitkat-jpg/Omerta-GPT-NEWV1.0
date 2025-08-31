@@ -86,15 +86,18 @@ backend:
         comment: "Previously verified: create, read twice then purge, TTL expiry and invalid give correct codes."
   - task: "Messaging envelopes RAM store (send/poll delete-on-delivery)"
     implemented: true
-    working: false
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: false
         agent: "main"
         comment: "Added POST /api/envelopes/send and GET /api/envelopes/poll?oid=... with 48h TTL and delete-on-delivery. Please test basic send/poll and TTL." 
+      - working: true
+        agent: "testing"
+        comment: "✅ All envelope tests passed: 1) Send envelope returns ID correctly 2) Poll delivers message with proper structure (id, from_oid, ciphertext, ts) 3) Second poll returns empty array (delete-on-delivery working) 4) TTL behavior confirmed with valid timestamps 5) Secure notes regression test also passed. Backend endpoints working correctly." 
 
 frontend:
   - task: "Chats: Secure Note create/open (client AES-GCM, cards, 2FA modal)"
