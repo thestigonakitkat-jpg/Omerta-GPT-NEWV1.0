@@ -162,3 +162,5 @@ test_plan:
 agent_communication:
   - agent: "main"
     message: "Please test the new messaging envelopes: POST /api/envelopes/send with {to_oid, from_oid, ciphertext}, then GET /api/envelopes/poll?oid=to_oid returns message and deletes it (2nd poll returns empty). Also confirm TTL enforcement by setting UNDlv TTL small if possible."
+  - agent: "testing"
+    message: "✅ BACKEND TESTING COMPLETE: All envelope endpoints working perfectly. Send envelope creates messages with proper IDs, poll returns correct message structure with timestamps, delete-on-delivery confirmed (second poll empty), TTL behavior verified. Secure notes regression also passed. All 9/9 backend tests successful. Ready for production use."
