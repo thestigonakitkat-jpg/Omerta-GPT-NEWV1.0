@@ -413,19 +413,19 @@ def test_secure_notes_regression():
             if response.status_code == 200:
                 print("✅ First read successful")
                 
-                # Read note again (should fail with 410 view_limit_reached)
+                # Read note again (should fail with 404 not_found_or_expired because note is purged immediately after views_left reaches 0)
                 response = requests.get(f"{BACKEND_URL}/notes/{note_id}")
                 print(f"GET /api/notes/{note_id} (second read) - Status: {response.status_code}")
                 
-                if response.status_code == 410:
+                if response.status_code == 404:
                     data = response.json()
-                    if data.get("detail") == "view_limit_reached":
-                        print("✅ Secure notes regression test successful - view limit enforced")
+                    if data.get("detail") == "not_found_or_expired":
+                        print("✅ Secure notes regression test successful - note purged after view limit reached")
                         return True
                     else:
                         print(f"❌ Wrong error detail: {data.get('detail')}")
                 else:
-                    print(f"❌ Expected 410 view_limit_reached, got: {response.status_code}")
+                    print(f"❌ Expected 404 not_found_or_expired, got: {response.status_code}")
             else:
                 print(f"❌ First read failed: {response.status_code}")
         else:
