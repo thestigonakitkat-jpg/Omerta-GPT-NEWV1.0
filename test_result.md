@@ -206,18 +206,17 @@ frontend:
 
 metadata:
   created_by: "main_agent"
-  version: "2.0"
-  test_sequence: 6
+  version: "2.1"
+  test_sequence: 7
   run_ui: true
 
 test_plan:
   current_focus:
-    - "Theme switching (Light/Dark/System) with red accents"
-    - "OMERTA logo integration across screens"
-    - "Enhanced in-chat settings menu functionality"
-    - "Complete UI/UX polish and security testing"
-  stuck_tasks: []
-  test_all: true
+    - "Expo app web rendering compatibility issue"
+    - "Package version updates for better compatibility"
+  stuck_tasks:
+    - "Chats: Secure Note create/open (browser rendering issue)"
+  test_all: false
   test_priority: "high_first"
 
 agent_communication:
