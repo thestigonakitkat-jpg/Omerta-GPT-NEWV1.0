@@ -11,7 +11,7 @@ import sys
 from datetime import datetime, timezone
 
 # Get backend URL from environment
-BACKEND_URL = "https://app-builder-check.preview.emergentagent.com/api"
+BACKEND_URL = "https://omerta-secure.preview.emergentagent.com/api"
 
 def test_status_endpoint():
     """Test that the status endpoint still works (regression test)"""
