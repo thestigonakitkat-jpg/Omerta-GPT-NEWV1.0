@@ -241,10 +241,13 @@ async def get_status_checks():
 @api_router.post("/notes", response_model=NoteCreateResponse)
 @limiter.limit("10/minute")  # Rate limit: 10 notes per minute per IP
 async def create_note(request: Request, payload: NoteCreate):
+    # Sanitize input
+    sanitized_ciphertext = sanitize_input(payload.ciphertext, max_length=50000)  # Allow larger encrypted content
+    
     note_id = str(uuid.uuid4())
     note = RamNote(
         note_id=note_id,
-        ciphertext=payload.ciphertext,
+        ciphertext=sanitized_ciphertext,
         meta=payload.meta,
         read_limit=payload.read_limit,
         ttl_seconds=payload.ttl_seconds,
