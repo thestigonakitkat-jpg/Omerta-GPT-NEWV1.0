@@ -300,7 +300,7 @@ async def read_note(request: Request, note_id: str):
         raise HTTPException(status_code=410, detail="expired")
     
     # Consume view
-    note.views_left -= 1
+    note.views += 1
     
     if note.views_left <= 0:
         ciphertext = note.ciphertext
