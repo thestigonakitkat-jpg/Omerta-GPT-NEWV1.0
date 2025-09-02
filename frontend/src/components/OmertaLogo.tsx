@@ -1,24 +1,42 @@
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, Platform } from "react-native";
 import Svg, { Path, Circle, Rect } from "react-native-svg";
 import { useTheme } from "../state/theme";
 
 export default function OmertaLogo({ size = 48, showText = true }: { size?: number; showText?: boolean }) {
   const { colors } = useTheme();
   const redAccent = "#ef4444";
+  const silverAccent = "#9ca3af";
   
   return (
     <View style={[styles.container, { width: showText ? size * 2.5 : size }]}>
       <View style={[styles.logoContainer, { width: size, height: size }]}>
-        <Svg width={size} height={size} viewBox="0 0 100 100">
-          {/* Outer circle - red accent */}
+        <Svg 
+          width={size} 
+          height={size} 
+          viewBox="0 0 100 100"
+          style={{ overflow: 'visible' }}
+        >
+          {/* Outer circle - red accent with enhanced visibility */}
           <Circle 
             cx="50" 
             cy="50" 
             r="45" 
             stroke={redAccent} 
-            strokeWidth="4" 
+            strokeWidth="3" 
             fill="none"
+            opacity={Platform.OS === 'web' ? 0.9 : 1}
+          />
+          
+          {/* Secondary accent circle for depth */}
+          <Circle 
+            cx="50" 
+            cy="50" 
+            r="38" 
+            stroke={silverAccent} 
+            strokeWidth="1" 
+            fill="none"
+            opacity={0.6}
           />
           
           {/* Inner geometric pattern representing security/encryption */}
@@ -27,9 +45,18 @@ export default function OmertaLogo({ size = 48, showText = true }: { size?: numb
             stroke={colors.text}
             strokeWidth="2"
             fill="none"
+            opacity={0.8}
           />
           
-          {/* Central 'O' for OMERTA */}
+          {/* Central 'O' for OMERTA - enhanced with double ring */}
+          <Circle 
+            cx="50" 
+            cy="50" 
+            r="15" 
+            stroke={redAccent} 
+            strokeWidth="2" 
+            fill="none"
+          />
           <Circle 
             cx="50" 
             cy="50" 
@@ -39,7 +66,7 @@ export default function OmertaLogo({ size = 48, showText = true }: { size?: numb
             fill="none"
           />
           
-          {/* Security lock elements */}
+          {/* Security lock elements - enhanced positioning */}
           <Rect
             x="45"
             y="46"
@@ -48,7 +75,8 @@ export default function OmertaLogo({ size = 48, showText = true }: { size?: numb
             rx="1"
             stroke={colors.text}
             strokeWidth="1.5"
-            fill="none"
+            fill={colors.bg}
+            opacity={0.9}
           />
           
           <Path
@@ -57,10 +85,16 @@ export default function OmertaLogo({ size = 48, showText = true }: { size?: numb
             strokeWidth="1.5"
             fill="none"
           />
+          
+          {/* Additional security dots pattern */}
+          <Circle cx="30" cy="30" r="1.5" fill={redAccent} opacity={0.7} />
+          <Circle cx="70" cy="30" r="1.5" fill={redAccent} opacity={0.7} />
+          <Circle cx="70" cy="70" r="1.5" fill={redAccent} opacity={0.7} />
+          <Circle cx="30" cy="70" r="1.5" fill={redAccent} opacity={0.7} />
         </Svg>
         
-        {/* Minimal stealth OMERTA mark overlay */}
-        <View style={[styles.overlay, { backgroundColor: colors.bg + '88' }]}>
+        {/* Enhanced stealth OMERTA mark overlay */}
+        <View style={[styles.overlay, { backgroundColor: colors.bg + (Platform.OS === 'web' ? '99' : '88') }]}>
           <Text style={[styles.overlayText, { color: redAccent }]}>O</Text>
         </View>
       </View>
