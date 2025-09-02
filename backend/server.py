@@ -23,6 +23,31 @@ import asyncio
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
+# Security Headers Middleware
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        response = await call_next(request)
+        
+        # Add comprehensive security headers
+        security_headers = {
+            "X-Content-Type-Options": "nosniff",
+            "X-Frame-Options": "DENY", 
+            "X-XSS-Protection": "1; mode=block",
+            "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+            "Content-Security-Policy": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'",
+            "Referrer-Policy": "strict-origin-when-cross-origin",
+            "Permissions-Policy": "geolocation=(), microphone=(), camera=()",
+            "X-Permitted-Cross-Domain-Policies": "none",
+            "Cross-Origin-Embedder-Policy": "require-corp",
+            "Cross-Origin-Opener-Policy": "same-origin",
+            "Cross-Origin-Resource-Policy": "cross-origin"
+        }
+        
+        for header, value in security_headers.items():
+            response.headers[header] = value
+            
+        return response
+
 # MongoDB connection (used for non-ephemeral tasks). Do NOT store notes/attachments/envelopes here.
 mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
