@@ -10,6 +10,7 @@ import { pollEnvelopes, sendEnvelope, createNote } from "../../src/utils/api";
 import { useChatKeys } from "../../src/state/chatKeys";
 import { BlurView } from "expo-blur";
 import { connectWs, onWsMessage } from "../../src/utils/ws";
+import { signalManager, EncryptedMessage } from "../../src/utils/signalCrypto";
 
  type Msg = { id: string; text: string; me: boolean; ts: number; status: "sent"|"delivered"|"read" };
 
