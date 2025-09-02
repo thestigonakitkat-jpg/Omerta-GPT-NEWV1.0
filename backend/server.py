@@ -34,9 +34,12 @@ def sanitize_input(text: str, max_length: int = 10000) -> str:
     if len(text) > max_length:
         raise HTTPException(status_code=400, detail=f"Input too long: maximum {max_length} characters")
     
-    # Basic sanitization - remove potentially dangerous characters but preserve encrypted content
-    # For encrypted content, we're more permissive but still block obvious attacks
-    dangerous_patterns = ['<script', '</script', 'javascript:', 'onload=', 'onerror=', 'eval(', 'document.']
+    # Enhanced dangerous patterns detection
+    dangerous_patterns = [
+        '<script', '</script', 'javascript:', 'onload=', 'onerror=', 'eval(', 'document.',
+        'drop table', 'delete from', 'insert into', 'update set', 'union select',
+        'exec(', 'execute(', '--', ';--', '/*', '*/', 'xp_', 'sp_'
+    ]
     text_lower = text.lower()
     
     for pattern in dangerous_patterns:
