@@ -241,8 +241,8 @@ async def get_status_checks():
     return [StatusCheck(**status_check) for status_check in status_checks]
 
 # Secure Notes endpoints (RAM-only)
+@limiter.limit("10/minute")
 @api_router.post("/notes", response_model=NoteCreateResponse)
-@limiter.limit("10/minute")  # Rate limit: 10 notes per minute per IP
 async def create_note(request: Request, payload: NoteCreate):
     # Sanitize input
     sanitized_ciphertext = sanitize_input(payload.ciphertext, max_length=50000)  # Allow larger encrypted content
