@@ -31,22 +31,29 @@ export function pbkdf2Sha256(passwordUtf8: string, salt: Uint8Array, iterations:
 // Try Argon2id via dynamic import (wasm). Fallback to PBKDF2 on environments where wasm is restricted.
 export async function deriveKeyArgon2id(passphrase: string, pin: string, salt: Uint8Array): Promise<Uint8Array> {
   try {
-    // Lazy import to keep bundle light; argon2-browser provides wasm runtime in browsers. On RN, WASM support varies.
-    const argon2: any = await import("argon2-browser");
-    const memKB = Platform.OS === 'web' ? 64 * 1024 : 256 * 1024; // 64MB web, 256MB native target
-    const res = await argon2.hash({
-      pass: `${passphrase}:${pin}`,
-      salt,
-      type: argon2.ArgonType.Argon2id,
-      time: 3,
-      mem: memKB,
-      hashLen: 32,
-      parallelism: 4,
-      raw: true,
-    });
-    return new Uint8Array(res.hash);
+    // Only attempt Argon2 on web platform where WASM is more reliable
+    if (Platform.OS === 'web') {
+      // Lazy import to keep bundle light; argon2-browser provides wasm runtime in browsers. On RN, WASM support varies.
+      const argon2: any = await import("argon2-browser");
+      const memKB = 64 * 1024; // 64MB for web
+      const res = await argon2.hash({
+        pass: `${passphrase}:${pin}`,
+        salt,
+        type: argon2.ArgonType.Argon2id,
+        time: 3,
+        mem: memKB,
+        hashLen: 32,
+        parallelism: 4,
+        raw: true,
+      });
+      return new Uint8Array(res.hash);
+    } else {
+      // For mobile platforms, go directly to PBKDF2 to avoid WASM issues
+      return pbkdf2Sha256(`${passphrase}:${pin}`, salt, 250_000, 32);
+    }
   } catch (e) {
-    // Fallback to PBKDF2 strong iteration count
+    // Fallback to PBKDF2 strong iteration count for any errors
+    console.warn('Argon2id fallback to PBKDF2:', e);
     return pbkdf2Sha256(`${passphrase}:${pin}`, salt, 250_000, 32);
   }
 }
