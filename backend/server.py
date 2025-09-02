@@ -88,21 +88,8 @@ app = FastAPI(title="OMERTA Secure API", version="2.0.0")
 # CRITICAL: Add limiter to app state BEFORE adding middleware
 app.state.limiter = limiter
 
-# Add SlowAPI middleware (MUST be added after setting app.state.limiter)
-app.add_middleware(SlowAPIMiddleware)
-
-# Add exception handler for rate limiting
-@app.exception_handler(RateLimitExceeded)
-async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
-    return JSONResponse(
-        status_code=429,
-        content={"detail": f"Rate limit exceeded: {exc.detail}"},
-        headers={
-            "X-RateLimit-Limit": str(exc.detail.split()[0]) if exc.detail else "unknown",
-            "X-RateLimit-Remaining": "0",
-            "Retry-After": "60"
-        }
-    )
+# Add exception handler for rate limiting (use default handler)
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Security middleware
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=["*"])  # Configure for production
