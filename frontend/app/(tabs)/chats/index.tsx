@@ -10,6 +10,8 @@ import ChatsPinGate from "./_pinGate";
 import { useSecurity } from "../../../src/state/security";
 import { useContacts } from "../../../src/state/contacts";
 import HandshakeBadge from "../../../src/components/HandshakeBadge";
+import OmertaLogo from "../../../src/components/OmertaLogo";
+import { useTheme } from "../../../src/state/theme";
 
 interface LocalNoteItem {
   id: string;
