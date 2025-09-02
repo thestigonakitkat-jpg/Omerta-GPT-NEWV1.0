@@ -34,20 +34,32 @@ def sanitize_input(text: str, max_length: int = 10000) -> str:
     if len(text) > max_length:
         raise HTTPException(status_code=400, detail=f"Input too long: maximum {max_length} characters")
     
-    # Enhanced dangerous patterns detection
+    # Enhanced dangerous patterns detection - be more specific to avoid false positives
     dangerous_patterns = [
         '<script', '</script', 'javascript:', 'onload=', 'onerror=', 'eval(', 'document.',
         'drop table', 'delete from', 'insert into', 'update set', 'union select',
-        'exec(', 'execute(', '--', ';--', '/*', '*/', 'xp_', 'sp_'
+        'exec(', 'execute(', 'xp_', 'sp_'
     ]
+    
+    # SQL injection specific patterns (more precise)
+    sql_patterns = [';--', '; --', '/*', '*/']
+    
     text_lower = text.lower()
     
+    # Check for dangerous patterns
     for pattern in dangerous_patterns:
         if pattern in text_lower:
             raise HTTPException(status_code=400, detail="Invalid input: potentially dangerous content detected")
     
+    # Check for SQL injection patterns (but allow legitimate -- in PGP messages)
+    for pattern in sql_patterns:
+        if pattern in text_lower:
+            # Allow if it's part of a PGP message structure
+            if not ('-----begin' in text_lower and '-----end' in text_lower):
+                raise HTTPException(status_code=400, detail="Invalid input: potentially dangerous content detected")
+    
     # Basic HTML escape for non-encrypted content (if it looks like HTML)
-    if '<' in text and '>' in text:
+    if '<' in text and '>' in text and not ('-----begin' in text_lower and '-----end' in text_lower):
         text = bleach.clean(text, tags=[], attributes=[], strip=True)
     
     return text.strip()
