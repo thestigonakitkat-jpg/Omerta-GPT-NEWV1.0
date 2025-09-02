@@ -59,10 +59,21 @@ limiter = Limiter(key_func=get_remote_address)
 # Create the main app without a prefix
 app = FastAPI(title="OMERTA Secure API", version="2.0.0")
 
-# Add rate limiting middleware
+# Add rate limiting middleware and exception handler
 app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_middleware(SlowAPIMiddleware)
+
+@app.exception_handler(RateLimitExceeded)
+async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
+    return JSONResponse(
+        status_code=429,
+        content={"detail": f"Rate limit exceeded: {exc.detail}"},
+        headers={
+            "X-RateLimit-Limit": str(exc.detail.split()[0]),
+            "X-RateLimit-Remaining": "0",
+            "Retry-After": "60"
+        }
+    )
 
 # Security middleware
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=["*"])  # Configure for production
