@@ -355,9 +355,10 @@ async def send_envelope(request: Request, payload: EnvelopeSend):
         ENVELOPES.setdefault(env.to_oid, []).append(env)
     return {"id": env.id}
 
-@limiter.limit("100/minute")
 @api_router.get("/envelopes/poll", response_model=EnvelopePollResponse)
 async def poll_envelopes(request: Request, oid: str, max: int = 50):
+    # REAL-WORLD rate limiting that works behind proxies
+    await rate_limit_middleware(request, "envelopes_poll")
     lst = ENVELOPES.get(oid, [])
     if not lst:
         return {"messages": []}
