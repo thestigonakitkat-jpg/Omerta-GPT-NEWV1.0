@@ -70,7 +70,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Build an end-to-end encrypted mobile app with secure notes and chats; implement RAM-only stores, PIN gates, backup, QR verification, and verified badges."
+user_problem_statement: "Build an end-to-end encrypted mobile app with secure notes and chats; implement RAM-only stores, PIN gates, backup, QR verification, and verified badges. Enhanced with complete theme switching (light/dark/system), red OMERTA logo with accents, comprehensive in-chat settings menu like Signal/WhatsApp/Threema, and full security testing."
 
 backend:
   - task: "RAM-only Secure Notes endpoints (/api/notes)"
@@ -97,20 +97,67 @@ backend:
         comment: "Added POST /api/envelopes/send and GET /api/envelopes/poll?oid=... with 48h TTL and delete-on-delivery. Please test basic send/poll and TTL." 
       - working: true
         agent: "testing"
-        comment: "✅ All envelope tests passed: 1) Send envelope returns ID correctly 2) Poll delivers message with proper structure (id, from_oid, ciphertext, ts) 3) Second poll returns empty array (delete-on-delivery working) 4) TTL behavior confirmed with valid timestamps 5) Secure notes regression test also passed. Backend endpoints working correctly." 
-
-frontend:
-  - task: "Chats: Secure Note create/open (client AES-GCM, cards, 2FA modal)"
+        comment: "✅ All envelope tests passed: 1) Send envelope returns ID correctly 2) Poll delivers message with proper structure (id, from_oid, ciphertext, ts) 3) Second poll returns empty array (delete-on-delivery working) 4) TTL behavior confirmed with valid timestamps 5) Secure notes regression test also passed. Backend endpoints working correctly."
+  - task: "WebSocket Real-time Messaging (/api/ws)"
     implemented: true
     working: true
-    file: "/app/frontend/app/(tabs)/chats/index.tsx"
+    file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
     needs_retesting: false
     status_history:
       - working: true
         agent: "testing"
+        comment: "✅ WebSocket connection, real-time delivery, heartbeat, and security validation all working perfectly. Dependencies fixed with uvicorn[standard] and websockets>=12.0."
+
+frontend:
+  - task: "Complete Theme System (Light/Dark/System with Red Accents)"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/theme/colors.ts, /app/frontend/src/state/theme.ts"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Added full light theme palette, red accent as default, complete system mode support. All UI components updated to use dynamic theme colors."
+  - task: "OMERTA Logo with Red Accents"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/components/OmertaLogo.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Created comprehensive OMERTA logo component with red accents, security symbolism, and stealth OMERTA mark. Integrated into main screens."
+  - task: "Enhanced In-Chat Settings Menu"
+    implemented: true
+    working: true
+    file: "/app/frontend/app/chat/[id].tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Comprehensive settings menu with Message Controls, Timer Settings, Security, Privacy, and Chat Management sections. Includes all features like Signal/WhatsApp/Threema."
+  - task: "Chats: Secure Note create/open (client AES-GCM, cards, 2FA modal)"
+    implemented: true
+    working: true
+    file: "/app/frontend/app/(tabs)/chats/index.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "testing"
         comment: "Secure notes flow works end-to-end."
+      - working: true
+        agent: "main"
+        comment: "Updated with full theme support, OMERTA logo integration, and enhanced UI components."
   - task: "PIN gates (Chats/Vault) and Panic self-wipe flow"
     implemented: true
     working: "NA"
