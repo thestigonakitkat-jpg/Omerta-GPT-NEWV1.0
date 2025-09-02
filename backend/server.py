@@ -219,7 +219,8 @@ async def read_note(request: Request, note_id: str):
 
 # Messaging envelopes (RAM-only delete-on-delivery)
 @api_router.post("/envelopes/send")
-async def send_envelope(payload: EnvelopeSend):
+@limiter.limit("50/minute")  # Rate limit: 50 messages per minute per IP
+async def send_envelope(request: Request, payload: EnvelopeSend):
     env = Envelope(
         id=str(uuid.uuid4()),
         to_oid=payload.to_oid,
