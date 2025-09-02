@@ -26,6 +26,7 @@ export default function ChatsScreen() {
   const router = useRouter();
   const sec = useSecurity();
   const contacts = useContacts();
+  const { colors } = useTheme();
   const [needPin, setNeedPin] = useState(false);
   const [noteText, setNoteText] = useState("");
   const [ttl, setTtl] = useState(300);
