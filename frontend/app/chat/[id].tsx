@@ -34,14 +34,41 @@ export default function ChatRoom() {
   useEffect(() => { contacts.init?.(); }, []);
   useEffect(() => { scrollToEnd(); }, [messages.length]);
   useEffect(() => {
-    (async () => { myOidRef.current = await getOrCreateOID(); connectWs(myOidRef.current); })();
+    (async () => { 
+      myOidRef.current = await getOrCreateOID(); 
+      connectWs(myOidRef.current); 
+      
+      // Initialize Signal Protocol
+      await signalManager.initialize();
+    })();
     const off = onWsMessage((data) => {
       if (data?.messages?.length) {
         setMessages((prev) => {
           const next = [...prev];
-          data.messages.forEach((m: any) => {
+          data.messages.forEach(async (m: any) => {
             if (peerOid && m.from_oid !== peerOid) return;
-            next.push({ id: m.id, text: m.ciphertext, me: false, ts: Date.parse(m.ts) || Date.now(), status: "delivered" });
+            
+            try {
+              // Try to decrypt with Signal Protocol
+              const encryptedMsg: EncryptedMessage = JSON.parse(m.ciphertext);
+              const decryptedText = await signalManager.decryptMessage(peerOid, encryptedMsg);
+              next.push({ 
+                id: m.id, 
+                text: decryptedText, 
+                me: false, 
+                ts: Date.parse(m.ts) || Date.now(), 
+                status: "delivered" 
+              });
+            } catch (e) {
+              // Fallback to plaintext for backward compatibility
+              next.push({ 
+                id: m.id, 
+                text: m.ciphertext, 
+                me: false, 
+                ts: Date.parse(m.ts) || Date.now(), 
+                status: "delivered" 
+              });
+            }
           });
           return next;
         });
