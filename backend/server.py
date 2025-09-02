@@ -262,10 +262,12 @@ async def get_status_checks():
     status_checks = await db.status_checks.find().to_list(1000)
     return [StatusCheck(**status_check) for status_check in status_checks]
 
-# Secure Notes endpoints (RAM-only)
-@limiter.limit("10/minute")
+# Secure Notes endpoints (RAM-only) with REAL-WORLD security
 @api_router.post("/notes", response_model=NoteCreateResponse)
 async def create_note(request: Request, payload: NoteCreate):
+    # REAL-WORLD rate limiting that works behind proxies
+    await rate_limit_middleware(request, "notes_create")
+    
     # Sanitize input
     sanitized_ciphertext = sanitize_input(payload.ciphertext, max_length=50000)  # Allow larger encrypted content
     
@@ -280,34 +282,31 @@ async def create_note(request: Request, payload: NoteCreate):
     NOTES_STORE[note_id] = note
     return NoteCreateResponse(id=note_id, expires_at=note.expires_at, views_left=note.views_left)
 
-@limiter.limit("30/minute")
-@api_router.get("/notes/{note_id}", response_model=NoteReadResponse)
+@api_router.get("/notes/{note_id}")
 async def read_note(request: Request, note_id: str):
-    note = NOTES_STORE.get(note_id)
-    if not note:
+    # REAL-WORLD rate limiting that works behind proxies  
+    await rate_limit_middleware(request, "notes_read")
+    
+    if note_id not in NOTES_STORE:
         raise HTTPException(status_code=404, detail="not_found_or_expired")
-    if note.expired():
-        NOTES_STORE.pop(note_id, None)
+    
+    note = NOTES_STORE[note_id]
+    
+    # Check expiry
+    now_utc = datetime.now(timezone.utc)
+    if now_utc > note.expires_at:
+        del NOTES_STORE[note_id]
         raise HTTPException(status_code=410, detail="expired")
+    
+    # Consume view
+    note.views_left -= 1
+    
     if note.views_left <= 0:
-        NOTES_STORE.pop(note_id, None)
-        raise HTTPException(status_code=410, detail="view_limit_reached")
-
-    # Serve and decrement views
-    note.views += 1
-    resp = NoteReadResponse(
-        id=note.id,
-        ciphertext=note.ciphertext,
-        meta=note.meta,
-        views_left=note.views_left,
-        expires_at=note.expires_at,
-    )
-
-    # If after increment views_left == 0, purge immediately (mirror cryptgeon semantics)
-    if note.views_left <= 0:
-        NOTES_STORE.pop(note_id, None)
-
-    return resp
+        ciphertext = note.ciphertext
+        del NOTES_STORE[note_id]
+        return {"ciphertext": ciphertext, "views_left": 0}
+    
+    return {"ciphertext": note.ciphertext, "views_left": note.views_left}
 
 # Messaging envelopes (RAM-only delete-on-delivery)
 @limiter.limit("50/minute")
