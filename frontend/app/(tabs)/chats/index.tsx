@@ -107,24 +107,24 @@ export default function ChatsScreen() {
   };
 
   const renderChatItem = ({ item }: { item: string }) => (
-    <TouchableOpacity style={styles.chatRow} onPress={() => router.push(`/chat/${item}`)}>
-      <View style={styles.avatar}><Text style={styles.avatarText}>{item.charAt(0)}</Text></View>
+    <TouchableOpacity style={[styles.chatRow, { backgroundColor: colors.card, borderColor: colors.border }]} onPress={() => router.push(`/chat/${item}`)}>
+      <View style={[styles.avatar, { backgroundColor: colors.border }]}><Text style={[styles.avatarText, { color: colors.text }]}>{item.charAt(0)}</Text></View>
       <View style={{ flex: 1 }}>
-        <Text style={styles.cardTitle}>Conversation with {item}</Text>
-        <Text style={styles.meta}>Tap to open sample chat</Text>
+        <Text style={[styles.cardTitle, { color: colors.text }]}>Conversation with {item}</Text>
+        <Text style={[styles.meta, { color: colors.sub }]}>Tap to open sample chat</Text>
       </View>
       {contacts.isVerified(item) && <HandshakeBadge small />}
     </TouchableOpacity>
   );
 
   const renderItem = ({ item }: { item: LocalNoteItem }) => (
-    <TouchableOpacity style={styles.card} onPress={() => onOpen(item.id)}>
+    <TouchableOpacity style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]} onPress={() => onOpen(item.id)}>
       <View style={styles.cardHeader}>
-        <Text style={styles.cardTitle}>Secure Note</Text>
-        <Text style={styles.badge}>🔒</Text>
+        <Text style={[styles.cardTitle, { color: colors.text }]}>Secure Note</Text>
+        <Text style={[styles.badge, { color: colors.accent }]}>🔒</Text>
       </View>
-      <Text style={styles.meta}>Views left: {item.views_left}</Text>
-      <Text style={styles.meta}>Expires: {new Date(item.expires_at).toLocaleString()}</Text>
+      <Text style={[styles.meta, { color: colors.sub }]}>Views left: {item.views_left}</Text>
+      <Text style={[styles.meta, { color: colors.sub }]}>Expires: {new Date(item.expires_at).toLocaleString()}</Text>
     </TouchableOpacity>
   );
 
