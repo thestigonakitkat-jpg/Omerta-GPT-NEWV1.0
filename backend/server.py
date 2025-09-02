@@ -288,11 +288,16 @@ async def read_note(request: Request, note_id: str):
 @api_router.post("/envelopes/send")
 @limiter.limit("50/minute")  # Rate limit: 50 messages per minute per IP
 async def send_envelope(request: Request, payload: EnvelopeSend):
+    # Sanitize inputs
+    sanitized_to_oid = sanitize_input(payload.to_oid, max_length=100)
+    sanitized_from_oid = sanitize_input(payload.from_oid, max_length=100)
+    sanitized_ciphertext = sanitize_input(payload.ciphertext, max_length=50000)  # Allow larger encrypted content
+    
     env = Envelope(
         id=str(uuid.uuid4()),
-        to_oid=payload.to_oid,
-        from_oid=payload.from_oid,
-        ciphertext=payload.ciphertext,
+        to_oid=sanitized_to_oid,
+        from_oid=sanitized_from_oid,
+        ciphertext=sanitized_ciphertext,
         ts=payload.ts or datetime.now(timezone.utc),
         expires_at=datetime.now(timezone.utc) + timedelta(seconds=UNDLV_TTL_SECONDS),
     )
