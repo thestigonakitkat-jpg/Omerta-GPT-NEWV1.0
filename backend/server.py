@@ -79,8 +79,25 @@ mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
-# Initialize rate limiter with correct configuration
-limiter = Limiter(key_func=get_remote_address)
+# Custom key function to get real client IP behind proxy/ingress
+def get_client_ip(request: Request):
+    """Get real client IP from headers when behind proxy/ingress"""
+    # Try X-Forwarded-For first (most common)
+    forwarded_for = request.headers.get("X-Forwarded-For")
+    if forwarded_for:
+        # X-Forwarded-For can contain multiple IPs, take the first one (original client)
+        return forwarded_for.split(",")[0].strip()
+    
+    # Try X-Real-IP (used by some proxies)
+    real_ip = request.headers.get("X-Real-IP")
+    if real_ip:
+        return real_ip.strip()
+    
+    # Fallback to remote address
+    return get_remote_address(request)
+
+# Initialize rate limiter with custom key function for proxy/ingress environments
+limiter = Limiter(key_func=get_client_ip)
 
 # Create the main app
 app = FastAPI(title="OMERTA Secure API", version="2.0.0")
