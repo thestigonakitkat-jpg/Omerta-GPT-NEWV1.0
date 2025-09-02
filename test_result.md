@@ -194,16 +194,18 @@ frontend:
 
 metadata:
   created_by: "main_agent"
-  version: "1.0"
-  test_sequence: 5
+  version: "2.0"
+  test_sequence: 6
   run_ui: true
 
 test_plan:
   current_focus:
-    - "Test /api/envelopes send/poll delete-on-delivery"
-    - "Smoke test PIN gates present, QR screens render"
+    - "Theme switching (Light/Dark/System) with red accents"
+    - "OMERTA logo integration across screens"
+    - "Enhanced in-chat settings menu functionality"
+    - "Complete UI/UX polish and security testing"
   stuck_tasks: []
-  test_all: false
+  test_all: true
   test_priority: "high_first"
 
 agent_communication:
@@ -211,5 +213,7 @@ agent_communication:
     message: "Please test the new messaging envelopes: POST /api/envelopes/send with {to_oid, from_oid, ciphertext}, then GET /api/envelopes/poll?oid=to_oid returns message and deletes it (2nd poll returns empty). Also confirm TTL enforcement by setting UNDlv TTL small if possible."
   - agent: "testing"
     message: "✅ BACKEND TESTING COMPLETE: All envelope endpoints working perfectly. Send envelope creates messages with proper IDs, poll returns correct message structure with timestamps, delete-on-delivery confirmed (second poll empty), TTL behavior verified. Secure notes regression also passed. All 9/9 backend tests successful. Ready for production use."
+  - agent: "main" 
+    message: "✅ COMPREHENSIVE IMPLEMENTATION COMPLETE: 1) Full theme system with light/dark/system modes and red accent as default 2) OMERTA logo with red accents and security symbolism integrated 3) Enhanced in-chat settings with all Signal/WhatsApp/Threema features 4) All UI components updated with dynamic theme support 5) WebSocket dependencies fixed 6) Backend fully tested (17/17 tests passed). Ready for frontend testing if requested."
   - agent: "testing"
     message: "✅ COMPREHENSIVE BACKEND TESTING COMPLETE: Conducted thorough testing as requested in review including: 1) Core Endpoints (9/9 tests passed) - Secure Notes and Messaging Envelopes working perfectly 2) WebSocket Testing (3/3 tests passed) - Real-time message delivery, heartbeat mechanism, and security validation all working 3) Security Testing (2/2 tests passed) - Invalid input handling and CORS configuration verified 4) Performance Testing (3/3 tests passed) - Concurrent connections (100% success rate), high-frequency polling (0.05s avg response), memory usage simulation all excellent. Fixed WebSocket dependencies issue by updating requirements.txt. All 17/17 total tests passed. Backend is production-ready with excellent security and performance characteristics."
