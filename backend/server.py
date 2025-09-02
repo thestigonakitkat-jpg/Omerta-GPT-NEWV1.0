@@ -66,6 +66,7 @@ app.add_middleware(SlowAPIMiddleware)
 
 # Security middleware
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=["*"])  # Configure for production
+app.add_middleware(SecurityHeadersMiddleware)
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
