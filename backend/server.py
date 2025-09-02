@@ -258,8 +258,8 @@ async def create_note(request: Request, payload: NoteCreate):
     NOTES_STORE[note_id] = note
     return NoteCreateResponse(id=note_id, expires_at=note.expires_at, views_left=note.views_left)
 
+@limiter.limit("30/minute")
 @api_router.get("/notes/{note_id}", response_model=NoteReadResponse)
-@limiter.limit("30/minute")  # Rate limit: 30 reads per minute per IP
 async def read_note(request: Request, note_id: str):
     note = NOTES_STORE.get(note_id)
     if not note:
