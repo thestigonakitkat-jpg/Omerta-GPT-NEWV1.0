@@ -18,3 +18,13 @@ export const dark = (accent: string) => ({
   muted: "#6b7280",
   accent,
 });
+
+export const light = (accent: string) => ({
+  bg: "#ffffff",
+  card: "#f8fafc",
+  border: "#e2e8f0",
+  text: "#1e293b",
+  sub: "#64748b",
+  muted: "#94a3b8",
+  accent,
+});
