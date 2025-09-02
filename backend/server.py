@@ -27,8 +27,11 @@ mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
+# Initialize rate limiter
+limiter = Limiter(key_func=get_remote_address)
+
 # Create the main app without a prefix
-app = FastAPI()
+app = FastAPI(title="OMERTA Secure API", version="2.0.0")
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
