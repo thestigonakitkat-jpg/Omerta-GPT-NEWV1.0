@@ -79,23 +79,26 @@ mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
-# Initialize rate limiter
+# Initialize rate limiter with correct configuration
 limiter = Limiter(key_func=get_remote_address)
 
-# Create the main app without a prefix
+# Create the main app
 app = FastAPI(title="OMERTA Secure API", version="2.0.0")
 
-# Add rate limiting middleware and exception handler
+# CRITICAL: Add limiter to app state BEFORE adding middleware
 app.state.limiter = limiter
+
+# Add SlowAPI middleware (MUST be added after setting app.state.limiter)
 app.add_middleware(SlowAPIMiddleware)
 
+# Add exception handler for rate limiting
 @app.exception_handler(RateLimitExceeded)
 async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
     return JSONResponse(
         status_code=429,
         content={"detail": f"Rate limit exceeded: {exc.detail}"},
         headers={
-            "X-RateLimit-Limit": str(exc.detail.split()[0]),
+            "X-RateLimit-Limit": str(exc.detail.split()[0]) if exc.detail else "unknown",
             "X-RateLimit-Remaining": "0",
             "Retry-After": "60"
         }
