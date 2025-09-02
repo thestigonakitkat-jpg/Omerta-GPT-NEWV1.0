@@ -90,17 +90,91 @@ export default function ChatRoom() {
   };
 
   const HeaderSettings = () => (
-    <View style={styles.settingsCard}> 
+    <View style={[styles.settingsCard, { backgroundColor: colors.card, borderColor: colors.border }]}> 
       <Text style={[styles.settingsTitle, { color: colors.text }]}>Chat Settings</Text>
-      <TouchableOpacity style={styles.rowBtn} onPress={async () => { await keys.forceRekey(peerOid); setNeedsKeyShare(true); setSettingsOpen(false); }}>
-        <Ionicons name="key" size={16} color={colors.accent} />
-        <Text style={[styles.rowText, { color: colors.text }]}>Get new key</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.rowBtn} onPress={() => { setNeedsKeyShare(true); setSettingsOpen(false); }}>
-        <Ionicons name="alert-circle" size={16} color="#f59e0b" />
-        <Text style={[styles.rowText, { color: colors.text }]}>Mark previous key as compromised</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.rowBtn} onPress={() => setSettingsOpen(false)}>
+      
+      {/* Message Controls */}
+      <View style={styles.settingsSection}>
+        <Text style={[styles.sectionTitle, { color: colors.sub }]}>Messages</Text>
+        <TouchableOpacity style={styles.rowBtn} onPress={() => Alert.alert("Edit Messages", "Select a message to edit (15min window)")}>
+          <Ionicons name="create-outline" size={16} color={colors.accent} />
+          <Text style={[styles.rowText, { color: colors.text }]}>Edit messages</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.rowBtn} onPress={() => Alert.alert("Delete Messages", "Long-press messages to delete (24h window)")}>
+          <Ionicons name="trash-outline" size={16} color={colors.accent} />
+          <Text style={[styles.rowText, { color: colors.text }]}>Delete messages</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.rowBtn} onPress={() => Alert.alert("Select Multiple", "Long-press to start multi-select mode")}>
+          <Ionicons name="checkmark-circle-outline" size={16} color={colors.accent} />
+          <Text style={[styles.rowText, { color: colors.text }]}>Multi-select messages</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Timer Settings */}
+      <View style={styles.settingsSection}>
+        <Text style={[styles.sectionTitle, { color: colors.sub }]}>Disappearing Messages</Text>
+        <TouchableOpacity style={styles.rowBtn} onPress={() => Alert.alert("Message Timer", "Options: Off, 30s, 1m, 5m, 1h, 8h, 1d, 1w")}>
+          <Ionicons name="timer-outline" size={16} color={colors.accent} />
+          <Text style={[styles.rowText, { color: colors.text }]}>Set message timer</Text>
+          <Text style={[styles.rowSubtext, { color: colors.sub }]}>Off</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.rowBtn} onPress={() => Alert.alert("View Once", "Send view-once photos/voice notes")}>
+          <Ionicons name="eye-outline" size={16} color={colors.accent} />
+          <Text style={[styles.rowText, { color: colors.text }]}>View-once media</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Security Settings */}
+      <View style={styles.settingsSection}>
+        <Text style={[styles.sectionTitle, { color: colors.sub }]}>Security</Text>
+        <TouchableOpacity style={styles.rowBtn} onPress={async () => { await keys.forceRekey(peerOid); setNeedsKeyShare(true); setSettingsOpen(false); }}>
+          <Ionicons name="key-outline" size={16} color={colors.accent} />
+          <Text style={[styles.rowText, { color: colors.text }]}>Get new key</Text>
+          <Text style={[styles.rowSubtext, { color: colors.sub }]}>Manual rekey</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.rowBtn} onPress={() => { setNeedsKeyShare(true); setSettingsOpen(false); }}>
+          <Ionicons name="alert-circle-outline" size={16} color="#f59e0b" />
+          <Text style={[styles.rowText, { color: colors.text }]}>Mark key compromised</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.rowBtn} onPress={() => Alert.alert("Safety Number", "Verify encryption keys with contact")}>
+          <Ionicons name="shield-checkmark-outline" size={16} color={colors.accent} />
+          <Text style={[styles.rowText, { color: colors.text }]}>Verify safety number</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Privacy Settings */}
+      <View style={styles.settingsSection}>
+        <Text style={[styles.sectionTitle, { color: colors.sub }]}>Privacy</Text>
+        <TouchableOpacity style={styles.rowBtn} onPress={() => Alert.alert("VIP Lock", "Move to VIP chats (hidden, per-chat PIN)")}>
+          <Ionicons name="lock-closed-outline" size={16} color={colors.accent} />
+          <Text style={[styles.rowText, { color: colors.text }]}>Move to VIP chats</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.rowBtn} onPress={() => setPrivacyTyping(!privacyTyping)}>
+          <Ionicons name={privacyTyping ? "eye-off-outline" : "eye-outline"} size={16} color={colors.accent} />
+          <Text style={[styles.rowText, { color: colors.text }]}>Privacy typing</Text>
+          <Text style={[styles.rowSubtext, { color: colors.sub }]}>{privacyTyping ? "On" : "Off"}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.rowBtn} onPress={() => Alert.alert("Read Receipts", "Toggle read receipt visibility")}>
+          <Ionicons name="checkmark-done-outline" size={16} color={colors.accent} />
+          <Text style={[styles.rowText, { color: colors.text }]}>Read receipts</Text>
+          <Text style={[styles.rowSubtext, { color: colors.sub }]}>On</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Chat Management */}
+      <View style={styles.settingsSection}>
+        <Text style={[styles.sectionTitle, { color: colors.sub }]}>Chat Management</Text>
+        <TouchableOpacity style={styles.rowBtn} onPress={() => Alert.alert("Export Chat", "Export encrypted chat backup")}>
+          <Ionicons name="download-outline" size={16} color={colors.accent} />
+          <Text style={[styles.rowText, { color: colors.text }]}>Export chat</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.rowBtn} onPress={() => Alert.alert("Clear Chat", "Clear all messages (cannot be undone)")}>
+          <Ionicons name="trash-bin-outline" size={16} color="#ef4444" />
+          <Text style={[styles.rowText, { color: "#ef4444" }]}>Clear chat</Text>
+        </TouchableOpacity>
+      </View>
+
+      <TouchableOpacity style={[styles.closeBtn, { borderColor: colors.border }]} onPress={() => setSettingsOpen(false)}>
         <Ionicons name="close" size={16} color={colors.sub} />
         <Text style={[styles.rowText, { color: colors.sub }]}>Close</Text>
       </TouchableOpacity>
