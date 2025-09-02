@@ -131,24 +131,29 @@ export default function ChatsScreen() {
   return (
     <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
       <ChatsPinGate visible={needPin} onAuthed={() => { setNeedPin(false); }} />
-      <View style={styles.container}>
-        <Text style={styles.h1}>Chats (Preview)</Text>
+      <View style={[styles.container, { backgroundColor: colors.bg }]}>
+        {/* Header with OMERTA Logo */}
+        <View style={styles.header}>
+          <OmertaLogo size={32} showText={true} />
+        </View>
+        
+        <Text style={[styles.h1, { color: colors.text }]}>Chats (Preview)</Text>
         <FlatList data={demoOids} renderItem={renderChatItem} keyExtractor={(it) => it} horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingVertical: 6 }} />
 
-        <Text style={styles.h1}>Create Secure Note</Text>
+        <Text style={[styles.h1, { color: colors.text }]}>Create Secure Note</Text>
         <TextInput
-          style={styles.textarea}
+          style={[styles.textarea, { borderColor: colors.border, color: colors.text, backgroundColor: colors.card }]}
           placeholder="Enter text (encrypted client-side with AES-256-GCM)"
-          placeholderTextColor="#6b7280"
+          placeholderTextColor={colors.muted}
           value={noteText}
           onChangeText={setNoteText}
           multiline
         />
         <View style={styles.row}>
           <View style={{ flex: 1 }}>
-            <Text style={styles.label}>TTL (seconds)</Text>
+            <Text style={[styles.label, { color: colors.sub }]}>TTL (seconds)</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.card }]}
               keyboardType="number-pad"
               value={String(ttl)}
               onChangeText={(t) => setTtl(Math.max(1, Math.min(604800, parseInt(t || '0', 10) || 0)))}
@@ -156,9 +161,9 @@ export default function ChatsScreen() {
           </View>
           <View style={{ width: 16 }} />
           <View style={{ flex: 1 }}>
-            <Text style={styles.label}>Read limit (1-3)</Text>
+            <Text style={[styles.label, { color: colors.sub }]}>Read limit (1-3)</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.card }]}
               keyboardType="number-pad"
               value={String(readLimit)}
               onChangeText={(t) => setReadLimit(Math.max(1, Math.min(3, parseInt(t || '0', 10) || 0)))}
@@ -166,35 +171,35 @@ export default function ChatsScreen() {
           </View>
         </View>
         <View style={[styles.row, { marginTop: 8 }]}> 
-          <Text style={styles.label}>Require 2FA</Text>
-          <Switch value={require2FA} onValueChange={setRequire2FA} />
+          <Text style={[styles.label, { color: colors.sub }]}>Require 2FA</Text>
+          <Switch value={require2FA} onValueChange={setRequire2FA} trackColor={{ true: colors.accent }} />
         </View>
-        <TouchableOpacity disabled={!canCreate || creating} onPress={onCreate} style={[styles.btn, (!canCreate || creating) && styles.btnDisabled]}>
+        <TouchableOpacity disabled={!canCreate || creating} onPress={onCreate} style={[styles.btn, { backgroundColor: colors.accent }, (!canCreate || creating) && styles.btnDisabled]}>
           <Text style={styles.btnText}>{creating ? "Creating..." : "Create Secure Note"}</Text>
         </TouchableOpacity>
 
         <View style={{ height: 24 }} />
-        <Text style={styles.h1}>Incoming Secure Notes</Text>
-        <FlatList data={items} renderItem={renderItem} keyExtractor={(it) => it.id} ListEmptyComponent={<Text style={styles.empty}>No notes yet.</Text>} />
+        <Text style={[styles.h1, { color: colors.text }]}>Incoming Secure Notes</Text>
+        <FlatList data={items} renderItem={renderItem} keyExtractor={(it) => it.id} ListEmptyComponent={<Text style={[styles.empty, { color: colors.muted }]}>No notes yet.</Text>} />
 
         <Modal visible={totpVisible} transparent animationType="fade">
           <View style={styles.modalBackdrop}>
-            <View style={styles.modalCard}>
-              <Text style={styles.h1}>2FA Required</Text>
-              <Text style={styles.meta}>Enter your 6-digit code</Text>
+            <View style={[styles.modalCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Text style={[styles.h1, { color: colors.text }]}>2FA Required</Text>
+              <Text style={[styles.meta, { color: colors.sub }]}>Enter your 6-digit code</Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.bg }]}
                 keyboardType="number-pad"
                 maxLength={6}
                 value={totpCode}
                 onChangeText={setTotpCode}
               />
               <View style={styles.row}>
-                <TouchableOpacity style={[styles.btn, { flex: 1 }]} onPress={onVerifyTotp}>
+                <TouchableOpacity style={[styles.btn, { flex: 1, backgroundColor: colors.accent }]} onPress={onVerifyTotp}>
                   <Text style={styles.btnText}>Verify</Text>
                 </TouchableOpacity>
                 <View style={{ width: 12 }} />
-                <TouchableOpacity style={[styles.btn, { flex: 1, backgroundColor: "#374151" }]} onPress={() => { setTotpVisible(false); setTotpCode(""); }}>
+                <TouchableOpacity style={[styles.btn, { flex: 1, backgroundColor: colors.border }]} onPress={() => { setTotpVisible(false); setTotpCode(""); }}>
                   <Text style={styles.btnText}>Cancel</Text>
                 </TouchableOpacity>
               </View>
