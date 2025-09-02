@@ -436,6 +436,395 @@ def test_secure_notes_regression():
     
     return False
 
+def test_rate_limiting_notes_create():
+    """Test rate limiting on Notes CREATE endpoint (10/minute)"""
+    print("\n=== Testing Rate Limiting: Notes CREATE (10/minute) ===")
+    
+    payload = {
+        "ciphertext": "rate_limit_test",
+        "ttl_seconds": 60,
+        "read_limit": 1
+    }
+    
+    success_count = 0
+    rate_limited_count = 0
+    
+    try:
+        print("Sending 15 requests rapidly to test 10/minute rate limit...")
+        
+        for i in range(15):
+            response = requests.post(f"{BACKEND_URL}/notes", json=payload)
+            
+            if response.status_code == 200:
+                success_count += 1
+            elif response.status_code == 429:
+                rate_limited_count += 1
+                print(f"Request {i+1}: Rate limited (429) - {response.json().get('detail', 'No detail')}")
+            else:
+                print(f"Request {i+1}: Unexpected status {response.status_code}")
+            
+            # Small delay to avoid overwhelming
+            time.sleep(0.1)
+        
+        print(f"Results: {success_count} successful, {rate_limited_count} rate limited")
+        
+        # Expected: 10 success + 5 rate limited
+        if success_count == 10 and rate_limited_count == 5:
+            print("✅ Rate limiting working correctly for Notes CREATE")
+            return True
+        else:
+            print(f"❌ Rate limiting FAILED - Expected 10 success + 5 rate limited, got {success_count} success + {rate_limited_count} rate limited")
+            return False
+            
+    except Exception as e:
+        print(f"❌ Rate limiting test error: {e}")
+        return False
+
+def test_rate_limiting_notes_read():
+    """Test rate limiting on Notes READ endpoint (30/minute)"""
+    print("\n=== Testing Rate Limiting: Notes READ (30/minute) ===")
+    
+    # First create a note to read
+    payload = {
+        "ciphertext": "rate_limit_read_test",
+        "ttl_seconds": 300,
+        "read_limit": 50  # High limit so we can test rate limiting
+    }
+    
+    try:
+        response = requests.post(f"{BACKEND_URL}/notes", json=payload)
+        if response.status_code != 200:
+            print(f"❌ Failed to create note for read rate limit test: {response.status_code}")
+            return False
+        
+        note_id = response.json()["id"]
+        print(f"Created note {note_id} for read rate limit testing")
+        
+        success_count = 0
+        rate_limited_count = 0
+        
+        print("Sending 35 requests rapidly to test 30/minute rate limit...")
+        
+        for i in range(35):
+            response = requests.get(f"{BACKEND_URL}/notes/{note_id}")
+            
+            if response.status_code == 200:
+                success_count += 1
+            elif response.status_code == 429:
+                rate_limited_count += 1
+                print(f"Request {i+1}: Rate limited (429) - {response.json().get('detail', 'No detail')}")
+            else:
+                print(f"Request {i+1}: Unexpected status {response.status_code}")
+            
+            time.sleep(0.1)
+        
+        print(f"Results: {success_count} successful, {rate_limited_count} rate limited")
+        
+        # Expected: 30 success + 5 rate limited
+        if success_count == 30 and rate_limited_count == 5:
+            print("✅ Rate limiting working correctly for Notes READ")
+            return True
+        else:
+            print(f"❌ Rate limiting FAILED - Expected 30 success + 5 rate limited, got {success_count} success + {rate_limited_count} rate limited")
+            return False
+            
+    except Exception as e:
+        print(f"❌ Rate limiting test error: {e}")
+        return False
+
+def test_rate_limiting_envelopes_send():
+    """Test rate limiting on Envelopes SEND endpoint (50/minute)"""
+    print("\n=== Testing Rate Limiting: Envelopes SEND (50/minute) ===")
+    
+    payload = {
+        "to_oid": "rate_test_user",
+        "from_oid": "rate_test_sender",
+        "ciphertext": "rate_limit_envelope_test"
+    }
+    
+    success_count = 0
+    rate_limited_count = 0
+    
+    try:
+        print("Sending 55 requests rapidly to test 50/minute rate limit...")
+        
+        for i in range(55):
+            response = requests.post(f"{BACKEND_URL}/envelopes/send", json=payload)
+            
+            if response.status_code == 200:
+                success_count += 1
+            elif response.status_code == 429:
+                rate_limited_count += 1
+                print(f"Request {i+1}: Rate limited (429) - {response.json().get('detail', 'No detail')}")
+            else:
+                print(f"Request {i+1}: Unexpected status {response.status_code}")
+            
+            time.sleep(0.1)
+        
+        print(f"Results: {success_count} successful, {rate_limited_count} rate limited")
+        
+        # Expected: 50 success + 5 rate limited
+        if success_count == 50 and rate_limited_count == 5:
+            print("✅ Rate limiting working correctly for Envelopes SEND")
+            return True
+        else:
+            print(f"❌ Rate limiting FAILED - Expected 50 success + 5 rate limited, got {success_count} success + {rate_limited_count} rate limited")
+            return False
+            
+    except Exception as e:
+        print(f"❌ Rate limiting test error: {e}")
+        return False
+
+def test_rate_limiting_envelopes_poll():
+    """Test rate limiting on Envelopes POLL endpoint (100/minute)"""
+    print("\n=== Testing Rate Limiting: Envelopes POLL (100/minute) ===")
+    
+    success_count = 0
+    rate_limited_count = 0
+    
+    try:
+        print("Sending 105 requests rapidly to test 100/minute rate limit...")
+        
+        for i in range(105):
+            response = requests.get(f"{BACKEND_URL}/envelopes/poll?oid=rate_test_user")
+            
+            if response.status_code == 200:
+                success_count += 1
+            elif response.status_code == 429:
+                rate_limited_count += 1
+                print(f"Request {i+1}: Rate limited (429) - {response.json().get('detail', 'No detail')}")
+            else:
+                print(f"Request {i+1}: Unexpected status {response.status_code}")
+            
+            time.sleep(0.05)  # Faster for 100/minute test
+        
+        print(f"Results: {success_count} successful, {rate_limited_count} rate limited")
+        
+        # Expected: 100 success + 5 rate limited
+        if success_count == 100 and rate_limited_count == 5:
+            print("✅ Rate limiting working correctly for Envelopes POLL")
+            return True
+        else:
+            print(f"❌ Rate limiting FAILED - Expected 100 success + 5 rate limited, got {success_count} success + {rate_limited_count} rate limited")
+            return False
+            
+    except Exception as e:
+        print(f"❌ Rate limiting test error: {e}")
+        return False
+
+def test_input_sanitization():
+    """Test input sanitization against dangerous payloads"""
+    print("\n=== Testing Input Sanitization ===")
+    
+    dangerous_payloads = [
+        "<script>alert('xss')</script>",
+        "'; DROP TABLE notes; --",
+        "javascript:alert(1)",
+        "<img src=x onerror=alert(1)>",
+        "eval('malicious code')",
+        "document.cookie",
+        "onload=alert(1)"
+    ]
+    
+    blocked_count = 0
+    accepted_count = 0
+    
+    try:
+        print("Testing dangerous payloads...")
+        
+        for i, payload in enumerate(dangerous_payloads):
+            print(f"\nTesting payload {i+1}: {payload[:50]}...")
+            
+            # Test in notes endpoint
+            note_payload = {
+                "ciphertext": payload,
+                "ttl_seconds": 60,
+                "read_limit": 1
+            }
+            
+            response = requests.post(f"{BACKEND_URL}/notes", json=note_payload)
+            
+            if response.status_code == 400:
+                blocked_count += 1
+                print(f"✅ Payload {i+1} BLOCKED (400): {response.json().get('detail', 'No detail')}")
+            elif response.status_code == 200:
+                accepted_count += 1
+                print(f"❌ Payload {i+1} ACCEPTED (200) - SECURITY VULNERABILITY!")
+            else:
+                print(f"⚠️  Payload {i+1} unexpected status: {response.status_code}")
+        
+        print(f"\nResults: {blocked_count} blocked, {accepted_count} accepted")
+        
+        # All dangerous payloads should be blocked
+        if blocked_count == len(dangerous_payloads) and accepted_count == 0:
+            print("✅ Input sanitization working correctly - all dangerous payloads blocked")
+            return True
+        else:
+            print(f"❌ Input sanitization FAILED - {accepted_count} dangerous payloads were accepted")
+            return False
+            
+    except Exception as e:
+        print(f"❌ Input sanitization test error: {e}")
+        return False
+
+def test_legitimate_encrypted_content():
+    """Test that legitimate encrypted content still works"""
+    print("\n=== Testing Legitimate Encrypted Content ===")
+    
+    # Simulate legitimate encrypted content (base64-like)
+    legitimate_payloads = [
+        "U2FsdGVkX1+vupppZksvRf5pq5g5XjFRIipRkwB0K1Y=",
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ",
+        "-----BEGIN PGP MESSAGE-----\nVersion: GnuPG v2\n\nhQEMA5rE8HtsgTrEAQf+KhIxbwvbpM2kxT7/OGHQmBXCH3xHTA==\n-----END PGP MESSAGE-----"
+    ]
+    
+    success_count = 0
+    
+    try:
+        print("Testing legitimate encrypted content...")
+        
+        for i, payload in enumerate(legitimate_payloads):
+            print(f"\nTesting legitimate payload {i+1}...")
+            
+            note_payload = {
+                "ciphertext": payload,
+                "ttl_seconds": 60,
+                "read_limit": 1
+            }
+            
+            response = requests.post(f"{BACKEND_URL}/notes", json=note_payload)
+            
+            if response.status_code == 200:
+                success_count += 1
+                print(f"✅ Legitimate payload {i+1} ACCEPTED")
+            else:
+                print(f"❌ Legitimate payload {i+1} REJECTED ({response.status_code}): {response.json().get('detail', 'No detail')}")
+        
+        print(f"\nResults: {success_count}/{len(legitimate_payloads)} legitimate payloads accepted")
+        
+        if success_count == len(legitimate_payloads):
+            print("✅ Legitimate encrypted content working correctly")
+            return True
+        else:
+            print(f"❌ Legitimate content test FAILED - {len(legitimate_payloads) - success_count} legitimate payloads were rejected")
+            return False
+            
+    except Exception as e:
+        print(f"❌ Legitimate content test error: {e}")
+        return False
+
+def test_security_headers():
+    """Test that all required security headers are present"""
+    print("\n=== Testing Security Headers ===")
+    
+    expected_headers = [
+        "X-Content-Type-Options",
+        "X-Frame-Options", 
+        "X-XSS-Protection",
+        "Strict-Transport-Security",
+        "Content-Security-Policy",
+        "Referrer-Policy",
+        "Permissions-Policy",
+        "X-Permitted-Cross-Domain-Policies",
+        "Cross-Origin-Embedder-Policy",
+        "Cross-Origin-Opener-Policy",
+        "Cross-Origin-Resource-Policy"
+    ]
+    
+    try:
+        # Test on a simple endpoint
+        response = requests.get(f"{BACKEND_URL}/")
+        print(f"GET /api/ - Status: {response.status_code}")
+        
+        if response.status_code != 200:
+            print(f"❌ Failed to get response for header testing: {response.status_code}")
+            return False
+        
+        headers = response.headers
+        present_headers = []
+        missing_headers = []
+        
+        print("\nChecking security headers:")
+        for header in expected_headers:
+            if header in headers:
+                present_headers.append(header)
+                print(f"✅ {header}: {headers[header]}")
+            else:
+                missing_headers.append(header)
+                print(f"❌ {header}: MISSING")
+        
+        print(f"\nResults: {len(present_headers)}/{len(expected_headers)} headers present")
+        
+        if len(missing_headers) == 0:
+            print("✅ All security headers present")
+            return True
+        else:
+            print(f"❌ Security headers test FAILED - Missing: {missing_headers}")
+            return False
+            
+    except Exception as e:
+        print(f"❌ Security headers test error: {e}")
+        return False
+
+def test_core_functionality_integrity():
+    """Test that security measures don't break core functionality"""
+    print("\n=== Testing Core Functionality Integrity ===")
+    
+    try:
+        # Test 1: Create and read a secure note
+        print("Testing secure notes functionality...")
+        payload = {
+            "ciphertext": "integrity_test_note",
+            "ttl_seconds": 60,
+            "read_limit": 1
+        }
+        
+        response = requests.post(f"{BACKEND_URL}/notes", json=payload)
+        if response.status_code != 200:
+            print(f"❌ Failed to create note: {response.status_code}")
+            return False
+        
+        note_id = response.json()["id"]
+        
+        response = requests.get(f"{BACKEND_URL}/notes/{note_id}")
+        if response.status_code != 200:
+            print(f"❌ Failed to read note: {response.status_code}")
+            return False
+        
+        print("✅ Secure notes functionality working")
+        
+        # Test 2: Send and poll envelope
+        print("Testing envelope functionality...")
+        envelope_payload = {
+            "to_oid": "integrity_test_user",
+            "from_oid": "integrity_test_sender",
+            "ciphertext": "integrity_test_message"
+        }
+        
+        response = requests.post(f"{BACKEND_URL}/envelopes/send", json=envelope_payload)
+        if response.status_code != 200:
+            print(f"❌ Failed to send envelope: {response.status_code}")
+            return False
+        
+        response = requests.get(f"{BACKEND_URL}/envelopes/poll?oid=integrity_test_user")
+        if response.status_code != 200:
+            print(f"❌ Failed to poll envelopes: {response.status_code}")
+            return False
+        
+        messages = response.json().get("messages", [])
+        if len(messages) != 1:
+            print(f"❌ Expected 1 message, got {len(messages)}")
+            return False
+        
+        print("✅ Envelope functionality working")
+        
+        print("✅ Core functionality integrity maintained")
+        return True
+        
+    except Exception as e:
+        print(f"❌ Core functionality integrity test error: {e}")
+        return False
+
 def main():
     """Run all backend tests"""
     print("Starting Backend API Tests for RAM-only Secure Notes and Messaging Envelopes")
