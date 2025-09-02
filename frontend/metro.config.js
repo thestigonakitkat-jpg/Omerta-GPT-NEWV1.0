@@ -2,6 +2,13 @@ const { getDefaultConfig } = require("expo/metro-config");
 
 const config = getDefaultConfig(__dirname);
 
+// Add WASM asset support for argon2-browser
+config.resolver.assetExts = config.resolver.assetExts || [];
+config.resolver.assetExts.push('wasm');
+
+// Ensure Metro can resolve WASM files
+config.resolver.platforms = ['web', 'native', 'ios', 'android'];
+
 // // Exclude unnecessary directories from file watching
 // config.watchFolders = [__dirname];
 // config.resolver.blacklistRE = /(.*)\/(__tests__|android|ios|build|dist|.git|node_modules\/.*\/android|node_modules\/.*\/ios|node_modules\/.*\/windows|node_modules\/.*\/macos)(\/.*)?$/;
