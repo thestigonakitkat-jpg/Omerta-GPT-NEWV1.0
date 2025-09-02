@@ -17,6 +17,7 @@
     "@react-navigation/bottom-tabs": "^7.3.10",
     "@react-navigation/elements": "^2.3.8",
     "@react-navigation/native": "^7.1.6",
+    "@signalapp/libsignal-client": "^0.79.0",
     "argon2-browser": "^1.18.0",
     "asmcrypto.js": "^2.3.2",
     "base64-js": "^1.5.1",
