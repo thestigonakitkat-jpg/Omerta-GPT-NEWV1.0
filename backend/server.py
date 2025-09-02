@@ -285,12 +285,27 @@ async def ws_endpoint(ws: WebSocket):
                 # wait for ping/pong or small sleep
                 await asyncio.sleep(5)
                 await ws.send_json({"type": "ping", "t": datetime.now(timezone.utc).isoformat()})
-            except RuntimeError:
+            except (RuntimeError, ConnectionResetError):
+                # Normal connection closure scenarios
                 break
+            except Exception as e:
+                # Handle WebSocket connection errors
+                from websockets.exceptions import ConnectionClosedOK, ConnectionClosedError
+                if isinstance(e, (ConnectionClosedOK, ConnectionClosedError)):
+                    # Normal WebSocket closure - don't log as error
+                    break
+                else:
+                    # Actual error - log it
+                    logger.exception("WebSocket error")
+                    break
     except WebSocketDisconnect:
+        # Normal FastAPI WebSocket disconnect
         pass
-    except Exception:
-        logger.exception("WebSocket error")
+    except Exception as e:
+        # Handle other exceptions, but don't log normal closures
+        from websockets.exceptions import ConnectionClosedOK, ConnectionClosedError
+        if not isinstance(e, (ConnectionClosedOK, ConnectionClosedError)):
+            logger.exception("WebSocket error")
     finally:
         # Remove from subs
         try:
