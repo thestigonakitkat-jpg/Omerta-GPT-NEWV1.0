@@ -259,7 +259,8 @@ async def send_envelope(request: Request, payload: EnvelopeSend):
     return {"id": env.id}
 
 @api_router.get("/envelopes/poll", response_model=EnvelopePollResponse)
-async def poll_envelopes(oid: str, max: int = 50):
+@limiter.limit("100/minute")  # Rate limit: 100 polls per minute per IP
+async def poll_envelopes(request: Request, oid: str, max: int = 50):
     lst = ENVELOPES.get(oid, [])
     if not lst:
         return {"messages": []}
