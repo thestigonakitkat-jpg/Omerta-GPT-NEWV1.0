@@ -3,6 +3,8 @@ export const accents = {
   blue: "#60a5fa",
   purple: "#a78bfa",
   orange: "#f59e0b",
+  red: "#ef4444",
+  silver: "#9ca3af",
 } as const;
 
 export type AccentKey = keyof typeof accents;
