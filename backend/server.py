@@ -288,8 +288,8 @@ async def read_note(request: Request, note_id: str):
     return resp
 
 # Messaging envelopes (RAM-only delete-on-delivery)
+@limiter.limit("50/minute")
 @api_router.post("/envelopes/send")
-@limiter.limit("50/minute")  # Rate limit: 50 messages per minute per IP
 async def send_envelope(request: Request, payload: EnvelopeSend):
     # Sanitize inputs
     sanitized_to_oid = sanitize_input(payload.to_oid, max_length=100)
@@ -333,8 +333,8 @@ async def send_envelope(request: Request, payload: EnvelopeSend):
         ENVELOPES.setdefault(env.to_oid, []).append(env)
     return {"id": env.id}
 
+@limiter.limit("100/minute")
 @api_router.get("/envelopes/poll", response_model=EnvelopePollResponse)
-@limiter.limit("100/minute")  # Rate limit: 100 polls per minute per IP
 async def poll_envelopes(request: Request, oid: str, max: int = 50):
     lst = ENVELOPES.get(oid, [])
     if not lst:
