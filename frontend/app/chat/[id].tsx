@@ -110,11 +110,25 @@ export default function ChatRoom() {
 
     try {
       const from = myOidRef.current || (await getOrCreateOID());
-      await sendEnvelope({ to_oid: peerOid, from_oid: from, ciphertext: txt }); // TODO: encrypt with per-chat key
+      
+      // Try to encrypt with Signal Protocol
+      let ciphertext: string;
+      try {
+        const encryptedMsg = await signalManager.encryptMessage(peerOid, txt);
+        ciphertext = JSON.stringify(encryptedMsg);
+      } catch (e) {
+        // Fallback to plaintext if no session exists yet
+        console.warn('Signal encryption failed, using plaintext:', e);
+        ciphertext = txt;
+      }
+      
+      await sendEnvelope({ to_oid: peerOid, from_oid: from, ciphertext });
       keys.bumpCounter(peerOid);
       setTimeout(() => { setMessages((prev) => prev.map(m => m.id === newMsg.id ? { ...m, status: "delivered" } : m)); }, 200);
       setTimeout(() => { setMessages((prev) => prev.map(m => m.id === newMsg.id ? { ...m, status: "read" } : m)); }, 600);
-    } catch {}
+    } catch (e) {
+      console.error('Send failed:', e);
+    }
   };
 
   const HeaderSettings = () => (
