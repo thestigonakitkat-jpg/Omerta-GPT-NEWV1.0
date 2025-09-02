@@ -1,3 +1,12 @@
+import os
+import logging
+import asyncio
+from datetime import datetime, timezone, timedelta
+from typing import Dict, List, Optional
+import uuid
+from pathlib import Path
+import bleach
+
 from fastapi import FastAPI, APIRouter, HTTPException, WebSocket, WebSocketDisconnect, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware 
@@ -10,18 +19,35 @@ from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
-import os
-import logging
-from pathlib import Path
 from pydantic import BaseModel, Field, validator
-from typing import List, Optional, Dict
-import uuid
-from datetime import datetime, timedelta, timezone
-import asyncio
-
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
+
+# Input sanitization function
+def sanitize_input(text: str, max_length: int = 10000) -> str:
+    """Sanitize and validate input text"""
+    if not text or not isinstance(text, str):
+        raise HTTPException(status_code=400, detail="Invalid input: text must be a non-empty string")
+    
+    # Length check
+    if len(text) > max_length:
+        raise HTTPException(status_code=400, detail=f"Input too long: maximum {max_length} characters")
+    
+    # Basic sanitization - remove potentially dangerous characters but preserve encrypted content
+    # For encrypted content, we're more permissive but still block obvious attacks
+    dangerous_patterns = ['<script', '</script', 'javascript:', 'onload=', 'onerror=', 'eval(', 'document.']
+    text_lower = text.lower()
+    
+    for pattern in dangerous_patterns:
+        if pattern in text_lower:
+            raise HTTPException(status_code=400, detail="Invalid input: potentially dangerous content detected")
+    
+    # Basic HTML escape for non-encrypted content (if it looks like HTML)
+    if '<' in text and '>' in text:
+        text = bleach.clean(text, tags=[], attributes=[], strip=True)
+    
+    return text.strip()
 
 # Security Headers Middleware
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
