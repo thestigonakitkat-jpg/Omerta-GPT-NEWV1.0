@@ -175,7 +175,8 @@ async def get_status_checks():
 
 # Secure Notes endpoints (RAM-only)
 @api_router.post("/notes", response_model=NoteCreateResponse)
-async def create_note(payload: NoteCreate):
+@limiter.limit("10/minute")  # Rate limit: 10 notes per minute per IP
+async def create_note(request: Request, payload: NoteCreate):
     note_id = str(uuid.uuid4())
     note = RamNote(
         note_id=note_id,
