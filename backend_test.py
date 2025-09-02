@@ -826,12 +826,17 @@ def test_core_functionality_integrity():
         return False
 
 def main():
-    """Run all backend tests"""
+    """Run all backend tests including comprehensive security verification"""
+    print("🔒 FINAL 100/100 SECURITY VERIFICATION - CRITICAL TEST")
     print("Starting Backend API Tests for RAM-only Secure Notes and Messaging Envelopes")
     print(f"Backend URL: {BACKEND_URL}")
     print("=" * 80)
     
     results = []
+    
+    # CORE FUNCTIONALITY TESTS
+    print("\n🔧 CORE FUNCTIONALITY TESTS")
+    print("=" * 50)
     
     # Test 1: Status endpoint regression
     results.append(("Status endpoint", test_status_endpoint()))
@@ -852,7 +857,6 @@ def main():
     # Test 5: Invalid note ID
     results.append(("Invalid note ID", test_invalid_note_id()))
     
-    # NEW ENVELOPE TESTS
     # Test 6: Send envelope
     envelope_id = test_send_envelope()
     results.append(("Send envelope", envelope_id is not None))
@@ -866,27 +870,70 @@ def main():
     # Test 9: Secure notes regression
     results.append(("Secure notes regression", test_secure_notes_regression()))
     
+    # CRITICAL SECURITY TESTS
+    print("\n🔒 CRITICAL SECURITY VERIFICATION TESTS")
+    print("=" * 50)
+    
+    # RATE LIMITING VERIFICATION (CRITICAL)
+    print("\n⚡ RATE LIMITING VERIFICATION")
+    results.append(("Rate Limit: Notes CREATE (10/min)", test_rate_limiting_notes_create()))
+    results.append(("Rate Limit: Notes READ (30/min)", test_rate_limiting_notes_read()))
+    results.append(("Rate Limit: Envelopes SEND (50/min)", test_rate_limiting_envelopes_send()))
+    results.append(("Rate Limit: Envelopes POLL (100/min)", test_rate_limiting_envelopes_poll()))
+    
+    # INPUT SANITIZATION VERIFICATION (CRITICAL)
+    print("\n🛡️  INPUT SANITIZATION VERIFICATION")
+    results.append(("Input Sanitization: Block Dangerous", test_input_sanitization()))
+    results.append(("Input Sanitization: Allow Legitimate", test_legitimate_encrypted_content()))
+    
+    # SECURITY HEADERS VERIFICATION
+    print("\n📋 SECURITY HEADERS VERIFICATION")
+    results.append(("Security Headers (11 required)", test_security_headers()))
+    
+    # CORE FUNCTIONALITY INTEGRITY
+    print("\n🔧 CORE FUNCTIONALITY INTEGRITY")
+    results.append(("Core Functionality Integrity", test_core_functionality_integrity()))
+    
     # Summary
     print("\n" + "=" * 80)
-    print("TEST RESULTS SUMMARY:")
+    print("🔒 FINAL SECURITY VERIFICATION RESULTS:")
     print("=" * 80)
     
     passed = 0
     total = len(results)
+    core_tests = 9
+    security_tests = total - core_tests
     
-    for test_name, success in results:
+    core_passed = 0
+    security_passed = 0
+    
+    for i, (test_name, success) in enumerate(results):
         status = "✅ PASS" if success else "❌ FAIL"
-        print(f"{test_name:<30} {status}")
+        print(f"{test_name:<35} {status}")
         if success:
             passed += 1
+            if i < core_tests:
+                core_passed += 1
+            else:
+                security_passed += 1
     
-    print(f"\nOverall: {passed}/{total} tests passed")
+    print(f"\nCore Functionality: {core_passed}/{core_tests} tests passed")
+    print(f"Security Tests: {security_passed}/{security_tests} tests passed")
+    print(f"Overall: {passed}/{total} tests passed")
     
-    if passed == total:
-        print("🎉 All tests passed!")
+    # Calculate security score
+    security_score = (security_passed / security_tests) * 100 if security_tests > 0 else 0
+    
+    print(f"\n🔒 SECURITY SCORE: {security_score:.1f}/100")
+    
+    if security_score == 100.0 and core_passed == core_tests:
+        print("🎉 100/100 SECURITY RATING ACHIEVED! All security measures working perfectly!")
         return 0
+    elif security_score >= 90.0:
+        print("⚠️  Near perfect security - minor issues to address")
+        return 1
     else:
-        print("⚠️  Some tests failed")
+        print("❌ CRITICAL SECURITY VULNERABILITIES FOUND - Immediate action required!")
         return 1
 
 if __name__ == "__main__":
