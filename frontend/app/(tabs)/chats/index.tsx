@@ -208,6 +208,7 @@ export default function ChatsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16, backgroundColor: "#0b0b0b" },
+  header: { flexDirection: 'row', alignItems: 'center', paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: '#1f2937', marginBottom: 16 },
   h1: { color: "#fff", fontSize: 18, fontWeight: "600", marginBottom: 8, marginTop: 12 },
   textarea: { minHeight: 100, borderColor: "#1f2937", borderWidth: 1, borderRadius: 8, padding: 12, color: "#fff" },
   row: { flexDirection: "row", alignItems: "center", marginTop: 12 },
