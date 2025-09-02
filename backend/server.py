@@ -443,6 +443,9 @@ async def ws_endpoint(ws: WebSocket):
 # Include the router in the main app
 app.include_router(api_router)
 
+# Include the PIN security router
+app.include_router(pin_router)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # Configure for production
