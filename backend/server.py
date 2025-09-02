@@ -308,10 +308,11 @@ async def read_note(request: Request, note_id: str):
     
     return {"ciphertext": note.ciphertext, "views_left": note.views_left}
 
-# Messaging envelopes (RAM-only delete-on-delivery)
-@limiter.limit("50/minute")
+# Messaging envelopes (RAM-only delete-on-delivery) with REAL-WORLD security
 @api_router.post("/envelopes/send")
 async def send_envelope(request: Request, payload: EnvelopeSend):
+    # REAL-WORLD rate limiting that works behind proxies
+    await rate_limit_middleware(request, "envelopes_send")
     # Sanitize inputs
     sanitized_to_oid = sanitize_input(payload.to_oid, max_length=100)
     sanitized_from_oid = sanitize_input(payload.from_oid, max_length=100)
