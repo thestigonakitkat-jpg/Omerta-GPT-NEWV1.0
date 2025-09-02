@@ -1,5 +1,5 @@
 import create from "zustand";
-import { accents, dark, AccentKey } from "../theme/colors";
+import { accents, dark, light, AccentKey } from "../theme/colors";
 import { Appearance } from "react-native";
 
 type Mode = "dark" | "light" | "system";
@@ -9,23 +9,22 @@ type ThemeState = {
   accentKey: AccentKey;
   setAccent: (k: AccentKey) => void;
   setMode: (m: Mode) => void;
-  colors: ReturnType<typeof dark>;
+  colors: ReturnType<typeof dark> | ReturnType<typeof light>;
 };
 
 function computeColors(mode: Mode, accentKey: AccentKey) {
   const accent = accents[accentKey];
   if (mode === "system") {
     const sys = Appearance.getColorScheme();
-    return dark(accent); // default to dark if unknown; we'll extend to light later
+    return sys === "light" ? light(accent) : dark(accent);
   }
-  // For now, dark theme palette; light palette to be added later
-  return dark(accent);
+  return mode === "light" ? light(accent) : dark(accent);
 }
 
 export const useTheme = create<ThemeState>((set, get) => ({
   mode: "dark",
-  accentKey: "green",
+  accentKey: "red", // Changed default to red for OMERTA branding
   setAccent: (k) => set({ accentKey: k, colors: computeColors(get().mode, k) }),
   setMode: (m) => set({ mode: m, colors: computeColors(m, get().accentKey) }),
-  colors: computeColors("dark", "green"),
+  colors: computeColors("dark", "red"),
 }));
