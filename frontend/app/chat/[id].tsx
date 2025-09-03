@@ -4,6 +4,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useContacts } from "../../src/state/contacts";
 import HandshakeBadge from "../../src/components/HandshakeBadge";
+import EmergencyNuke from "../../src/components/EmergencyNuke";
 import { useTheme } from "../../src/state/theme";
 import { getOrCreateOID } from "../../src/state/identity";
 import { pollEnvelopes, sendEnvelope, createNote } from "../../src/utils/api";
