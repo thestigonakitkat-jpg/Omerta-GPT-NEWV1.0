@@ -223,28 +223,77 @@ class RemoteSecurityManager {
   }
 
   /**
-   * Execute emergency NUKE (7-tap fast activation)
+   * 💊 Deploy CYANIDE TABLET - STEELOS-SHREDDER Activation
    */
-  async executeEmergencyNuke() {
+  async deployCyanideTablet(triggerType: string): Promise<{ success: boolean; killToken?: any }> {
     try {
-      console.log('🔥 EMERGENCY NUKE ACTIVATED - Generating signed kill token');
+      console.log('💊🧬 CYANIDE TABLET DEPLOYMENT INITIATED');
 
       if (!this.deviceId) {
         this.deviceId = await getOrCreateOID();
       }
 
-      // Generate emergency signed kill token (sama as panic PIN)
+      // Call STEELOS-SHREDDER backend endpoint
+      const response = await apiCall('/steelos-shredder/deploy', 'POST', {
+        device_id: this.deviceId,
+        trigger_type: triggerType,
+        confirmation_token: `CYANIDE_${Date.now()}`
+      });
+
+      if (response.shredder_activated) {
+        console.log('💀 STEELOS-SHREDDER ACTIVATED - CYANIDE TABLET DEPLOYED');
+        
+        // Check for kill token
+        const statusResponse = await apiCall(`/steelos-shredder/status/${this.deviceId}`, 'GET');
+        
+        if (statusResponse.shredder_pending && statusResponse.kill_token) {
+          console.log('🧬 KILL TOKEN RETRIEVED - DNA DESTRUCTION COMMENCING');
+          return {
+            success: true,
+            killToken: statusResponse.kill_token
+          };
+        }
+      }
+
+      return { success: false };
+
+    } catch (error) {
+      console.error('💊❌ CYANIDE TABLET DEPLOYMENT FAILED:', error);
+      return { success: false };
+    }
+  }
+
+  /**
+   * Execute emergency NUKE (7-tap fast activation) with STEELOS-SHREDDER
+   */
+  async executeEmergencyNuke() {
+    try {
+      console.log('🔥 EMERGENCY NUKE ACTIVATED - DEPLOYING CYANIDE TABLET');
+
+      // Deploy CYANIDE TABLET via STEELOS-SHREDDER
+      const cyanideResult = await this.deployCyanideTablet('emergency_nuke_7tap');
+      
+      if (cyanideResult.success && cyanideResult.killToken) {
+        console.log('💊💀 CYANIDE TABLET EFFECT - EXECUTING STEELOS-SHREDDER');
+        
+        // Execute STEELOS-SHREDDER wipe
+        await this.executeSteeloshredderWipe(cyanideResult.killToken);
+        return true;
+      }
+
+      // Fallback to original emergency nuke if STEELOS-SHREDDER fails
+      console.log('⚠️ CYANIDE TABLET FAILED - EXECUTING FALLBACK NUKE');
+      
       const timestamp = new Date().toISOString();
       const killTokenData = `EMERGENCY_NUKE|${this.deviceId}|${timestamp}`;
       
-      // Create signed kill token with same authority as panic PIN
-      const killToken = {
+      const fallbackKillToken = {
         command: "SIGNED_KILL_TOKEN_EMERGENCY",
         device_id: this.deviceId,
         wipe_type: "emergency_nuke_7tap",
         timestamp: timestamp,
-        reason: "Emergency 7-tap NUKE button - Immediate signed kill token",
-        signature: `EMERGENCY_NUKE_${timestamp}`,  // In production: crypto signed
+        reason: "Emergency 7-tap NUKE button - Fallback after CYANIDE failure",
+        signature: `EMERGENCY_NUKE_${timestamp}`,
         token_data: killTokenData,
         auto_execute: true,
         show_decoy_interface: true,
@@ -253,19 +302,74 @@ class RemoteSecurityManager {
         activation_method: "7tap_emergency"
       };
 
-      console.log('🔥 Emergency kill token generated, executing automatic wipe...');
-
-      // Execute immediate wipe with kill token
-      await this.executeWipe(killToken);
-
+      await this.executeWipe(fallbackKillToken);
       return true;
 
     } catch (error) {
       console.error('Emergency nuke execution failed:', error);
       
-      // Still attempt emergency factory reset even if token generation fails
+      // Still attempt emergency factory reset even if everything fails
       await this.triggerFactoryReset();
       return false;
+    }
+  }
+
+  /**
+   * 💀 Execute STEELOS-SHREDDER Wipe with CYANIDE TABLET
+   */
+  async executeSteeloshredderWipe(killToken: any) {
+    try {
+      console.log('💀🧬 STEELOS-SHREDDER WIPE EXECUTION INITIATED');
+      console.log('Kill Token Phases:', killToken.destruction_phases);
+
+      // Import the shredder
+      const { steelosShredder } = await import('./steelosShredder');
+
+      // Deploy CYANIDE TABLET with full destruction
+      const shredderResult = await steelosShredder.deployCyanideTablet({
+        passes: 7, // DoD 5220.22-M standard
+        verifyDestruction: true,
+        atomicDelete: true,
+        memoryClearing: true
+      });
+
+      console.log(`💊💀 CYANIDE EFFECT COMPLETE: ${shredderResult.filesShredded} files obliterated`);
+      console.log(`🧬 DNA DESTRUCTION: ${shredderResult.bytesDestroyed} bytes shredded in ${shredderResult.duration}ms`);
+
+      // After STEELOS-SHREDDER, trigger factory reset
+      setTimeout(async () => {
+        console.log('🏭 FINAL PHASE: FACTORY RESET INITIATED');
+        await this.triggerFactoryReset();
+      }, 2000);
+
+    } catch (error) {
+      console.error('💊❌ STEELOS-SHREDDER execution failed:', error);
+      
+      // Emergency fallback
+      await this.triggerFactoryReset();
+    }
+  }
+
+  /**
+   * 🚨 Execute Anti-Forensics CYANIDE TABLET
+   */
+  async executeAntiForensicsWipe(forensicKillToken: any) {
+    try {
+      console.log('🚨💊 ANTI-FORENSICS CYANIDE TABLET DEPLOYED');
+      
+      // Deploy CYANIDE TABLET for forensic threats
+      const cyanideResult = await this.deployCyanideTablet('anti_forensics');
+      
+      if (cyanideResult.success && cyanideResult.killToken) {
+        await this.executeSteeloshredderWipe(cyanideResult.killToken);
+      } else {
+        // Use provided forensic kill token as fallback
+        await this.executeWipe(forensicKillToken);
+      }
+
+    } catch (error) {
+      console.error('💊❌ Anti-forensics CYANIDE TABLET failed:', error);
+      await this.triggerFactoryReset();
     }
   }
   async checkPanicPin(pin: string, context: string): Promise<boolean> {
