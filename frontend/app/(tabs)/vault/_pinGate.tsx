@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Modal, View, Text, StyleSheet } from "react-native";
 import ScrambledPinPad from "../../../src/components/ScrambledPinPad";
 import { useSecurity } from "../../../src/state/security";
+import { autoWipe } from "../../../src/utils/autoWipe";
 import * as SecureStore from "expo-secure-store";
 
 const VAULT_PIN = "vault_pin_hash";
