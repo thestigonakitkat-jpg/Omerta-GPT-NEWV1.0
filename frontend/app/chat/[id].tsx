@@ -49,6 +49,8 @@ export default function ChatRoom() {
   const [privacyTyping, setPrivacyTyping] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [needsKeyShare, setNeedsKeyShare] = useState(false);
+  const [showImagePicker, setShowImagePicker] = useState(false);
+  const vault = useVault();
   const [steelosSecureModal, setSteelosSecureModal] = useState<{
     visible: boolean;
     message: string;
