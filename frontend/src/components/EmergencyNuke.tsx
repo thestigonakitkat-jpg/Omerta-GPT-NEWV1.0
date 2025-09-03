@@ -201,10 +201,7 @@ export default function EmergencyNuke({ children }: EmergencyNukeProps) {
     setChernobylPanelVisible(false);
   };
 
-  const cancelNuke = () => {
-    setNukeConfirmVisible(false);
-    hideNukeButton();
-  };
+
 
   return (
     <View style={styles.container}>
