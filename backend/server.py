@@ -577,12 +577,6 @@ async def ws_endpoint(ws: WebSocket):
         except Exception:
             pass
 
-# Include the router in the main app
-app.include_router(api_router)
-
-# Include the PIN security router with /api prefix
-app.include_router(pin_router, prefix="/api")
-
 # Import and include new feature routers
 from contacts_vault import store_contacts_backup, retrieve_contacts_backup, clear_contacts_vault
 from auto_wipe import configure_auto_wipe, update_activity, check_auto_wipe_status, get_wipe_token
@@ -629,6 +623,12 @@ async def get_autowipe_status(request: Request, device_id: str):
 async def get_autowipe_token(request: Request, device_id: str):
     """Get pending auto-wipe token for device"""
     return await get_wipe_token(request, device_id)
+
+# Include the router in the main app
+app.include_router(api_router)
+
+# Include the PIN security router with /api prefix
+app.include_router(pin_router, prefix="/api")
 
 app.add_middleware(
     CORSMiddleware,
