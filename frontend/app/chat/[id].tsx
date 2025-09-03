@@ -666,6 +666,15 @@ export default function ChatRoom() {
             <TouchableOpacity style={styles.iconBtn} onPress={() => setPrivacyTyping(!privacyTyping)}>
               <Ionicons name={privacyTyping ? "eye-off" : "eye"} size={18} color={colors.sub} />
             </TouchableOpacity>
+            
+            {/* Image Handler */}
+            <ImageHandler 
+              onImageSelected={onSendImage}
+              onImageSharedToVault={(vaultItem) => {
+                console.log('Image shared to vault:', vaultItem.title);
+              }}
+            />
+            
             <View style={{ flex: 1, position: 'relative' }}>
               <TextInput
                 style={[styles.input, { backgroundColor: colors.card, color: colors.text }]}
