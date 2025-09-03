@@ -1424,6 +1424,7 @@ def main():
     results.append(("Rate Limit: Notes READ (30/min)", test_rate_limiting_notes_read()))
     results.append(("Rate Limit: Envelopes SEND (50/min)", test_rate_limiting_envelopes_send()))
     results.append(("Rate Limit: Envelopes POLL (100/min)", test_rate_limiting_envelopes_poll()))
+    results.append(("Rate Limit: New Endpoints", test_rate_limiting_new_endpoints()))
     
     # INPUT SANITIZATION VERIFICATION (CRITICAL)
     print("\n🛡️  INPUT SANITIZATION VERIFICATION")
@@ -1440,44 +1441,58 @@ def main():
     
     # Summary
     print("\n" + "=" * 80)
-    print("🔒 FINAL SECURITY VERIFICATION RESULTS:")
+    print("🔒 COMPREHENSIVE BACKEND TESTING RESULTS:")
     print("=" * 80)
     
     passed = 0
     total = len(results)
     core_tests = 9
-    security_tests = total - core_tests
+    contact_vault_tests = 4
+    auto_wipe_tests = 5
+    security_tests = total - core_tests - contact_vault_tests - auto_wipe_tests
     
     core_passed = 0
+    vault_passed = 0
+    wipe_passed = 0
     security_passed = 0
     
     for i, (test_name, success) in enumerate(results):
         status = "✅ PASS" if success else "❌ FAIL"
-        print(f"{test_name:<35} {status}")
+        print(f"{test_name:<40} {status}")
         if success:
             passed += 1
             if i < core_tests:
                 core_passed += 1
+            elif i < core_tests + contact_vault_tests:
+                vault_passed += 1
+            elif i < core_tests + contact_vault_tests + auto_wipe_tests:
+                wipe_passed += 1
             else:
                 security_passed += 1
     
     print(f"\nCore Functionality: {core_passed}/{core_tests} tests passed")
+    print(f"Contact Vault System: {vault_passed}/{contact_vault_tests} tests passed")
+    print(f"Auto-Wipe System: {wipe_passed}/{auto_wipe_tests} tests passed")
     print(f"Security Tests: {security_passed}/{security_tests} tests passed")
     print(f"Overall: {passed}/{total} tests passed")
     
     # Calculate security score
     security_score = (security_passed / security_tests) * 100 if security_tests > 0 else 0
+    vault_score = (vault_passed / contact_vault_tests) * 100 if contact_vault_tests > 0 else 0
+    wipe_score = (wipe_passed / auto_wipe_tests) * 100 if auto_wipe_tests > 0 else 0
     
     print(f"\n🔒 SECURITY SCORE: {security_score:.1f}/100")
+    print(f"📇 CONTACT VAULT SCORE: {vault_score:.1f}/100")
+    print(f"⏰ AUTO-WIPE SCORE: {wipe_score:.1f}/100")
     
-    if security_score == 100.0 and core_passed == core_tests:
-        print("🎉 100/100 SECURITY RATING ACHIEVED! All security measures working perfectly!")
+    if (security_score == 100.0 and vault_score == 100.0 and wipe_score == 100.0 and core_passed == core_tests):
+        print("🎉 100/100 COMPREHENSIVE TESTING SUCCESS! All systems working perfectly!")
         return 0
-    elif security_score >= 90.0:
-        print("⚠️  Near perfect security - minor issues to address")
+    elif (security_score >= 90.0 and vault_score >= 75.0 and wipe_score >= 75.0):
+        print("⚠️  Near perfect - minor issues to address")
         return 1
     else:
-        print("❌ CRITICAL SECURITY VULNERABILITIES FOUND - Immediate action required!")
+        print("❌ CRITICAL ISSUES FOUND - Immediate action required!")
         return 1
 
 if __name__ == "__main__":
