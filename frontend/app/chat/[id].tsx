@@ -290,38 +290,61 @@ export default function ChatRoom() {
     </View>
   );
 
-  const renderItem = ({ item }: { item: Msg }) => (
-    <View style={[styles.row, item.me ? styles.rowMe : styles.rowOther]}>
-      {!item.me && (
-        <View style={[styles.avatar, { backgroundColor: colors.border }]}>
-          <Text style={styles.avatarText}>{peerOid?.charAt(0) || 'A'}</Text>
-        </View>
-      )}
-      <View style={[styles.bubble, item.me ? { backgroundColor: colors.accent, borderBottomRightRadius: 4 } : { backgroundColor: colors.card, borderBottomLeftRadius: 4 }]}>
-        <Text style={[styles.text, item.me ? { color: '#000' } : { color: colors.text }]}>{item.text}</Text>
-        <View style={styles.metaRow}>
-          <Text style={[styles.time, { color: '#374151' }]}>{new Date(item.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
-          {item.me && (
-            <View style={styles.ticks}>
-              {item.status === "sent" && <Ionicons name="checkmark" size={14} color="#9ca3af" />}
-              {item.status === "delivered" && (
-                <View style={{ flexDirection: 'row' }}>
-                  <Ionicons name="checkmark" size={14} color="#9ca3af" />
-                  <Ionicons name="checkmark" size={14} color="#9ca3af" style={{ marginLeft: -6 }} />
-                </View>
-              )}
-              {item.status === "read" && (
-                <View style={{ flexDirection: 'row' }}>
-                  <Ionicons name="checkmark" size={14} color={colors.accent} />
-                  <Ionicons name="checkmark" size={14} color={colors.accent} style={{ marginLeft: -6 }} />
+  const renderItem = ({ item }: { item: Msg }) => {
+    const isMe = item.me;
+    const isSteelosSecure = item.text.startsWith('STEELOS_SECURE:');
+    
+    return (
+      <View style={[styles.row, item.me ? styles.rowMe : styles.rowOther]}>
+        {!item.me && (
+          <View style={[styles.avatar, { backgroundColor: colors.border }]}>
+            <Text style={styles.avatarText}>{peerOid?.charAt(0) || 'A'}</Text>
+          </View>
+        )}
+        {isSteelosSecure ? (
+          // STEELOS SECURE MESSAGE BADGE
+          <TouchableOpacity 
+            style={[styles.steelosSecureBadge, { backgroundColor: colors.accent }]}
+            onPress={() => handleSteelosSecureOpen(item)}
+          >
+            <View style={styles.steelosSecureHeader}>
+              <Text style={styles.steelosSecureIcon}>🔒</Text>
+              <Text style={styles.steelosSecureTitle}>STEELOS SECURE</Text>
+              <Text style={styles.steelosSecureSubtitle}>Tap to open • One-time read</Text>
+            </View>
+            <View style={styles.steelosSecureFooter}>
+              <Text style={styles.steelosSecureTimer}>⏱️ Auto-destruct timer active</Text>
+            </View>
+          </TouchableOpacity>
+        ) : (
+          // REGULAR MESSAGE BUBBLE
+          <View style={[styles.bubble, item.me ? { backgroundColor: colors.accent, borderBottomRightRadius: 4 } : { backgroundColor: colors.card, borderBottomLeftRadius: 4 }]}>
+            <Text style={[styles.text, item.me ? { color: '#000' } : { color: colors.text }]}>{item.text}</Text>
+            <View style={styles.metaRow}>
+              <Text style={[styles.time, { color: '#374151' }]}>{new Date(item.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
+              {item.me && (
+                <View style={styles.ticks}>
+                  {item.status === "sent" && <Ionicons name="checkmark" size={14} color="#9ca3af" />}
+                  {item.status === "delivered" && (
+                    <View style={{ flexDirection: 'row' }}>
+                      <Ionicons name="checkmark" size={14} color="#9ca3af" />
+                      <Ionicons name="checkmark" size={14} color="#9ca3af" style={{ marginLeft: -6 }} />
+                    </View>
+                  )}
+                  {item.status === "read" && (
+                    <View style={{ flexDirection: 'row' }}>
+                      <Ionicons name="checkmark" size={14} color={colors.accent} />
+                      <Ionicons name="checkmark" size={14} color={colors.accent} style={{ marginLeft: -6 }} />
+                    </View>
+                  )}
                 </View>
               )}
             </View>
-          )}
-        </View>
+          </View>
+        )}
       </View>
-    </View>
-  );
+    );
+  };
 
   const KeyShareBanner = () => (
     needsKeyShare ? (
