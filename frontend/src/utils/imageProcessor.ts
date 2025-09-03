@@ -74,34 +74,55 @@ export class ImageProcessor {
 
   /**
    * Pick image from camera or gallery
+   * SECURITY: Camera photos are NOT saved to gallery - taken directly to memory
    */
   async pickImage(source: 'camera' | 'gallery'): Promise<string | null> {
-    // Request permissions
     if (source === 'camera') {
+      // Request camera permissions
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
       if (status !== 'granted') {
         throw new Error('Camera permission required');
       }
+
+      // 🔒 SECURITY: Use launchCameraAsync to take photo directly without saving to gallery
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: false,
+        quality: 1,
+        base64: false,
+        exif: false, // Don't include EXIF data
+        saveToPhotos: false, // 🔒 CRITICAL: Never save to phone's photo gallery
+      });
+
+      if (result.canceled || !result.assets[0]) {
+        return null;
+      }
+
+      console.log('🔒 SECURITY: Photo taken directly to memory - NOT saved to gallery');
+      return result.assets[0].uri;
+
     } else {
+      // Gallery selection (for existing images)
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
         throw new Error('Gallery permission required');
       }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: false,
+        quality: 1,
+        base64: false,
+        exif: false, // Don't include EXIF data
+      });
+
+      if (result.canceled || !result.assets[0]) {
+        return null;
+      }
+
+      console.log('🔒 SECURITY: Existing image selected from gallery for encryption');
+      return result.assets[0].uri;
     }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: false,
-      quality: 1,
-      base64: false,
-      exif: false, // Don't include EXIF data
-    });
-
-    if (result.canceled || !result.assets[0]) {
-      return null;
-    }
-
-    return result.assets[0].uri;
   }
 
   /**
