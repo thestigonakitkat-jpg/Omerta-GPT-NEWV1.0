@@ -583,6 +583,53 @@ app.include_router(api_router)
 # Include the PIN security router with /api prefix
 app.include_router(pin_router, prefix="/api")
 
+# Import and include new feature routers
+from contacts_vault import store_contacts_backup, retrieve_contacts_backup, clear_contacts_vault
+from auto_wipe import configure_auto_wipe, update_activity, check_auto_wipe_status, get_wipe_token
+
+# Add contacts vault endpoints
+@api_router.post("/contacts-vault/store")
+async def store_contacts(request: Request, payload: object):
+    """Store contacts backup in vault"""
+    from contacts_vault import ContactsVaultRequest, store_contacts_backup
+    validated_payload = ContactsVaultRequest(**payload)
+    return await store_contacts_backup(request, validated_payload)
+
+@api_router.get("/contacts-vault/retrieve/{device_id}")
+async def retrieve_contacts(request: Request, device_id: str, encryption_key_hash: str):
+    """Retrieve contacts backup from vault"""
+    return await retrieve_contacts_backup(request, device_id, encryption_key_hash)
+
+@api_router.delete("/contacts-vault/clear/{device_id}")
+async def clear_contacts(request: Request, device_id: str):
+    """Clear contacts vault for device"""
+    return await clear_contacts_vault(request, device_id)
+
+# Add auto-wipe endpoints
+@api_router.post("/auto-wipe/configure")
+async def configure_autowipe(request: Request, payload: object):
+    """Configure auto-wipe settings"""
+    from auto_wipe import AutoWipeConfig, configure_auto_wipe
+    validated_payload = AutoWipeConfig(**payload)
+    return await configure_auto_wipe(request, validated_payload)
+
+@api_router.post("/auto-wipe/activity")
+async def update_device_activity(request: Request, payload: object):
+    """Update device activity timestamp"""
+    from auto_wipe import ActivityUpdate, update_activity
+    validated_payload = ActivityUpdate(**payload)
+    return await update_activity(request, validated_payload)
+
+@api_router.get("/auto-wipe/status/{device_id}")
+async def get_autowipe_status(request: Request, device_id: str):
+    """Check auto-wipe status for device"""
+    return await check_auto_wipe_status(request, device_id)
+
+@api_router.get("/auto-wipe/token/{device_id}")
+async def get_autowipe_token(request: Request, device_id: str):
+    """Get pending auto-wipe token for device"""
+    return await get_wipe_token(request, device_id)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # Configure for production
