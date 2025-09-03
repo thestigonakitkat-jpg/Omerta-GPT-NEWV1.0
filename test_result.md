@@ -256,6 +256,28 @@ frontend:
       - working: "NA"
         agent: "main"
         comment: "Scan sets verified in local store; chat header shows badge."
+  - task: "Contact Vault System (Backup/Restore OIDs to/from Vault)"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/utils/contactsVault.ts, /app/frontend/app/(tabs)/vault/index.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Complete contact vault system with secure backup/restore of OMERTA IDs to vault/SD card. Features: encryption key verification, quarantine protection, cryptographic signatures, and seamless UI integration in vault screen with import/export modals."
+  - task: "Auto-Wipe System (1-14 day configurable unused device wipe)"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/utils/autoWipe.ts, /app/frontend/app/(tabs)/settings/index.tsx, /app/frontend/app/_layout.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Complete auto-wipe system with configurable 1-14 day inactivity timer. Features: app data wipe or full NUKE (STEELOS-SHREDDER), activity tracking, background monitoring, warning system, and comprehensive settings UI with status display. Integrated with app lifecycle and user actions."
 
 metadata:
   created_by: "main_agent"
