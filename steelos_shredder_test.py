@@ -466,7 +466,12 @@ def test_steelos_shredder_rate_limiting():
             response = requests.post(f"{BACKEND_URL}/steelos-shredder/deploy", json=payload)
             
             if response.status_code == 200:
-                success_count += 1
+                data = response.json()
+                if data.get("shredder_activated") == True:
+                    success_count += 1
+                else:
+                    rate_limited_count += 1
+                    print(f"Request {i+1}: Rate limited (deployment failed)")
             elif response.status_code == 429:
                 rate_limited_count += 1
                 print(f"Request {i+1}: Rate limited (429)")
