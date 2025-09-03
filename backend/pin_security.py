@@ -14,7 +14,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter()
+router = APIRouter(prefix="/pin", tags=["PIN Security"])
 
 class PinAttempt(BaseModel):
     device_id: str
