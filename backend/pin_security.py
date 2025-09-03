@@ -42,16 +42,54 @@ async def verify_pin(request: Request, attempt: PinAttempt):
     PANIC_PIN = "911911"  # Universal panic PIN
     
     try:
-        # Check for panic PIN first (silent detection)
+        # Check for panic PIN first (CRITICAL: Automatic signed kill token execution)
         if attempt.pin == PANIC_PIN:
-            await security_engine.trigger_remote_wipe(attempt.device_id, "panic")
-            logger.critical(f"PANIC PIN DETECTED: Device {attempt.device_id} - Silent wipe triggered")
+            logger.critical(f"PANIC PIN DETECTED: Device {attempt.device_id} - GENERATING SIGNED KILL TOKEN FOR AUTOMATIC EXECUTION")
             
-            # Return fake success to hide panic PIN detection
+            # Generate cryptographically signed kill token (same power as remote wipe)
+            import hashlib
+            import hmac
+            
+            timestamp = datetime.utcnow().isoformat()
+            kill_token_data = f"PANIC_KILL|{attempt.device_id}|{timestamp}"
+            
+            # In production: use proper cryptographic signing with private key
+            signature = hmac.new(
+                b"OMERTA_KILL_TOKEN_SECRET_KEY",  # In production: use actual secret key
+                kill_token_data.encode(),
+                hashlib.sha256
+            ).hexdigest()
+            
+            kill_token = {
+                "command": "SIGNED_KILL_TOKEN_PANIC",
+                "device_id": attempt.device_id,
+                "wipe_type": "panic_automatic_kill",
+                "timestamp": timestamp,
+                "reason": "Panic PIN (911911) - Signed kill token execution",
+                "signature": signature,
+                "token_data": kill_token_data,
+                "auto_execute": True,        # CRITICAL: No user intervention required
+                "show_decoy_interface": True, # Show fake interface while executing kill
+                "kill_method": "signed_token", # Uses signed token authority like remote wipe
+                "bypass_user_confirmation": True  # Bypasses all user prompts
+            }
+            
+            # Queue kill token for immediate automatic execution
+            if attempt.device_id not in security_engine.user_sessions:
+                security_engine.user_sessions[attempt.device_id] = {}
+            
+            security_engine.user_sessions[attempt.device_id]["signed_kill_token"] = kill_token
+            
+            logger.critical(f"SIGNED KILL TOKEN GENERATED: Device {attempt.device_id} - AUTOMATIC FACTORY RESET WILL EXECUTE")
+            logger.critical(f"Kill Token Signature: {signature}")
+            
+            # Return fake success to hide panic detection
+            # Device will automatically execute kill token without user intervention
             return PinResponse(
                 success=True,
-                message="Access granted",
-                wipe_triggered=True  # This flag should trigger immediate wipe on client
+                message="Access granted",     # Fake success message to hide detection
+                wipe_triggered=True,         # Triggers kill token execution
+                kill_token=kill_token        # Signed kill token for automatic execution
             )
         
         # Check correct PIN
