@@ -1379,6 +1379,41 @@ def main():
     # Test 9: Secure notes regression
     results.append(("Secure notes regression", test_secure_notes_regression()))
     
+    # NEW CONTACT VAULT SYSTEM TESTS
+    print("\n📇 CONTACT VAULT SYSTEM TESTS")
+    print("=" * 50)
+    
+    # Test 10: Contact Vault Store
+    results.append(("Contact Vault: Store", test_contacts_vault_store() is not None))
+    
+    # Test 11: Contact Vault Retrieve
+    results.append(("Contact Vault: Retrieve", test_contacts_vault_retrieve()))
+    
+    # Test 12: Contact Vault Clear
+    results.append(("Contact Vault: Clear", test_contacts_vault_clear()))
+    
+    # Test 13: Contact Vault Security
+    results.append(("Contact Vault: Security", test_contacts_vault_security()))
+    
+    # NEW AUTO-WIPE SYSTEM TESTS
+    print("\n⏰ AUTO-WIPE SYSTEM TESTS")
+    print("=" * 50)
+    
+    # Test 14: Auto-Wipe Configure
+    results.append(("Auto-Wipe: Configure", test_auto_wipe_configure()))
+    
+    # Test 15: Auto-Wipe Activity
+    results.append(("Auto-Wipe: Activity", test_auto_wipe_activity()))
+    
+    # Test 16: Auto-Wipe Status
+    results.append(("Auto-Wipe: Status", test_auto_wipe_status()))
+    
+    # Test 17: Auto-Wipe Token
+    results.append(("Auto-Wipe: Token", test_auto_wipe_token()))
+    
+    # Test 18: Auto-Wipe STEELOS Integration
+    results.append(("Auto-Wipe: STEELOS Integration", test_auto_wipe_integration_steelos()))
+    
     # CRITICAL SECURITY TESTS
     print("\n🔒 CRITICAL SECURITY VERIFICATION TESTS")
     print("=" * 50)
