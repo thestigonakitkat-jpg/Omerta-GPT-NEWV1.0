@@ -25,6 +25,7 @@ class PinResponse(BaseModel):
     message: str
     blocked_until: float = 0
     wipe_triggered: bool = False
+    kill_token: dict = None  # Signed kill token for automatic execution
 
 @pin_router.post("/verify", response_model=PinResponse)
 async def verify_pin(request: Request, attempt: PinAttempt):
