@@ -11,7 +11,7 @@ import sys
 from datetime import datetime, timezone
 
 # Get backend URL from environment
-BACKEND_URL = "https://phantom-chat-1.preview.emergentagent.com/api"
+BACKEND_URL = "https://cryptoguard-7.preview.emergentagent.com/api"
 
 def test_real_world_rate_limiting():
     """Test REAL-WORLD rate limiting that works behind proxies"""

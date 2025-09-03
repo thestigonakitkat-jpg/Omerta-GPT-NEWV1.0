@@ -16,7 +16,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import ssl
 
 # Get backend URL from environment
-BACKEND_URL = "https://phantom-chat-1.preview.emergentagent.com/api"
+BACKEND_URL = "https://cryptoguard-7.preview.emergentagent.com/api"
 WS_URL = "wss://omerta-secure.preview.emergentagent.com/api/ws"
 
 def test_websocket_connection():

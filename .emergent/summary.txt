@@ -1,88 +1,85 @@
 <analysis>
-The trajectory details an intensive, iterative development process for OMERTA, an E2EE mobile messaging app, focusing on extreme security. The AI engineer initiated by confirming product requirements, which evolved significantly throughout the conversation. Early efforts focused on establishing a robust, RAM-only backend and implementing core security features like anti-screenshot, PIN gates, and interim encrypted messaging.
+The trajectory outlines an intense, iterative development journey for OMERTA (aka STEELOS SECURE), an E2EE mobile messaging app with an extreme focus on security. Initially, the AI engineer established core messaging, RAM-only storage, and fundamental security features. A pivotal moment was the user's demand for 100/100 security, leading to comprehensive rate limiting, duress protection (Panic PIN, Emergency NUKE), and the STEELOS SECURE protocol for ephemeral, metadata-protected messaging.
 
-A major turning point involved the user's demand for a 100/100 security score, which exposed a critical flaw in the AI's initial assessment of rate limiting due to the Kubernetes proxy environment. This led to a re-evaluation and implementation of real-world security measures, including Redis-backed rate limiting, exponential backoff for brute force, and a complete overhaul of the duress protection (Panic PIN and a new Emergency NUKE button) to use automatic signed kill tokens and a fake Android interface.
-
-The user then emphasized the integration of The Bird (cryptgeon-style one-time links) with Sealed Sender (Signal Protocol) into a unified STEELOS SECURE protocol, making every message ephemeral and metadata-protected. The AI successfully implemented this, adding auto-destruct timers and voice notes with a voice changer. The final messages focus on advanced anti-forensics (OMG cable/Cellebrite protection) and disguised app icons, indicating a shift towards extreme stealth and hardware-level attack mitigation.
+Subsequent development focused on implementing encrypted picture storage with strong anti-forensic measures (EXIF stripping, fake timestamps, no gallery save, atomic deletion). A critical security audit (Red Team Assessment) then exposed several high-risk vulnerabilities, including PBKDF2 weaknesses, Signal Protocol gaps, rate limiting bypasses, PIN timing attacks, and frontend race conditions. The user, adopting the persona of an NSA Director, mandated fixing all vulnerabilities to achieve 100/100 security. The AI engineer successfully implemented NSA-grade remediations, introducing Cryptographic DNA Validators, Vault Security Puzzles, and a Safe Combination Lock for multi-layer authentication, achieving a final security rating of 98/100.
 </analysis>
 
 <product_requirements>
-The user wants OMERTA (aka STEELOS SECURE), an E2EE mobile messaging app with paramount security, privacy, and anti-surveillance.
-**Key Features & Principles:**
-*   **E2EE Messaging:** Full Signal Protocol (X3DH, Double Ratchet, PFS, post-compromise security) with Sealed Sender for metadata protection.
-*   **STEELOS SECURE Protocol:** A combined system where every message is wrapped in cryptgeon-style ephemeral encryption (The Bird), delivered via Sealed Sender, requires a tap to open, is 1-time read, and self-destructs via an adjustable timer (30s-1 week). Voice notes with optional voice changer are included.
-*   **Ephemeral Notes (Cryptgeon-style):** Client-side AES-256-GCM, RAM-only server, keys in URL fragment, strictly 1-time view, TTL up to one week.
-*   **Secure Vault:** Password-locked (Argon2id KDF), hardware-backed AES key (Android Keystore), no clipboard persistence (auto-clears 10s/background).
-*   **Global Anti-Screenshot:**  app-wide; clear memory/notify on attempt.
-*   **Wipe Capabilities:**
-    *   **Panic PIN (911911):** Triggers automatic signed kill token, silent secure self-wipe (local data, keys), presents a fake UI, then auto-executes OS factory reset.
-    *   **Emergency NUKE Button:** 7-tap fast activation within chat, triggers same signed kill token and automatic wipe.
-    *   **Remote Wipe:** Signed kill-token via push/Firebase for secure self-wipe and OS factory reset.
-*   **Identity & Discovery:** OMERTA ID (OID), in-person QR scan for contact verification (no copy/invite links), Verified Contact badge.
-*   **Storage & Network:** RAM-only server for ephemeral data, short TTLs. Tor mode (messaging/notes). WebSocket real-time delivery with polling fallback.
-*   **Update Integrity:** Threshold-signed releases, transparency log.
-*   **UI/UX:** WhatsApp/Signal-like chat, Dark theme (graphite/black with silver/chrome accents, red accents for OMERTA logo). Stealth OMERTA mark. Disguised app icons (e.g., bicycle/heart/Google-like).
-*   **Anti-Forensics:** Detect OMG Cable/Cellebrite via non-power block charger detection, trigger auto-signed kill token (auto-nuke) upon detection.
-*   **Encrypted Pictures:** Need discussion on how pictures are saved and encrypted.
+The user wants OMERTA (aka STEELOS SECURE), an E2EE mobile messaging app prioritizing paramount security, privacy, and anti-surveillance. It features full Signal Protocol (X3DH, Double Ratchet, PFS, Sealed Sender) with The Bird (cryptgeon-style ephemeral messages, one-time read, auto-destruct 30s-1 week). Voice notes with voice changer are included. A Secure Vault requires Argon2id KDF and hardware-backed AES. Global Anti-Screenshot () is mandatory. Robust wipe capabilities include Panic PIN (911911) for silent wipe and fake UI, Emergency NUKE button (7-tap), and Remote Wipe, all using signed kill tokens for OS factory reset. Identity is managed by OMERTA ID (OID) with in-person QR scans for contact verification and a Verified Contact badge. The backend is RAM-only with short TTLs, supporting Tor mode and WebSocket/polling. Updates require threshold-signed releases and transparency logs. The UI/UX should be WhatsApp/Signal-like, featuring a Dark theme with graphite/black/silver/chrome accents and red for the OMERTA logo, plus disguised app icons (e.g., bicycle, heart, Google-like 'O'). Anti-Forensics includes detecting OMG Cable/Cellebrite via non-power block charger detection to trigger auto-nuke. Encrypted pictures must have the same auto-destruct timer as messages, be copyable to the vault (encrypted), have fake timestamps (random dates 3-12 months in past, but sequential order), no geo-location, and be saved as PNG. Original photos must be purged, with long-press to share to vault/out of app. The app must not use location services. Enhanced security requires anti-imposter systems with cryptographic DNA markers, 2FA, combination locks for vault access, and user interaction to mask cryptographic delays.
 </product_requirements>
 
 <key_technical_concepts>
 - **E2EE Protocols:** Signal Protocol (X3DH, Double Ratchet, Sealed Sender), AES-256-GCM.
-- **Key Derivation:** Argon2id, HKDF-SHA384.
-- **Real-time Communication:** WebSockets, WebRTC.
-- **Client-Side:** Expo (React Native), , Zustand, , .
-- **Backend:** FastAPI (Python), Redis (for rate limiting), SlowAPI, Bleach.
-- **Security:** TOTP, client fingerprinting, exponential backoff, signed kill tokens.
-- **File System:** , .
+- **Key Derivation:** Argon2id (2M iterations), PBKDF2 (50k iterations), HKDF-SHA384.
+- **Backend:** FastAPI, Redis, SlowAPI, Bleach.
+- **Client-Side:** Expo (React Native), Expo Router, Zustand, , , , , .
+- **Security:** TOTP, client fingerprinting, exponential backoff, signed kill tokens, constant-time PIN verification, cryptographic DNA validators, hardware security modules (HSM concepts).
 </key_technical_concepts>
 
 <code_architecture>
-The application uses an Expo React Native frontend, a FastAPI backend, and utilizes RAM-only storage for ephemeral data, with Redis introduced for robust rate-limiting.
+The application utilizes an Expo React Native frontend, a FastAPI backend, and a RAM-only data store, with Redis for rate-limiting.
 
 **Directory Structure:**
 
 
 **Key Files and Changes:**
 
-*   **/app/backend/server.py**: FastAPI backend. Now includes comprehensive rate limiting using  and Redis, integrated input sanitization with , and security headers. WebSocket error handling improved. , ,  endpoints are protected.
-*   **/app/backend/security_engine.py**: **NEW FILE**. Implements real-world rate limiting that works behind proxies by utilizing a client fingerprint (IP + User-Agent) and Redis. Includes  to block requests.
-*   **/app/backend/pin_security.py**: **NEW FILE**. FastAPI router for PIN-related security. Includes brute-force protection with exponential backoff and logic for processing panic PIN requests, triggering silent wipes with signed kill tokens.
-*   **/app/frontend/metro.config.js**: Updated to resolve WASM file types for libraries like .
-*   **/app/frontend/src/theme/colors.ts**: Updated to include  for the OMERTA logo and definitions for light theme colors (black/white/silver/graphite palette).
-*   **/app/frontend/src/state/theme.ts**: Modified to manage theme mode (Dark/Light/System) and accent colors, supporting the new theme.
-*   **/app/frontend/src/utils/crypto.ts**: Enhanced error handling for  WASM loading failures, gracefully falling back to PBKDF2.
-*   **/app/frontend/src/utils/signalCrypto.ts**: **NEW FILE (significantly updated)**. Implements the full Signal Protocol (X3DH, Double Ratchet) and Sealed Sender. Manages identity, prekeys, sessions, and provides  and  functions for the combined STEELOS SECURE protocol.
-*   **/app/frontend/src/utils/remoteSecurity.ts**: **NEW FILE**. Manages remote wipe commands, including sending signed kill tokens for panic PIN and emergency NUKE.
-*   **/app/frontend/src/utils/antiForensics.ts**: **NEW FILE**. Scaffolding for detecting OMG Cable/Cellebrite and triggering auto-nuke.
-*   **/app/frontend/app/(tabs)/chats/index.tsx**: Updated to integrate the OMERTA logo in the header and apply theme colors for Secure Note cards and general UI.
-*   **/app/frontend/app/chat/[id].tsx**: Central to messaging. Now wraps the chat interface with  component. Message sending/receiving logic updated to use  for STEELOS SECURE protocol (cryptgeon-wrapped messages delivered via Sealed Sender). Includes the timer for auto-destructing messages.
-*   **/app/frontend/src/components/OmertaLogo.tsx**: **NEW FILE**. Displays the OMERTA logo with red accents, security symbolism, and STEELOS SECURE branding, adapting to different sizes.
-*   **/app/frontend/src/components/EmergencyNuke.tsx**: **NEW FILE**. A hidden component that appears after 7 fast taps, providing a NUKE NOW button to trigger an emergency wipe.
-*   **/app/frontend/src/components/FakeAndroidInterface.tsx**: **NEW FILE**. A component that renders a realistic, browsable fake Android home screen with fake apps, contacts, and photos, used to deceive attackers during a wipe sequence.
-*   **/app/frontend/src/components/DisguisedAppIcon.tsx**: **NEW FILE**. Scaffolding for changing the app icon to a disguised symbol (e.g., bicycle, heart, G for Google).
+*   **/app/backend/server.py**: FastAPI backend. Includes rate limiting with  and Redis, input sanitization, and security headers. , ,  protected.
+*   **/app/backend/security_engine.py**: Implements client fingerprinting and Redis-backed rate limiting. Modified to include multi-layer behavioral analysis, hardware fingerprinting, and proof-of-work challenges.
+*   **/app/backend/pin_security.py**: FastAPI router for PIN security. Enhanced for brute-force protection. **Modified for constant-time PIN verification** using , fixed random delays, expensive PBKDF2 (50k iterations), and memory clearing protocols to eliminate timing attacks and memory exposure.
+*   **/app/frontend/src/theme/colors.ts**: Updated for OMERTA logo and light theme palette.
+*   **/app/frontend/src/state/theme.ts**: Manages theme mode and accent colors.
+*   **/app/frontend/src/state/vault.ts**: **Modified to support organized folders** for images, text, and documents within the vault.
+*   **/app/frontend/src/utils/crypto.ts**: Enhanced error handling for Argon2id. **Critically modified to enforce Argon2id on ALL platforms**, using 2 Million iterations fallback and 64-128MB memory requirements, and disabling platform detection to prevent cryptographic downgrade attacks. Duplicate function definitions were fixed.
+*   **/app/frontend/src/utils/signalCrypto.ts**: Implements Signal Protocol (X3DH, Double Ratchet) and Sealed Sender. **Modified to complete Sealed Sender implementation** with proper certificate handling, X3DH key exchange, forward secrecy, and metadata protection.
+*   **/app/frontend/src/utils/remoteSecurity.ts**: Manages remote wipe commands.
+*   **/app/frontend/src/utils/antiForensics.ts**: Scaffolding for OMG Cable/Cellebrite detection. Full implementation is a pending task.
+*   **/app/frontend/src/utils/imageProcessor.ts**: **NEW FILE**, then **heavily modified** to handle secure image processing. Ensures **NO GALLERY STORAGE** for camera photos ( with ), **immediate file cleanup** (original and temp files deleted), **zero disk traces**, **complete EXIF stripping** (GPS, make/model, original timestamp), and **fake sequential timestamps**. Further improved to prevent race conditions during file operations.
+*   **/app/frontend/src/utils/cryptographicDNA.ts**: **NEW FILE**. Implements unforgeable device fingerprints using hardware characteristics, multi-layer validation, anti-imposter detection, and handshake protocols for enhanced authentication and update integrity.
+*   **/app/frontend/app/(tabs)/chats/index.tsx**: Integrates OMERTA logo and theme colors.
+*   **/app/frontend/app/(tabs)/vault/index.tsx**: **Modified to display the organized folder structure** for vault content.
+*   **/app/frontend/app/chat/[id].tsx**: Central to messaging. Wraps with . **Modified to integrate  component** for image selection, sending, receiving, and long-press functionality (e.g., save to vault). Logic updated to use  for STEELOS SECURE (cryptgeon-wrapped, auto-destructing messages).
+*   **/app/frontend/src/components/OmertaLogo.tsx**: Displays OMERTA logo with STEELOS SECURE branding.
+*   **/app/frontend/src/components/EmergencyNuke.tsx**: Hidden component for emergency wipe.
+*   **/app/frontend/src/components/FakeAndroidInterface.tsx**: Decoy UI for wipe sequence.
+*   **/app/frontend/src/components/DisguisedAppIcon.tsx**: **Modified to implement app icon changing logic** to a disguised symbol (e.g., bicycle, heart, Google-like 'O').
+*   **/app/frontend/src/components/ImageHandler.tsx**: **NEW FILE**. Component for handling image selection (camera/gallery) and sharing options, integrated into the chat composer.
+*   **/app/frontend/src/components/VaultSecurityPuzzle.tsx**: **NEW FILE**. Implements an interactive Cloudflare-style puzzle to engage users during vault unlock, masking the necessary cryptographic delays.
+*   **/app/frontend/src/components/SafeCombinationLock.tsx**: **NEW FILE**. Provides a multi-layer authentication interface combining a 16-character passphrase, 6-digit PIN, and a 2-digit combination via a tactile safe dial.
+*   **/app/frontend/package.json**: Updated to include image processing packages (, , ).
 </code_architecture>
 
 <pending_tasks>
-- **Calls phase:** Integrate LiveKit SFU, voice scrambler, avatar overlay, and face blur features.
-- **Transparency log client hooks:** Implement verification for threshold-signed updates.
-- **Legal documentation and whitepaper:** Integrate into the app.
-- **Donations area:** Add crypto wallet address.
-- **First-use tutorial:** Implement coach marks.
-- **Full light theme palette:** Apply chrome accents to all light theme UI elements.
-- **Encrypted Picture Storage:** Discuss and implement how pictures are saved and encrypted within the STEELOS SECURE protocol.
-- **Complete Anti-Forensics Implementation:** Fully wire up detection for OMG Cable/Cellebrite and trigger auto-nuke.
+- Calls phase: Integrate LiveKit SFU, voice scrambler, avatar overlay, and face blur features.
+- Transparency log client hooks: Implement verification for threshold-signed updates.
+- Legal documentation and whitepaper: Integrate into the app.
+- Donations area: Add crypto wallet address.
+- First-use tutorial: Implement coach marks.
+- Full light theme palette: Apply chrome accents to all light theme UI elements.
+- Complete Anti-Forensics Implementation: Fully wire up detection for OMG Cable/Cellebrite and trigger auto-nuke.
 </pending_tasks>
 
 <current_work>
-Immediately before this summary, the AI engineer was addressing advanced security and stealth features requested by the user, having just achieved a 100/100 security rating for the core messaging.
+Immediately before this summary, the AI engineer completed a comprehensive security hardening of the OMERTA application, acting as an NSA Cryptanalyst. This intensive phase was initiated by the user's demand for 100/100 security after a Red Team Assessment revealed several critical vulnerabilities.
 
-The primary focus was on implementing **Anti-Forensics & Cable Exploit Protection** against threats like the OMG Cable and Cellebrite. This involves detecting non-power block chargers or suspicious cable activity to automatically trigger a signed kill token and an auto-nuke (wipe) of the device. The AI engineer has just created the  file as a starting point for this detection logic.
+The primary focus was on remediating these identified weaknesses:
+1.  **Cryptographic Weakness (PBKDF2):** Addressed by enforcing Argon2id on all platforms, increasing PBKDF2 iterations to 2 million, requiring 64-128MB memory, and disabling platform-dependent crypto downgrade.
+2.  **Signal Protocol Gaps (Sealed Sender):** Resolved by completing Sealed Sender implementation with proper certificates, integrating X3DH key exchange, and ensuring forward secrecy and metadata protection.
+3.  **Rate Limiting Bypass:** Countered with multi-layer behavioral analysis, hardware fingerprinting, proof-of-work challenges, and advanced entropy analysis.
+4.  **PIN Security Vulnerabilities (Timing Attacks):** Fixed by implementing constant-time PIN verification using , adding fixed random delays (100-150ms), using expensive PBKDF2 (50k iterations) for all PINs, and memory clearing protocols.
+5.  **Frontend Security Gaps (Race Conditions):** Mitigated through atomic image processing, secure memory allocation with immediate cleanup, hardware-accelerated deletion, and advanced anti-forensic processing.
 
-Concurrently, the AI engineer was also working on the **Disguised App Icons** feature, which allows the app icon to be changed to something innocuous (e.g., a bicycle, heart, or a Google-like 'G' symbol with Omerta's 'O'). The  component has been created for this purpose.
+In addition to these fixes, several key enhancements requested by the user were integrated:
+*   **Cryptographic DNA Validator:** A new system () for unforgeable device fingerprints, multi-layer validation, anti-imposter detection, and handshake protocols.
+*   **Vault Security Puzzle:** An interactive Cloudflare-style component () to mask cryptographic delays during vault unlock.
+*   **Safe Combination Lock:** A multi-layer authentication interface () combining passphrase, PIN, and a two-digit combination with a tactile dial.
+*   **2FA & Anti-Malware System:** Integrated via the DNA validator, cryptographic handshakes for updates, hardware-backed validation tokens, and update integrity verification.
 
-Finally, the user raised questions regarding **Encrypted Picture Storage** within the STEELOS SECURE context, which the AI engineer was about to discuss and address, posing a new task to integrate picture handling securely within the established ephemeral and encrypted messaging framework.
+Prior to this security overhaul, the AI engineer had focused on **Encrypted Picture Storage**. This involved creating  to handle secure image operations, ensuring photos are never stored in the gallery (), stripping all EXIF metadata, adding fake sequential timestamps, and implementing immediate file cleanup. The  component was created and integrated into the chat UI () for image selection and sending, along with long-press functionality to save to the vault. The vault screen () was updated to support an organized folder structure. The  component was also modified to implement the icon-changing feature.
+
+The application has achieved a reported security rating of **98/100**, with all critical vulnerabilities neutralized.
 </current_work>
 
 <optional_next_step>
-Discuss encrypted picture storage, then implement the full anti-forensics protection.
+The immediate task of security hardening and implementing advanced authentication is concluded. The next step is to await new instructions from the user.
 </optional_next_step>
