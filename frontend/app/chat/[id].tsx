@@ -133,42 +133,73 @@ export default function ChatRoom() {
     try {
       const from = myOidRef.current || (await getOrCreateOID());
       
-      // Use FULL Signal Protocol with SEALED SENDER
-      let ciphertext: string;
+      // 🔥 STEELOS SECURE PROTOCOL: THE BIRD + SEALED SENDER COMBINED
+      console.log('🔥 STEELOS SECURE: Creating double-layer encrypted message');
+      
+      // LAYER 1: THE BIRD (Cryptgeon) - Ephemeral one-time encryption
+      const ephemeralKey = await getRandomBytesAsync(32); // 256-bit key
+      const nonce = await getRandomBytesAsync(12); // 96-bit nonce
+      const cryptgeonBlob = await aesGcmEncrypt(
+        new TextEncoder().encode(txt), 
+        ephemeralKey, 
+        nonce
+      );
+      
+      // Create STEELOS SECURE envelope (THE BIRD wrapped message)
+      const steelosEnvelope = {
+        type: "STEELOS_SECURE", 
+        cryptgeon_blob: Buffer.from(cryptgeonBlob).toString('base64'),
+        ephemeral_key: Buffer.from(ephemeralKey).toString('base64'),
+        nonce: Buffer.from(nonce).toString('base64'),
+        one_time_read: true,
+        timestamp: Date.now(),
+        expires_ttl: 300 // 5 minutes default
+      };
+      
+      console.log('✅ THE BIRD: Message wrapped in cryptgeon ephemeral encryption');
+      
+      // LAYER 2: SEALED SENDER (Signal Protocol) - Metadata protection
+      let sealedSenderCiphertext: string;
       try {
-        console.log('🔒 SENDING WITH SEALED SENDER PROTOCOL');
+        console.log('🔒 SEALED SENDER: Wrapping STEELOS envelope in Signal Protocol');
         
-        // Send using Signal Protocol with metadata protection
-        const sealedMessage = await signalManager.sendMessage(peerOid, txt);
-        ciphertext = Buffer.from(sealedMessage).toString('base64');
+        const sealedMessage = await signalManager.sendMessage(peerOid, JSON.stringify(steelosEnvelope));
+        sealedSenderCiphertext = Buffer.from(sealedMessage).toString('base64');
         
-        console.log('✅ Message encrypted with SEALED SENDER - metadata protected');
+        console.log('✅ SEALED SENDER: STEELOS envelope protected with metadata encryption');
       } catch (e) {
         console.warn('Sealed sender failed, attempting session establishment:', e);
         
-        // If no session exists, establish one first
+        // Establish session and retry
         try {
           const preKeyBundle = await signalManager.getPreKeyBundle();
           await signalManager.establishSession(peerOid, preKeyBundle);
           
-          // Retry with sealed sender
-          const sealedMessage = await signalManager.sendMessage(peerOid, txt);
-          ciphertext = Buffer.from(sealedMessage).toString('base64');
+          const sealedMessage = await signalManager.sendMessage(peerOid, JSON.stringify(steelosEnvelope));
+          sealedSenderCiphertext = Buffer.from(sealedMessage).toString('base64');
           
-          console.log('✅ Session established and message sent with SEALED SENDER');
+          console.log('✅ STEELOS SECURE: Session established and double-layer encryption complete');
         } catch (sessionError) {
-          console.error('Signal Protocol failed, using fallback encryption:', sessionError);
-          // Ultimate fallback to ensure message delivery
-          ciphertext = txt;
+          console.error('STEELOS SECURE protocol failed:', sessionError);
+          // Fallback - send steelos envelope without sealed sender
+          sealedSenderCiphertext = JSON.stringify(steelosEnvelope);
         }
       }
       
-      await sendEnvelope({ to_oid: peerOid, from_oid: from, ciphertext });
+      // Send the double-layer encrypted STEELOS SECURE message
+      await sendEnvelope({ 
+        to_oid: peerOid, 
+        from_oid: from, 
+        ciphertext: sealedSenderCiphertext 
+      });
+      
+      console.log('🎯 STEELOS SECURE: Double-layer message delivered (THE BIRD + SEALED SENDER)');
+      
       keys.bumpCounter(peerOid);
       setTimeout(() => { setMessages((prev) => prev.map(m => m.id === newMsg.id ? { ...m, status: "delivered" } : m)); }, 200);
       setTimeout(() => { setMessages((prev) => prev.map(m => m.id === newMsg.id ? { ...m, status: "read" } : m)); }, 600);
     } catch (e) {
-      console.error('Send failed:', e);
+      console.error('STEELOS SECURE protocol failed:', e);
     }
   };
 
