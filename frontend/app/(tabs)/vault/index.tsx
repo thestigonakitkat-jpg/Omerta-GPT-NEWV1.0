@@ -770,4 +770,28 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#000',
   },
+  contactsVaultSection: {
+    marginTop: 16,
+  },
+  sectionSubtitle: {
+    fontSize: 12,
+    marginBottom: 8,
+    lineHeight: 16,
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    marginBottom: 16,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  contactsStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+    paddingHorizontal: 4,
+  },
+  statsText: {
+    fontSize: 13,
+    fontWeight: '500',
+  },
 });
