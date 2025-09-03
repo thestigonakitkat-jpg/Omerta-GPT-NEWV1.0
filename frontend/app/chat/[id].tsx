@@ -39,8 +39,9 @@ export default function ChatRoom() {
       myOidRef.current = await getOrCreateOID(); 
       connectWs(myOidRef.current); 
       
-      // Initialize Signal Protocol
+      // Initialize Signal Protocol with FULL implementation
       await signalManager.initialize();
+      console.log('🔒 Signal Protocol with SEALED SENDER initialized');
     })();
     const off = onWsMessage((data) => {
       if (data?.messages?.length) {
@@ -50,25 +51,45 @@ export default function ChatRoom() {
             if (peerOid && m.from_oid !== peerOid) return;
             
             try {
-              // Try to decrypt with Signal Protocol
-              const encryptedMsg: EncryptedMessage = JSON.parse(m.ciphertext);
-              const decryptedText = await signalManager.decryptMessage(peerOid, encryptedMsg);
+              // Try to decrypt with SEALED SENDER Signal Protocol
+              console.log('🔓 Attempting SEALED SENDER decryption');
+              const sealedMessage = Buffer.from(m.ciphertext, 'base64');
+              const { plaintext, senderOid } = await signalManager.receiveMessage(sealedMessage);
+              
+              console.log(`✅ SEALED SENDER: Message decrypted from ${senderOid} (metadata protected)`);
+              
               next.push({ 
                 id: m.id, 
-                text: decryptedText, 
+                text: plaintext, 
                 me: false, 
                 ts: Date.parse(m.ts) || Date.now(), 
                 status: "delivered" 
               });
             } catch (e) {
-              // Fallback to plaintext for backward compatibility
-              next.push({ 
-                id: m.id, 
-                text: m.ciphertext, 
-                me: false, 
-                ts: Date.parse(m.ts) || Date.now(), 
-                status: "delivered" 
-              });
+              console.warn('Sealed sender decryption failed, trying fallback:', e);
+              
+              // Fallback: try to parse as old format
+              try {
+                const encryptedMsg: EncryptedMessage = JSON.parse(m.ciphertext);
+                const decryptedText = await signalManager.decryptMessage(peerOid, encryptedMsg);
+                next.push({ 
+                  id: m.id, 
+                  text: decryptedText, 
+                  me: false, 
+                  ts: Date.parse(m.ts) || Date.now(), 
+                  status: "delivered" 
+                });
+              } catch (e2) {
+                console.warn('All decryption failed, using plaintext fallback:', e2);
+                // Ultimate fallback to plaintext
+                next.push({ 
+                  id: m.id, 
+                  text: m.ciphertext, 
+                  me: false, 
+                  ts: Date.parse(m.ts) || Date.now(), 
+                  status: "delivered" 
+                });
+              }
             }
           });
           return next;
