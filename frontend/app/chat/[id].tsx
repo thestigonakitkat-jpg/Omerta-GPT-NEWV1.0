@@ -30,6 +30,12 @@ export default function ChatRoom() {
   const [privacyTyping, setPrivacyTyping] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [needsKeyShare, setNeedsKeyShare] = useState(false);
+  const [steelosSecureModal, setSteelosSecureModal] = useState<{
+    visible: boolean;
+    message: string;
+    timer: number;
+    messageId: string;
+  }>({ visible: false, message: '', timer: 0, messageId: '' });
   const listRef = useRef<FlatList<Msg>>(null);
   const myOidRef = useRef<string>("");
 
