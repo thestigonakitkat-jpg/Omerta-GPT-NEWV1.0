@@ -48,6 +48,45 @@ class SteelosShredder {
   /**
    * 💊 DEPLOY CYANIDE TABLET - Complete data destruction
    */
+
+  /**
+   * Execute STEELOS-SHREDDER with auto-wipe token
+   */
+  async executeWithToken(token: any): Promise<ShredderResult> {
+    try {
+      console.log('💊 STEELOS-SHREDDER: Executing with auto-wipe token');
+      
+      // Log token information
+      this.shredLog.push(`Token received: ${token.command}`);
+      this.shredLog.push(`Device: ${token.device_id}`);
+      this.shredLog.push(`Reason: ${token.reason}`);
+      
+      // Execute destruction based on token
+      const result = await this.deployCyanideTablet({
+        passes: SteelosShredder.DOD_STANDARD_PASSES,
+        patternMode: 'all',
+        verifyDestruction: true,
+        atomicDelete: true,
+        memoryClearing: true
+      });
+      
+      // Mark as executed with token
+      result.cyanideDeployed = true;
+      
+      return result;
+    } catch (error) {
+      console.error('STEELOS-SHREDDER token execution failed:', error);
+      return {
+        success: false,
+        filesShredded: 0,
+        bytesDestroyed: 0,
+        passes: 0,
+        duration: 0,
+        cyanideDeployed: false,
+        errors: [error.message]
+      };
+    }
+  }
   async deployCyanideTablet(options: ShredderOptions = {}): Promise<ShredderResult> {
     if (this.isShredding) {
       throw new Error('CYANIDE TABLET already deployed - Shredding in progress');
