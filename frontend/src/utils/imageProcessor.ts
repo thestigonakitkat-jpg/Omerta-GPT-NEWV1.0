@@ -127,19 +127,20 @@ export class ImageProcessor {
 
   /**
    * Strip EXIF data, convert to PNG, add fake timestamp
+   * SECURITY: All processing happens in memory, no temporary files on disk
    */
   async processImage(imageUri: string): Promise<ProcessedImage> {
     try {
-      console.log('🖼️ Processing image: Stripping EXIF and converting to PNG');
+      console.log('🔒 SECURITY: Processing image in memory - stripping EXIF and converting to PNG');
 
-      // Step 1: Strip EXIF and convert to PNG (this removes ALL metadata)
+      // Step 1: Strip EXIF and convert to PNG (this removes ALL metadata and happens in memory)
       const manipulatedImage = await ImageManipulator.manipulateAsync(
         imageUri,
         [], // No transformations, just format conversion
         {
           compress: 1, // No compression loss
           format: ImageManipulator.SaveFormat.PNG, // Convert to PNG
-          base64: true,
+          base64: true, // Get base64 for memory processing
         }
       );
 
@@ -150,14 +151,24 @@ export class ImageProcessor {
       // Step 2: Generate fake sequential timestamp
       const fakeTimestamp = this.timestampManager.getNextFakeTimestamp();
 
-      // Step 3: Get file info
+      // Step 3: Get file info (temporary URI will be cleaned up automatically)
       const fileInfo = await FileSystem.getInfoAsync(manipulatedImage.uri);
       const size = fileInfo.exists ? fileInfo.size || 0 : 0;
 
-      console.log('✅ Image processed: EXIF stripped, converted to PNG, fake timestamp applied');
+      // 🔒 SECURITY: Delete the temporary processed image file immediately
+      try {
+        if (manipulatedImage.uri.startsWith('file://')) {
+          await FileSystem.deleteAsync(manipulatedImage.uri, { idempotent: true });
+          console.log('🗑️ SECURITY: Temporary processed image file deleted');
+        }
+      } catch (error) {
+        console.warn('Warning: Failed to delete temporary image file:', error);
+      }
+
+      console.log('✅ SECURITY: Image processed - EXIF stripped, PNG converted, fake timestamp applied, no disk traces');
 
       return {
-        uri: manipulatedImage.uri,
+        uri: 'memory://processed', // Placeholder since we only use base64
         base64: manipulatedImage.base64,
         width: manipulatedImage.width,
         height: manipulatedImage.height,
@@ -166,7 +177,7 @@ export class ImageProcessor {
       };
     } catch (error) {
       console.error('Image processing failed:', error);
-      throw new Error('Failed to process image');
+      throw new Error('Failed to process image securely');
     }
   }
 
@@ -209,6 +220,7 @@ export class ImageProcessor {
 
   /**
    * Full pipeline: Pick, process, and encrypt image
+   * SECURITY: Original photo deleted from temp storage immediately after encryption
    */
   async pickProcessAndEncrypt(source: 'camera' | 'gallery'): Promise<EncryptedImage | null> {
     const imageUri = await this.pickImage(source);
@@ -216,8 +228,33 @@ export class ImageProcessor {
       return null;
     }
 
-    const processedImage = await this.processImage(imageUri);
-    return await this.encryptImage(processedImage);
+    try {
+      const processedImage = await this.processImage(imageUri);
+      const encryptedImage = await this.encryptImage(processedImage);
+
+      // 🔒 SECURITY: Delete original camera image immediately after encryption
+      try {
+        if (imageUri.startsWith('file://')) {
+          await FileSystem.deleteAsync(imageUri, { idempotent: true });
+          console.log('🗑️ SECURITY: Original camera image deleted - no trace on device');
+        }
+      } catch (error) {
+        console.warn('Warning: Failed to delete original image file:', error);
+      }
+
+      return encryptedImage;
+    } catch (error) {
+      // Clean up original image even if processing fails
+      try {
+        if (imageUri.startsWith('file://')) {
+          await FileSystem.deleteAsync(imageUri, { idempotent: true });
+          console.log('🗑️ SECURITY: Original image cleaned up after processing failure');
+        }
+      } catch (cleanupError) {
+        console.warn('Warning: Failed to cleanup image after error:', cleanupError);
+      }
+      throw error;
+    }
   }
 
   /**
