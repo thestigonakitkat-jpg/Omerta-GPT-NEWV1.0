@@ -246,7 +246,6 @@ export class SignalProtocolManager {
     
     return signedPreKey;
   }
-}
 
   async createSession(theirOid: string, bundle: SignalBundle): Promise<void> {
     if (!this.identityKeyPair) throw new Error('Identity not initialized');
