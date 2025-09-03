@@ -130,42 +130,6 @@ export class SignalProtocolManager {
   }
 
   /**
-   * X3DH Key Exchange: Establish session with recipient
-   */
-  async establishSession(recipientOid: string, preKeyBundle: PreKeyBundle): Promise<void> {
-    if (!this.identityKeyPair || !this.store) {
-      throw new Error('Signal Protocol not initialized');
-    }
-
-    const recipientAddress = SignalClient.ProtocolAddress.new(recipientOid, this.deviceId);
-
-    // Build the session using X3DH
-    const sessionBuilder = new SignalClient.SessionBuilder(
-      this.store,
-      this.store,
-      this.store,
-      this.store,
-      recipientAddress
-    );
-
-    // Process the prekey bundle to establish session
-    const bundle = SignalClient.PreKeyBundle.new(
-      preKeyBundle.registrationId,
-      preKeyBundle.deviceId,
-      preKeyBundle.preKeyId,
-      SignalClient.PublicKey.deserialize(Buffer.from(preKeyBundle.preKeyPublic, 'base64')),
-      preKeyBundle.signedPreKeyId,
-      SignalClient.PublicKey.deserialize(Buffer.from(preKeyBundle.signedPreKeyPublic, 'base64')),
-      Buffer.from(preKeyBundle.signedPreKeySignature, 'base64'),
-      SignalClient.PublicKey.deserialize(Buffer.from(preKeyBundle.identityKey, 'base64'))
-    );
-
-    await sessionBuilder.processPreKeyBundle(bundle);
-    
-    console.log(`🤝 X3DH: Session established with ${recipientOid}`);
-  }
-
-  /**
    * Double Ratchet: Send message with forward secrecy
    */
   async sendMessage(recipientOid: string, plaintext: string): Promise<Buffer> {
@@ -176,7 +140,7 @@ export class SignalProtocolManager {
     // Check if session exists
     const hasSession = await this.store.getSession(recipientAddress);
     if (!hasSession) {
-      throw new Error(`No session established with ${recipientOid}. Run X3DH key exchange first.`);
+      throw new Error(`No session established with ${recipientOid}. Using fallback encryption.`);
     }
 
     // Use sealed sender for metadata protection
