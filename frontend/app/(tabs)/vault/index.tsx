@@ -467,6 +467,74 @@ export default function VaultScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* Contacts Vault Modal */}
+      <Modal visible={showContactsModal} transparent animationType='fade'>
+        <View style={styles.backdrop}>
+          <View style={[styles.credentialsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Text style={[styles.credentialsTitle, { color: colors.text }]}>📇 Contacts Vault</Text>
+            <Text style={[styles.modalSubtitle, { color: colors.sub }]}>
+              Secure backup/restore of OMERTA IDs with quarantine protection
+            </Text>
+            
+            <TextInput 
+              style={[styles.input, { backgroundColor: colors.bg, color: colors.text, borderColor: colors.border }]} 
+              secureTextEntry 
+              placeholder='16+ character passphrase' 
+              placeholderTextColor={colors.muted} 
+              value={contactsPassphrase} 
+              onChangeText={setContactsPassphrase} 
+            />
+            <TextInput 
+              style={[styles.input, { backgroundColor: colors.bg, color: colors.text, borderColor: colors.border }]} 
+              keyboardType='number-pad' 
+              placeholder='6-digit PIN' 
+              placeholderTextColor={colors.muted} 
+              value={contactsPin} 
+              maxLength={6} 
+              onChangeText={setContactsPin} 
+            />
+
+            <View style={styles.contactsStats}>
+              <Text style={[styles.statsText, { color: colors.sub }]}>
+                Current Contacts: {Object.keys(contacts.verified).length}
+              </Text>
+              <Text style={[styles.statsText, { color: colors.sub }]}>
+                Verified: {Object.values(contacts.verified).filter(Boolean).length}
+              </Text>
+            </View>
+            
+            <TouchableOpacity 
+              style={[styles.modalButton, { backgroundColor: '#10b981' }]} 
+              onPress={onExportContacts}
+              disabled={busy}
+            >
+              <Ionicons name="cloud-upload" size={16} color="#000" style={{ marginRight: 8 }} />
+              <Text style={styles.modalButtonText}>Export to Vault</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={[styles.modalButton, { backgroundColor: '#3b82f6' }]} 
+              onPress={onImportContacts}
+              disabled={busy}
+            >
+              <Ionicons name="cloud-download" size={16} color="#000" style={{ marginRight: 8 }} />
+              <Text style={styles.modalButtonText}>Import from Vault</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={[styles.modalButton, { backgroundColor: colors.border }]} 
+              onPress={() => {
+                setShowContactsModal(false);
+                setContactsPassphrase("");
+                setContactsPin("");
+              }}
+            >
+              <Text style={[styles.modalButtonText, { color: colors.text }]}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
