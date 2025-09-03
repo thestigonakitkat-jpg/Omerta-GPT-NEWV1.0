@@ -30,7 +30,11 @@ export default function ChatsPinGate({ visible, onAuthed }: { visible: boolean; 
           <Text style={styles.title}>Enter Chats PIN</Text>
           <ScrambledPinPad onChange={setPin} onComplete={async (code) => {
             const ok = await sec.verifyChatsPin(code);
-            if (ok) onAuthed();
+            if (ok) {
+              // Track user login activity for auto-wipe
+              autoWipe.onUserLogin();
+              onAuthed();
+            }
           }} />
         </View>
       </View>
