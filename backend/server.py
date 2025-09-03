@@ -380,6 +380,138 @@ async def poll_envelopes(request: Request, oid: str, max: int = 50):
         } for e in deliver
     ]}
 
+# STEELOS-SHREDDER Endpoint
+class ShredderRequest(BaseModel):
+    device_id: str
+    trigger_type: str  # "panic_pin", "emergency_nuke", "anti_forensics", "manual"
+    confirmation_token: Optional[str] = None
+    
+class ShredderResponse(BaseModel):
+    shredder_activated: bool
+    kill_token_generated: bool
+    destruction_initiated: bool
+    message: str
+
+@api_router.post("/steelos-shredder/deploy", response_model=ShredderResponse)
+async def deploy_steelos_shredder(request: Request, payload: ShredderRequest):
+    """
+    💊 DEPLOY CYANIDE TABLET - STEELOS-SHREDDER Data Destruction
+    Generates signed kill token and initiates complete data obliteration
+    """
+    try:
+        # REAL-WORLD rate limiting that works behind proxies
+        await rate_limit_middleware(request, "shredder_deploy")
+        
+        # Sanitize inputs
+        device_id = sanitize_input(payload.device_id, max_length=100)
+        trigger_type = sanitize_input(payload.trigger_type, max_length=50)
+        
+        logger.critical(f"💊🧬 STEELOS-SHREDDER DEPLOYMENT: Device {device_id}, Trigger: {trigger_type}")
+        
+        # Generate signed kill token for STEELOS-SHREDDER
+        import hmac
+        import hashlib
+        import time
+        
+        timestamp = int(time.time())
+        kill_token_data = f"STEELOS_SHREDDER:{device_id}:{timestamp}:{trigger_type}:CYANIDE_TABLET_DEPLOYED"
+        
+        # Generate cryptographic signature
+        signature = hmac.new(
+            b"STEELOS_SHREDDER_KILL_TOKEN_SECRET_2025_NSA_GRADE",
+            kill_token_data.encode(),
+            hashlib.sha256
+        ).hexdigest()
+        
+        kill_token = {
+            "command": "STEELOS_SHREDDER_KILL_TOKEN",
+            "device_id": device_id,
+            "wipe_type": "steelos_shredder_obliteration",
+            "timestamp": timestamp,
+            "trigger_type": trigger_type,
+            "reason": f"STEELOS-SHREDDER triggered by {trigger_type}",
+            "signature": signature,
+            "token_data": kill_token_data,
+            "auto_execute": True,
+            "show_cyanide_animation": True,
+            "kill_method": "steelos_shredder",
+            "bypass_user_confirmation": True,
+            "destruction_phases": [
+                "secure_store_annihilation",
+                "file_system_destruction", 
+                "memory_clearing",
+                "cache_data_destruction",
+                "metadata_destruction"
+            ]
+        }
+        
+        # Store kill token for device retrieval
+        if device_id not in security_engine.user_sessions:
+            security_engine.user_sessions[device_id] = {}
+            
+        security_engine.user_sessions[device_id]["steelos_shredder_token"] = kill_token
+        
+        logger.critical(f"💀 CYANIDE TABLET DEPLOYED: Device {device_id} - STEELOS-SHREDDER KILL TOKEN GENERATED")
+        logger.critical(f"🧬 DNA DESTRUCTION Signature: {signature}")
+        
+        return ShredderResponse(
+            shredder_activated=True,
+            kill_token_generated=True,
+            destruction_initiated=True,
+            message="CYANIDE TABLET DEPLOYED - STEELOS-SHREDDER ACTIVATED"
+        )
+        
+    except Exception as e:
+        logger.error(f"STEELOS-SHREDDER deployment failed: {e}")
+        return ShredderResponse(
+            shredder_activated=False,
+            kill_token_generated=False,
+            destruction_initiated=False,
+            message="STEELOS-SHREDDER deployment failed"
+        )
+
+@api_router.get("/steelos-shredder/status/{device_id}")
+async def get_shredder_status(request: Request, device_id: str):
+    """Check if STEELOS-SHREDDER kill token is waiting for device"""
+    try:
+        # REAL-WORLD rate limiting that works behind proxies
+        await rate_limit_middleware(request, "shredder_status")
+        
+        device_id = sanitize_input(device_id, max_length=100)
+        
+        if device_id in security_engine.user_sessions:
+            session = security_engine.user_sessions[device_id]
+            
+            # Check for STEELOS-SHREDDER kill token
+            if "steelos_shredder_token" in session:
+                kill_token = session["steelos_shredder_token"]
+                
+                logger.critical(f"💊 STEELOS-SHREDDER TOKEN RETRIEVED: Device {device_id}")
+                
+                # Remove token after retrieval (one-time use)
+                del session["steelos_shredder_token"]
+                
+                return {
+                    "shredder_pending": True,
+                    "kill_token": kill_token,
+                    "cyanide_deployed": True
+                }
+        
+        return {
+            "shredder_pending": False,
+            "kill_token": None,
+            "cyanide_deployed": False
+        }
+        
+    except Exception as e:
+        logger.error(f"STEELOS-SHREDDER status check failed: {e}")
+        return {
+            "shredder_pending": False,
+            "kill_token": None,
+            "cyanide_deployed": False,
+            "error": str(e)
+        }
+
 # WebSocket for real-time delivery
 @app.websocket("/api/ws")
 async def ws_endpoint(ws: WebSocket):
