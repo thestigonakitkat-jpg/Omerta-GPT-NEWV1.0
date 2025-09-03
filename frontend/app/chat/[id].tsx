@@ -12,6 +12,7 @@ import { useChatKeys } from "../../src/state/chatKeys";
 import { BlurView } from "expo-blur";
 import { connectWs, onWsMessage } from "../../src/utils/ws";
 import { signalManager, EncryptedMessage } from "../../src/utils/signalCrypto";
+import { aesGcmEncrypt, aesGcmDecrypt, getRandomBytesAsync } from "../../src/utils/crypto";
 
  type Msg = { id: string; text: string; me: boolean; ts: number; status: "sent"|"delivered"|"read" };
 
