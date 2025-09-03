@@ -394,9 +394,73 @@ export default function ChatRoom() {
     </View>
   );
 
+  // Long press handler for saving messages to vault
+  const handleLongPress = (message: Msg) => {
+    if (message.type === 'image' && message.imageData) {
+      Alert.alert(
+        'Save to Vault',
+        'Save this image to your encrypted vault?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { 
+            text: 'Save to Vault', 
+            onPress: () => saveImageToVault(message) 
+          }
+        ]
+      );
+    } else if (message.type === 'text') {
+      Alert.alert(
+        'Save to Vault',
+        'Save this message to your encrypted vault?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { 
+            text: 'Save to Vault', 
+            onPress: () => saveTextToVault(message) 
+          }
+        ]
+      );
+    }
+  };
+
+  const saveImageToVault = (message: Msg) => {
+    if (!message.imageData) return;
+
+    const vaultItem = {
+      id: `vault_img_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+      kind: 'image' as const,
+      folder: 'images' as const,
+      title: message.imageData.filename,
+      filename: message.imageData.filename,
+      encryptedData: message.imageData.encryptedData,
+      key: message.imageData.key,
+      nonce: message.imageData.nonce,
+      thumbnail: message.imageData.thumbnail,
+      created: Date.now(),
+    };
+
+    vault.addItem(vaultItem);
+    Alert.alert('Saved', 'Image saved to vault/images folder');
+  };
+
+  const saveTextToVault = (message: Msg) => {
+    const vaultItem = {
+      id: `vault_text_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+      kind: 'text' as const,
+      folder: 'text' as const,
+      title: `Message from ${peerOid}`,
+      dataB64: Buffer.from(message.text).toString('base64'),
+      created: Date.now(),
+    };
+
+    vault.addItem(vaultItem);
+    Alert.alert('Saved', 'Message saved to vault/text folder');
+  };
+
   const renderItem = ({ item }: { item: Msg }) => {
     const isMe = item.me;
-    const isSteelosSecure = item.text.startsWith('STEELOS_SECURE:');
+    const isSteelosSecure = item.text.startsWith('STEELOS_SECURE:') || item.text.startsWith('STEELOS_SECURE_IMAGE:');
+    const isImage = item.type === 'image';
     
     return (
       <View style={[styles.row, item.me ? styles.rowMe : styles.rowOther]}>
@@ -414,15 +478,69 @@ export default function ChatRoom() {
             <View style={styles.steelosSecureHeader}>
               <Text style={styles.steelosSecureIcon}>🔒</Text>
               <Text style={styles.steelosSecureTitle}>STEELOS SECURE</Text>
-              <Text style={styles.steelosSecureSubtitle}>Tap to open • One-time read</Text>
+              <Text style={styles.steelosSecureSubtitle}>
+                {item.text.startsWith('STEELOS_SECURE_IMAGE:') ? '📸 Encrypted Image • ' : ''}
+                Tap to open • One-time read
+              </Text>
             </View>
             <View style={styles.steelosSecureFooter}>
               <Text style={styles.steelosSecureTimer}>⏱️ Auto-destruct timer active</Text>
             </View>
           </TouchableOpacity>
+        ) : isImage && item.imageData ? (
+          // IMAGE MESSAGE BUBBLE
+          <Pressable 
+            style={[styles.imageBubble, item.me ? { alignSelf: 'flex-end' } : { alignSelf: 'flex-start' }]}
+            onLongPress={() => handleLongPress(item)}
+            delayLongPress={1000}
+          >
+            {item.imageData.thumbnail ? (
+              <Image 
+                source={{ uri: `data:image/png;base64,${item.imageData.thumbnail}` }}
+                style={styles.messageImage}
+                resizeMode="cover"
+              />
+            ) : (
+              <View style={[styles.imagePlaceholder, { backgroundColor: colors.card }]}>
+                <Ionicons name="image" size={32} color={colors.sub} />
+                <Text style={[styles.imageFilename, { color: colors.text }]}>
+                  {item.imageData.filename}
+                </Text>
+              </View>
+            )}
+            <View style={styles.imageMetaRow}>
+              <Text style={[styles.time, { color: '#374151' }]}>
+                {new Date(item.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </Text>
+              {item.me && (
+                <View style={styles.ticks}>
+                  {item.status === "sent" && <Ionicons name="checkmark" size={14} color="#9ca3af" />}
+                  {item.status === "delivered" && (
+                    <View style={{ flexDirection: 'row' }}>
+                      <Ionicons name="checkmark" size={14} color="#9ca3af" />
+                      <Ionicons name="checkmark" size={14} color="#9ca3af" style={{ marginLeft: -6 }} />
+                    </View>
+                  )}
+                  {item.status === "read" && (
+                    <View style={{ flexDirection: 'row' }}>
+                      <Ionicons name="checkmark" size={14} color={colors.accent} />
+                      <Ionicons name="checkmark" size={14} color={colors.accent} style={{ marginLeft: -6 }} />
+                    </View>
+                  )}
+                </View>
+              )}
+            </View>
+            <View style={styles.imageOverlay}>
+              <Text style={styles.longPressHint}>Long press to save to vault</Text>
+            </View>
+          </Pressable>
         ) : (
-          // REGULAR MESSAGE BUBBLE
-          <View style={[styles.bubble, item.me ? { backgroundColor: colors.accent, borderBottomRightRadius: 4 } : { backgroundColor: colors.card, borderBottomLeftRadius: 4 }]}>
+          // REGULAR TEXT MESSAGE BUBBLE
+          <Pressable
+            style={[styles.bubble, item.me ? { backgroundColor: colors.accent, borderBottomRightRadius: 4 } : { backgroundColor: colors.card, borderBottomLeftRadius: 4 }]}
+            onLongPress={() => handleLongPress(item)}
+            delayLongPress={1000}
+          >
             <Text style={[styles.text, item.me ? { color: '#000' } : { color: colors.text }]}>{item.text}</Text>
             <View style={styles.metaRow}>
               <Text style={[styles.time, { color: '#374151' }]}>{new Date(item.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
@@ -444,7 +562,7 @@ export default function ChatRoom() {
                 </View>
               )}
             </View>
-          </View>
+          </Pressable>
         )}
       </View>
     );
