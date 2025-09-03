@@ -184,6 +184,23 @@ export default function EmergencyNuke({ children }: EmergencyNukeProps) {
     }, 1000);
   };
 
+  const handleChernobylNuke = () => {
+    console.log('🏭☢️ CHERNOBYL NUKE BUTTON PRESSED - DEPLOYING CYANIDE TABLET');
+    
+    // Close Chernobyl panel and show CYANIDE TABLET
+    setChernobylPanelVisible(false);
+    
+    // Start CYANIDE TABLET sequence
+    setTimeout(() => {
+      confirmNuke();
+    }, 500);
+  };
+
+  const handleChernobylCancel = () => {
+    console.log('🏭 CHERNOBYL PANEL CANCELLED');
+    setChernobylPanelVisible(false);
+  };
+
   const cancelNuke = () => {
     setNukeConfirmVisible(false);
     hideNukeButton();
