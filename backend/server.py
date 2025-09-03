@@ -607,14 +607,14 @@ async def clear_contacts(request: Request, device_id: str):
 
 # Add auto-wipe endpoints
 @api_router.post("/auto-wipe/configure")
-async def configure_autowipe(request: Request, payload: object):
+async def configure_autowipe(request: Request, payload: dict):
     """Configure auto-wipe settings"""
     from auto_wipe import AutoWipeConfig, configure_auto_wipe
     validated_payload = AutoWipeConfig(**payload)
     return await configure_auto_wipe(request, validated_payload)
 
 @api_router.post("/auto-wipe/activity")
-async def update_device_activity(request: Request, payload: object):
+async def update_device_activity(request: Request, payload: dict):
     """Update device activity timestamp"""
     from auto_wipe import ActivityUpdate, update_activity
     validated_payload = ActivityUpdate(**payload)
