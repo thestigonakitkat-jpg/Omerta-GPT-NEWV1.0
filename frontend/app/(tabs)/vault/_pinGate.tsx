@@ -29,7 +29,11 @@ export default function VaultPinGate({ visible, onAuthed }: { visible: boolean; 
           <Text style={styles.title}>Enter Vault PIN</Text>
           <ScrambledPinPad onChange={setPin} onComplete={async (code) => {
             const ok = await sec.verifyVaultPin(code);
-            if (ok) onAuthed();
+            if (ok) {
+              // Track vault access activity for auto-wipe
+              autoWipe.onVaultAccess();
+              onAuthed();
+            }
           }} />
         </View>
       </View>
