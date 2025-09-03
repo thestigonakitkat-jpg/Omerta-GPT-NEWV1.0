@@ -1,10 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
-import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, TextInput, TouchableOpacity, FlatList, Pressable, Alert, Modal } from "react-native";
+import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, TextInput, TouchableOpacity, FlatList, Pressable, Alert, Modal, Image } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useContacts } from "../../src/state/contacts";
 import HandshakeBadge from "../../src/components/HandshakeBadge";
 import EmergencyNuke from "../../src/components/EmergencyNuke";
+import ImageHandler from "../../src/components/ImageHandler";
 import { useTheme } from "../../src/state/theme";
 import { getOrCreateOID } from "../../src/state/identity";
 import { pollEnvelopes, sendEnvelope, createNote } from "../../src/utils/api";
@@ -13,6 +14,8 @@ import { BlurView } from "expo-blur";
 import { connectWs, onWsMessage } from "../../src/utils/ws";
 import { signalManager, EncryptedMessage } from "../../src/utils/signalCrypto";
 import { aesGcmEncrypt, aesGcmDecrypt, getRandomBytesAsync } from "../../src/utils/crypto";
+import { EncryptedImage, imageProcessor } from "../../src/utils/imageProcessor";
+import { useVault } from "../../src/state/vault";
 
  type Msg = { id: string; text: string; me: boolean; ts: number; status: "sent"|"delivered"|"read" };
 
