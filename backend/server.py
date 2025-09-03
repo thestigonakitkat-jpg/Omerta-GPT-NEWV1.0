@@ -42,11 +42,11 @@ def sanitize_input(text: str, max_length: int = 10000) -> str:
     dangerous_patterns = [
         '<script', '</script', 'javascript:', 'onload=', 'onerror=', 'eval(', 'document.',
         'drop table', 'delete from', 'insert into', 'update set', 'union select',
-        'exec(', 'execute(', 'xp_', 'sp_'
+        'exec(', 'execute(', 'xp_', 'sp_', '../', '..\\', '/etc/passwd', 'drop table devices'
     ]
     
     # SQL injection specific patterns (more precise)
-    sql_patterns = [';--', '; --', '/*', '*/']
+    sql_patterns = [';--', '; --', '/*', '*/', '; drop table']
     
     text_lower = text.lower()
     
