@@ -112,7 +112,9 @@ export default function EmergencyNuke({ children }: EmergencyNukeProps) {
   };
 
   const handleNukePress = () => {
-    setNukeConfirmVisible(true);
+    console.log('🏭☢️ OPENING CHERNOBYL CONTROL PANEL');
+    setChernobylPanelVisible(true);
+    hideNukeButton();
   };
 
   const confirmNuke = async () => {
