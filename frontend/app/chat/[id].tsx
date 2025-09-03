@@ -17,7 +17,23 @@ import { aesGcmEncrypt, aesGcmDecrypt, getRandomBytesAsync } from "../../src/uti
 import { EncryptedImage, imageProcessor } from "../../src/utils/imageProcessor";
 import { useVault } from "../../src/state/vault";
 
- type Msg = { id: string; text: string; me: boolean; ts: number; status: "sent"|"delivered"|"read" };
+ type Msg = { 
+   id: string; 
+   text: string; 
+   me: boolean; 
+   ts: number; 
+   status: "sent"|"delivered"|"read";
+   type?: "text" | "image";
+   imageData?: {
+     encryptedData: string;
+     key: Uint8Array;
+     nonce: Uint8Array;
+     filename: string;
+     width: number;
+     height: number;
+     thumbnail?: string;
+   };
+ };
 
 export default function ChatRoom() {
   const { id } = useLocalSearchParams();
