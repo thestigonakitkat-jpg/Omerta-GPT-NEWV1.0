@@ -23,6 +23,18 @@ export function aesGcmDecrypt(ciphertextB64: string, key: Uint8Array, nonce: Uin
   return new TextDecoder().decode(pt);
 }
 
+// STEELOS SECURE compatible functions
+export async function aesGcmEncrypt(plaintext: Uint8Array, key: Uint8Array, nonce: Uint8Array): Promise<Uint8Array> {
+  return AES_GCM.encrypt(plaintext, key, nonce);
+}
+
+export async function aesGcmDecrypt(ciphertext: Uint8Array, key: Uint8Array, nonce: Uint8Array): Promise<Uint8Array> {
+  return AES_GCM.decrypt(ciphertext, key, nonce);
+}
+
+// Re-export getRandomBytesAsync for compatibility
+export { getRandomBytesAsync } from "expo-crypto";
+
 export function pbkdf2Sha256(passwordUtf8: string, salt: Uint8Array, iterations: number, dkLen: number = 32): Uint8Array {
   const pwd = new TextEncoder().encode(passwordUtf8);
   return PBKDF2_HMAC_SHA256.bytes(pwd, salt, iterations, dkLen);
