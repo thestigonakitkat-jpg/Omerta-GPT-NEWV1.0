@@ -20,7 +20,11 @@ export default function VaultScreen() {
   const [showCreds, setShowCreds] = useState(false);
   const [activeFolder, setActiveFolder] = useState<VaultFolder | null>(null);
   const [selectedItem, setSelectedItem] = useState<VaultItem | null>(null);
+  const [showContactsModal, setShowContactsModal] = useState(false);
+  const [contactsPassphrase, setContactsPassphrase] = useState("");
+  const [contactsPin, setContactsPin] = useState("");
   const vault = useVault();
+  const contacts = useContacts();
   const { colors } = useTheme();
 
   const openCreds = () => setShowCreds(true);
