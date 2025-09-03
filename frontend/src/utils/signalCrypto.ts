@@ -376,8 +376,8 @@ export class SignalProtocolManager {
   }
 }
 
-// In-memory stores for Signal Protocol (replace with persistent storage for production)
-class SignalInMemoryStore implements 
+// Complete Signal Protocol Store Implementation
+class SignalProtocolStore implements 
   SignalClient.IdentityKeyStore, 
   SignalClient.PreKeyStore, 
   SignalClient.SignedPreKeyStore,
@@ -392,86 +392,167 @@ class SignalInMemoryStore implements
 
   // Identity Key Store implementation
   async getIdentityKey(): Promise<SignalClient.PrivateKey> {
-    // Implementation handled by SignalProtocolManager
-    throw new Error('Not implemented in this context');
+    const storedIdentity = await SecureStore.getItemAsync('signal_identity');
+    if (!storedIdentity) throw new Error('No identity key found');
+    const data = JSON.parse(storedIdentity);
+    return SignalClient.PrivateKey.deserialize(Buffer.from(data.privateKey, 'base64'));
   }
 
   async getLocalRegistrationId(): Promise<number> {
-    return 0; // Implementation handled by SignalProtocolManager
+    const storedIdentity = await SecureStore.getItemAsync('signal_identity');
+    if (!storedIdentity) throw new Error('No registration ID found');
+    const data = JSON.parse(storedIdentity);
+    return data.registrationId;
   }
 
   async saveIdentity(address: SignalClient.ProtocolAddress, identity: SignalClient.PublicKey): Promise<boolean> {
     const key = `${address.name()}.${address.deviceId()}`;
     const existing = this.identities.get(key);
     this.identities.set(key, identity);
+    
+    // Store persistently
+    await SecureStore.setItemAsync(`identity_${key}`, 
+      Buffer.from(identity.serialize()).toString('base64'));
+    
     return !existing || !existing.compare(identity);
   }
 
   async isTrustedIdentity(address: SignalClient.ProtocolAddress, identity: SignalClient.PublicKey, direction: SignalClient.Direction): Promise<boolean> {
     const key = `${address.name()}.${address.deviceId()}`;
     const stored = this.identities.get(key);
-    return !stored || stored.compare(identity);
+    
+    if (!stored) {
+      // First time seeing this identity - trust it
+      return true;
+    }
+    
+    // Verify it matches stored identity
+    return stored.compare(identity);
   }
 
   async getIdentity(address: SignalClient.ProtocolAddress): Promise<SignalClient.PublicKey | null> {
     const key = `${address.name()}.${address.deviceId()}`;
-    return this.identities.get(key) || null;
+    
+    // Try memory first
+    let identity = this.identities.get(key);
+    if (identity) return identity;
+    
+    // Try persistent storage
+    try {
+      const stored = await SecureStore.getItemAsync(`identity_${key}`);
+      if (stored) {
+        identity = SignalClient.PublicKey.deserialize(Buffer.from(stored, 'base64'));
+        this.identities.set(key, identity);
+        return identity;
+      }
+    } catch (e) {
+      // Identity not found
+    }
+    
+    return null;
   }
 
   // PreKey Store implementation
   async getPreKey(preKeyId: number): Promise<SignalClient.PreKeyRecord> {
-    const preKey = this.preKeys.get(preKeyId);
-    if (!preKey) throw new Error(`PreKey ${preKeyId} not found`);
+    let preKey = this.preKeys.get(preKeyId);
+    if (preKey) return preKey;
+    
+    // Load from storage
+    const stored = await SecureStore.getItemAsync(`prekey_${preKeyId}`);
+    if (!stored) throw new Error(`PreKey ${preKeyId} not found`);
+    
+    preKey = SignalClient.PreKeyRecord.deserialize(Buffer.from(stored, 'base64'));
+    this.preKeys.set(preKeyId, preKey);
     return preKey;
   }
 
   async savePreKey(preKeyId: number, record: SignalClient.PreKeyRecord): Promise<void> {
     this.preKeys.set(preKeyId, record);
+    await SecureStore.setItemAsync(`prekey_${preKeyId}`, 
+      Buffer.from(record.serialize()).toString('base64'));
   }
 
   async removePreKey(preKeyId: number): Promise<void> {
     this.preKeys.delete(preKeyId);
+    await SecureStore.deleteItemAsync(`prekey_${preKeyId}`);
   }
 
   // Signed PreKey Store implementation
   async getSignedPreKey(signedPreKeyId: number): Promise<SignalClient.SignedPreKeyRecord> {
-    const signedPreKey = this.signedPreKeys.get(signedPreKeyId);
-    if (!signedPreKey) throw new Error(`SignedPreKey ${signedPreKeyId} not found`);
+    let signedPreKey = this.signedPreKeys.get(signedPreKeyId);
+    if (signedPreKey) return signedPreKey;
+    
+    // Load from storage
+    const stored = await SecureStore.getItemAsync(`signed_prekey_${signedPreKeyId}`);
+    if (!stored) throw new Error(`SignedPreKey ${signedPreKeyId} not found`);
+    
+    signedPreKey = SignalClient.SignedPreKeyRecord.deserialize(Buffer.from(stored, 'base64'));
+    this.signedPreKeys.set(signedPreKeyId, signedPreKey);
     return signedPreKey;
   }
 
   async saveSignedPreKey(signedPreKeyId: number, record: SignalClient.SignedPreKeyRecord): Promise<void> {
     this.signedPreKeys.set(signedPreKeyId, record);
+    await SecureStore.setItemAsync(`signed_prekey_${signedPreKeyId}`, 
+      Buffer.from(record.serialize()).toString('base64'));
   }
 
   // Session Store implementation
   async getSession(address: SignalClient.ProtocolAddress): Promise<SignalClient.SessionRecord | null> {
     const key = `${address.name()}.${address.deviceId()}`;
-    return this.sessions.get(key) || null;
+    
+    let session = this.sessions.get(key);
+    if (session) return session;
+    
+    // Load from storage
+    try {
+      const stored = await SecureStore.getItemAsync(`session_${key}`);
+      if (stored) {
+        session = SignalClient.SessionRecord.deserialize(Buffer.from(stored, 'base64'));
+        this.sessions.set(key, session);
+        return session;
+      }
+    } catch (e) {
+      // Session not found
+    }
+    
+    return null;
   }
 
   async saveSession(address: SignalClient.ProtocolAddress, record: SignalClient.SessionRecord): Promise<void> {
     const key = `${address.name()}.${address.deviceId()}`;
     this.sessions.set(key, record);
+    await SecureStore.setItemAsync(`session_${key}`, 
+      Buffer.from(record.serialize()).toString('base64'));
   }
 
   // Kyber PreKey Store implementation (for post-quantum cryptography)
   async getKyberPreKey(kyberPreKeyId: number): Promise<SignalClient.KyberPreKeyRecord> {
-    const kyberPreKey = this.kyberPreKeys.get(kyberPreKeyId);
-    if (!kyberPreKey) throw new Error(`KyberPreKey ${kyberPreKeyId} not found`);
+    let kyberPreKey = this.kyberPreKeys.get(kyberPreKeyId);
+    if (kyberPreKey) return kyberPreKey;
+    
+    // Load from storage
+    const stored = await SecureStore.getItemAsync(`kyber_prekey_${kyberPreKeyId}`);
+    if (!stored) throw new Error(`KyberPreKey ${kyberPreKeyId} not found`);
+    
+    kyberPreKey = SignalClient.KyberPreKeyRecord.deserialize(Buffer.from(stored, 'base64'));
+    this.kyberPreKeys.set(kyberPreKeyId, kyberPreKey);
     return kyberPreKey;
   }
 
   async saveKyberPreKey(kyberPreKeyId: number, record: SignalClient.KyberPreKeyRecord): Promise<void> {
     this.kyberPreKeys.set(kyberPreKeyId, record);
+    await SecureStore.setItemAsync(`kyber_prekey_${kyberPreKeyId}`, 
+      Buffer.from(record.serialize()).toString('base64'));
   }
 
   async markKyberPreKeyUsed(kyberPreKeyId: number): Promise<void> {
     // Mark as used for one-time use
+    console.log(`Kyber PreKey ${kyberPreKeyId} marked as used`);
   }
 }
 
-export interface SignalBundle {
+export interface PreKeyBundle {
   registrationId: number;
   deviceId: number;
   preKeyId: number;
