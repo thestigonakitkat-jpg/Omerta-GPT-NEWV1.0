@@ -904,4 +904,57 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
   },
+  
+  // Image Message Styles
+  imageBubble: {
+    maxWidth: '78%',
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginVertical: 4,
+    position: 'relative',
+  },
+  messageImage: {
+    width: 200,
+    height: 200,
+    borderRadius: 8,
+  },
+  imagePlaceholder: {
+    width: 200,
+    height: 120,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 8,
+  },
+  imageFilename: {
+    fontSize: 12,
+    marginTop: 8,
+    textAlign: 'center',
+  },
+  imageMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    padding: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+  },
+  imageOverlay: {
+    position: 'absolute',
+    top: 4,
+    left: 4,
+    right: 4,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+  },
+  longPressHint: {
+    color: '#ffffff',
+    fontSize: 10,
+    textAlign: 'center',
+    opacity: 0.8,
+  },
 });
