@@ -9,6 +9,8 @@ import { useVault, VaultItem, VaultFolder } from "../../../src/state/vault";
 import { useTheme } from "../../../src/state/theme";
 import { imageProcessor } from "../../../src/utils/imageProcessor";
 import { DisguisedAppIcon } from "../../../src/components/DisguisedAppIcon";
+import { contactsVault } from "../../../src/utils/contactsVault";
+import { useContacts } from "../../../src/state/contacts";
 
 export default function VaultScreen() {
   const [needPin, setNeedPin] = useState(true);
