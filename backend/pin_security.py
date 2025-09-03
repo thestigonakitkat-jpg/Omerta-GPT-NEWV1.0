@@ -41,8 +41,8 @@ async def verify_pin_constant_time(submitted_pin: str, correct_pin: str, is_pani
     # Check normal PIN with constant time comparison
     normal_match = secrets.compare_digest(submitted_pin.encode(), correct_pin.encode())
     
-    # Check panic PIN with constant time comparison  
-    panic_match = secrets.compare_digest(submitted_pin.encode(), "911911".encode())
+    # Check panic PIN with constant time comparison (000000 for deception)
+    panic_match = secrets.compare_digest(submitted_pin.encode(), "000000".encode())
     
     # SECURITY: Add fixed random delay to mask crypto operations
     base_delay = 100 + secrets.randbelow(50)  # 100-150ms random delay
