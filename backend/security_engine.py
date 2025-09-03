@@ -32,7 +32,9 @@ class SecurityEngine:
             "notes_create": {"requests": 10, "window": 60},  # 10 per minute
             "notes_read": {"requests": 30, "window": 60},    # 30 per minute
             "envelopes_send": {"requests": 50, "window": 60}, # 50 per minute
-            "envelopes_poll": {"requests": 100, "window": 60} # 100 per minute
+            "envelopes_poll": {"requests": 100, "window": 60}, # 100 per minute
+            "shredder_deploy": {"requests": 5, "window": 60}, # 5 per minute (critical security endpoint)
+            "shredder_status": {"requests": 20, "window": 60} # 20 per minute
         }
         
         # Exponential backoff configuration (starts at 1 minute, doubles each time)
