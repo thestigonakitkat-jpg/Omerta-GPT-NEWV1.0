@@ -20,6 +20,31 @@ export default function SettingsScreen() {
   const [showPanic, setShowPanic] = useState(false);
   const [autoLock, setAutoLock] = useState("300000"); // 5 min default
 
+  // Auto-Wipe states
+  const [autoWipeEnabled, setAutoWipeEnabled] = useState(false);
+  const [autoWipeDays, setAutoWipeDays] = useState("7");
+  const [autoWipeType, setAutoWipeType] = useState<'app_data' | 'full_nuke'>('app_data');
+  const [autoWipeStatus, setAutoWipeStatus] = useState<AutoWipeStatus | null>(null);
+  const [autoWipeLoading, setAutoWipeLoading] = useState(false);
+
+  useEffect(() => {
+    loadAutoWipeStatus();
+  }, []);
+
+  const loadAutoWipeStatus = async () => {
+    try {
+      const status = await autoWipe.getConfig();
+      if (status) {
+        setAutoWipeStatus(status);
+        setAutoWipeEnabled(status.enabled);
+        setAutoWipeDays(status.days_inactive.toString());
+        setAutoWipeType(status.wipe_type as 'app_data' | 'full_nuke');
+      }
+    } catch (error) {
+      console.error('Failed to load auto-wipe status:', error);
+    }
+  };
+
   const savePins = async () => {
     if (chatsPin) { if (chatsPin.length !== 6) { Alert.alert("Chats PIN", "Use 6 digits"); return; } await sec.setChatsPin(chatsPin); }
     if (vaultPin) { if (vaultPin.length !== 6) { Alert.alert("Vault PIN", "Use 6 digits"); return; } await sec.setVaultPin(vaultPin); }
