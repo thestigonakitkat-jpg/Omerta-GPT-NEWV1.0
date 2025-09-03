@@ -11,6 +11,7 @@ import { View, Text, TouchableOpacity, StyleSheet, Alert, Animated, Vibration } 
 import { useTheme } from '../state/theme';
 import { remoteSecurityManager } from '../utils/remoteSecurity';
 import CyanideTablet from './CyanideTablet';
+import ChernobylNukePanel from './ChernobylNukePanel';
 import { steelosShredder } from '../utils/steelosShredder';
 
 interface EmergencyNukeProps {
