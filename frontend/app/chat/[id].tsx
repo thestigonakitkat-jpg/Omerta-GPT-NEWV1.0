@@ -514,4 +514,50 @@ const styles = StyleSheet.create({
   banner: { flexDirection: 'row', alignItems: 'center', padding: 8, margin: 8, borderRadius: 10, borderWidth: 1, borderColor: '#1f2937' },
   bannerText: { marginLeft: 8, flex: 1 },
   bannerBtn: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, borderWidth: 1 },
+  
+  // STEELOS SECURE Badge Styles
+  steelosSecureBadge: {
+    maxWidth: '78%',
+    borderRadius: 12,
+    padding: 16,
+    marginVertical: 4,
+    borderWidth: 2,
+    borderColor: '#10b981',
+    shadowColor: '#10b981',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  steelosSecureHeader: {
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  steelosSecureIcon: {
+    fontSize: 24,
+    marginBottom: 4,
+  },
+  steelosSecureTitle: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '700',
+    letterSpacing: 1,
+    marginBottom: 2,
+  },
+  steelosSecureSubtitle: {
+    color: '#ffffff80',
+    fontSize: 11,
+    textAlign: 'center',
+  },
+  steelosSecureFooter: {
+    alignItems: 'center',
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#ffffff20',
+  },
+  steelosSecureTimer: {
+    color: '#ffffff60',
+    fontSize: 10,
+    fontStyle: 'italic',
+  },
 });
