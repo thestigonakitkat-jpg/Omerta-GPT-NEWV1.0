@@ -135,7 +135,7 @@ export default function SettingsScreen() {
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.bg }]}> 
+    <ScrollView style={[styles.container, { backgroundColor: colors.bg }]}> 
       <Text style={[styles.h1, { color: colors.text }]}>Security Settings</Text>
 
       <Text style={[styles.label, { color: colors.sub }]}>Chats PIN (6 digits)</Text>
@@ -167,6 +167,136 @@ export default function SettingsScreen() {
       <Text style={[styles.h1, { color: colors.text, marginTop: 16 }]}>Auto-lock Timeout (ms)</Text>
       <TextInput style={[styles.input, { borderColor: colors.border, color: colors.text }]} keyboardType="number-pad" value={autoLock} onChangeText={setAutoLock} />
       <TouchableOpacity style={[styles.btn, { backgroundColor: colors.accent }]} onPress={onAutoLockSave}><Text style={styles.btnText}>Save Auto-lock</Text></TouchableOpacity>
+
+      {/* Auto-Wipe Section */}
+      <View style={styles.autoWipeSection}>
+        <Text style={[styles.h1, { color: colors.text, marginTop: 16 }]}>⏰ Auto-Wipe (Unused Device)</Text>
+        <Text style={[styles.sectionSubtitle, { color: colors.sub }]}>
+          Automatically wipe device after period of inactivity for security
+        </Text>
+
+        {autoWipeStatus && (
+          <View style={[styles.statusCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={styles.statusRow}>
+              <Text style={[styles.statusLabel, { color: colors.sub }]}>Status:</Text>
+              <Text style={[styles.statusValue, { color: autoWipeStatus.enabled ? '#10b981' : colors.sub }]}>
+                {autoWipeStatus.enabled ? 'ENABLED' : 'DISABLED'}
+              </Text>
+            </View>
+            {autoWipeStatus.enabled && (
+              <>
+                <View style={styles.statusRow}>
+                  <Text style={[styles.statusLabel, { color: colors.sub }]}>Days until wipe:</Text>
+                  <Text style={[styles.statusValue, { 
+                    color: autoWipeStatus.days_until_wipe <= 2 ? '#ef4444' : 
+                           autoWipeStatus.days_until_wipe <= 5 ? '#f59e0b' : '#10b981' 
+                  }]}>
+                    {autoWipeStatus.days_until_wipe}
+                  </Text>
+                </View>
+                <View style={styles.statusRow}>
+                  <Text style={[styles.statusLabel, { color: colors.sub }]}>Wipe type:</Text>
+                  <Text style={[styles.statusValue, { 
+                    color: autoWipeStatus.wipe_type === 'full_nuke' ? '#ef4444' : '#3b82f6' 
+                  }]}>
+                    {autoWipeStatus.wipe_type === 'full_nuke' ? 'FULL NUKE 💀' : 'App Data 🧹'}
+                  </Text>
+                </View>
+                <View style={styles.statusRow}>
+                  <Text style={[styles.statusLabel, { color: colors.sub }]}>Last activity:</Text>
+                  <Text style={[styles.statusValue, { color: colors.text }]}>
+                    {new Date(autoWipeStatus.last_activity * 1000).toLocaleDateString()}
+                  </Text>
+                </View>
+              </>
+            )}
+          </View>
+        )}
+
+        <View style={styles.autoWipeControls}>
+          <View style={styles.switchRow}>
+            <Text style={[styles.label, { color: colors.text, flex: 1 }]}>Enable Auto-Wipe</Text>
+            <Switch
+              value={autoWipeEnabled}
+              onValueChange={setAutoWipeEnabled}
+              trackColor={{ false: colors.border, true: colors.accent }}
+              thumbColor={autoWipeEnabled ? '#ffffff' : colors.sub}
+            />
+          </View>
+
+          <Text style={[styles.label, { color: colors.sub }]}>Days inactive before wipe (1-14)</Text>
+          <TextInput 
+            style={[styles.input, { borderColor: colors.border, color: colors.text }]} 
+            keyboardType="number-pad" 
+            value={autoWipeDays} 
+            onChangeText={setAutoWipeDays}
+            maxLength={2}
+            editable={autoWipeEnabled}
+          />
+
+          <Text style={[styles.label, { color: colors.sub, marginTop: 12 }]}>Wipe Type</Text>
+          <View style={styles.wipeTypeButtons}>
+            <TouchableOpacity
+              style={[
+                styles.wipeTypeButton,
+                { 
+                  backgroundColor: autoWipeType === 'app_data' ? '#3b82f6' : colors.card,
+                  borderColor: colors.border
+                }
+              ]}
+              onPress={() => setAutoWipeType('app_data')}
+              disabled={!autoWipeEnabled}
+            >
+              <Ionicons name="apps" size={16} color={autoWipeType === 'app_data' ? '#fff' : colors.text} />
+              <Text style={[
+                styles.wipeTypeText,
+                { color: autoWipeType === 'app_data' ? '#fff' : colors.text }
+              ]}>
+                App Data Only
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.wipeTypeButton,
+                { 
+                  backgroundColor: autoWipeType === 'full_nuke' ? '#ef4444' : colors.card,
+                  borderColor: colors.border
+                }
+              ]}
+              onPress={() => setAutoWipeType('full_nuke')}
+              disabled={!autoWipeEnabled}
+            >
+              <Ionicons name="nuclear" size={16} color={autoWipeType === 'full_nuke' ? '#fff' : colors.text} />
+              <Text style={[
+                styles.wipeTypeText,
+                { color: autoWipeType === 'full_nuke' ? '#fff' : colors.text }
+              ]}>
+                FULL NUKE 💀
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {autoWipeType === 'full_nuke' && (
+            <View style={[styles.warningBox, { backgroundColor: '#fef2f2', borderColor: '#ef4444' }]}>
+              <Ionicons name="warning" size={16} color="#ef4444" />
+              <Text style={[styles.warningText, { color: '#dc2626' }]}>
+                DANGER: Full NUKE uses STEELOS-SHREDDER for complete data obliteration!
+              </Text>
+            </View>
+          )}
+
+          <TouchableOpacity 
+            style={[styles.btn, { backgroundColor: colors.accent, marginTop: 16 }]} 
+            onPress={onAutoWipeSave}
+            disabled={autoWipeLoading}
+          >
+            <Text style={styles.btnText}>
+              {autoWipeLoading ? 'Configuring...' : 'Save Auto-Wipe Settings'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
 
       <Text style={[styles.h1, { color: colors.text, marginTop: 16 }]}>Appearance</Text>
       <ModeRow />
