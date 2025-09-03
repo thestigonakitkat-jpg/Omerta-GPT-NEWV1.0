@@ -594,4 +594,83 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontStyle: 'italic',
   },
+  
+  // STEELOS SECURE Modal Styles
+  steelosModal: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  steelosModalContent: {
+    width: '90%',
+    maxWidth: 400,
+    borderRadius: 16,
+    padding: 24,
+    borderWidth: 2,
+    shadowColor: '#10b981',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 10,
+  },
+  steelosModalHeader: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  steelosModalIcon: {
+    fontSize: 32,
+    marginBottom: 8,
+  },
+  steelosModalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    letterSpacing: 1.5,
+    marginBottom: 4,
+  },
+  steelosModalSubtitle: {
+    fontSize: 12,
+    textAlign: 'center',
+    opacity: 0.8,
+  },
+  steelosModalMessage: {
+    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(16, 185, 129, 0.3)',
+  },
+  steelosModalText: {
+    fontSize: 16,
+    lineHeight: 24,
+    textAlign: 'center',
+  },
+  steelosModalTimer: {
+    alignItems: 'center',
+    marginBottom: 20,
+    padding: 12,
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.3)',
+  },
+  timerText: {
+    fontSize: 14,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  steelosModalClose: {
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  steelosModalCloseText: {
+    color: '#000',
+    fontSize: 16,
+    fontWeight: '700',
+  },
 });
