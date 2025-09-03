@@ -589,7 +589,7 @@ from auto_wipe import configure_auto_wipe, update_activity, check_auto_wipe_stat
 
 # Add contacts vault endpoints
 @api_router.post("/contacts-vault/store")
-async def store_contacts(request: Request, payload: object):
+async def store_contacts(request: Request, payload: dict):
     """Store contacts backup in vault"""
     from contacts_vault import ContactsVaultRequest, store_contacts_backup
     validated_payload = ContactsVaultRequest(**payload)
