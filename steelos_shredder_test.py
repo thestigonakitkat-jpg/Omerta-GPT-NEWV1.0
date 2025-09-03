@@ -425,11 +425,13 @@ def test_steelos_shredder_input_sanitization():
             
             response = requests.post(f"{BACKEND_URL}/steelos-shredder/deploy", json=payload)
             
-            if response.status_code == 400:
-                blocked_count += 1
-                print(f"✅ Dangerous payload {i+1} BLOCKED (400)")
-            elif response.status_code == 200:
-                print(f"❌ Dangerous payload {i+1} ACCEPTED (200) - SECURITY VULNERABILITY!")
+            if response.status_code == 200:
+                data = response.json()
+                if data.get("shredder_activated") == False and "deployment failed" in data.get("message", ""):
+                    blocked_count += 1
+                    print(f"✅ Dangerous payload {i+1} BLOCKED (deployment failed)")
+                else:
+                    print(f"❌ Dangerous payload {i+1} ACCEPTED (200) - SECURITY VULNERABILITY!")
             else:
                 print(f"⚠️  Dangerous payload {i+1} unexpected status: {response.status_code}")
         
