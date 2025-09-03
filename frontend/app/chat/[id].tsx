@@ -346,6 +346,54 @@ export default function ChatRoom() {
     );
   };
 
+  // Handle STEELOS SECURE message opening
+  const handleSteelosSecureOpen = async (message: Msg) => {
+    try {
+      console.log('🔓 STEELOS SECURE: Opening one-time message');
+      
+      // Extract STEELOS envelope from message
+      const steelosData = message.text.replace('STEELOS_SECURE:', '');
+      let steelosEnvelope;
+      
+      try {
+        // Try to decrypt with Sealed Sender first
+        const sealedMessage = Buffer.from(steelosData, 'base64');
+        const { plaintext } = await signalManager.receiveMessage(sealedMessage);
+        steelosEnvelope = JSON.parse(plaintext);
+      } catch (e) {
+        // Fallback to direct envelope parsing
+        steelosEnvelope = JSON.parse(steelosData);
+      }
+      
+      // LAYER 1: Decrypt THE BIRD (cryptgeon) wrapper
+      const cryptgeonBlob = new Uint8Array(Buffer.from(steelosEnvelope.cryptgeon_blob, 'base64'));
+      const ephemeralKey = new Uint8Array(Buffer.from(steelosEnvelope.ephemeral_key, 'base64'));
+      const nonce = new Uint8Array(Buffer.from(steelosEnvelope.nonce, 'base64'));
+      
+      const decryptedBytes = await aesGcmDecrypt(cryptgeonBlob, ephemeralKey, nonce);
+      const originalMessage = new TextDecoder().decode(decryptedBytes);
+      
+      console.log('✅ STEELOS SECURE: Message decrypted successfully');
+      
+      // Show decrypted message with timer
+      setSteelosSecureModal({
+        visible: true,
+        message: originalMessage,
+        timer: steelosEnvelope.expires_ttl || 30, // Default 30 seconds
+        messageId: message.id
+      });
+      
+      // PURGE FROM RAM: Remove message immediately after opening
+      setMessages(prev => prev.filter(m => m.id !== message.id));
+      
+      console.log('🗑️ STEELOS SECURE: Message purged from RAM after opening');
+      
+    } catch (error) {
+      console.error('STEELOS SECURE decryption failed:', error);
+      Alert.alert('STEELOS SECURE', 'Failed to decrypt message. It may have already been read or expired.');
+    }
+  };
+
   const KeyShareBanner = () => (
     needsKeyShare ? (
       <View style={styles.banner}>
