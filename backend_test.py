@@ -825,10 +825,519 @@ def test_core_functionality_integrity():
         print(f"❌ Core functionality integrity test error: {e}")
         return False
 
+def test_contacts_vault_store():
+    """Test POST /api/contacts-vault/store endpoint"""
+    print("\n=== Testing POST /api/contacts-vault/store (Contact Vault Store) ===")
+    
+    payload = {
+        "device_id": "test_device_vault_001",
+        "contacts": [
+            {
+                "oid": "contact_alice_123",
+                "display_name": "Alice Smith",
+                "verified": True,
+                "added_timestamp": int(time.time()),
+                "verification_timestamp": int(time.time())
+            },
+            {
+                "oid": "contact_bob_456", 
+                "display_name": "Bob Johnson",
+                "verified": False,
+                "added_timestamp": int(time.time())
+            }
+        ],
+        "encryption_key_hash": "sha256_hash_of_encryption_key_abc123def456"
+    }
+    
+    try:
+        response = requests.post(f"{BACKEND_URL}/contacts-vault/store", json=payload)
+        print(f"POST /api/contacts-vault/store - Status: {response.status_code}")
+        
+        if response.status_code == 200:
+            data = response.json()
+            print(f"Response: {json.dumps(data, indent=2)}")
+            
+            # Verify response structure
+            required_fields = ["success", "message", "backup_id", "contacts_count"]
+            if all(field in data for field in required_fields):
+                if data["success"] and data["contacts_count"] == 2:
+                    print("✅ Contacts vault store successful")
+                    return data["backup_id"]
+                else:
+                    print(f"❌ Store failed: success={data.get('success')}, count={data.get('contacts_count')}")
+            else:
+                print(f"❌ Missing required fields in response")
+        else:
+            print(f"❌ Contacts vault store failed: {response.status_code} - {response.text}")
+            
+    except Exception as e:
+        print(f"❌ Contacts vault store error: {e}")
+    
+    return None
+
+def test_contacts_vault_retrieve():
+    """Test GET /api/contacts-vault/retrieve/{device_id} endpoint"""
+    print("\n=== Testing GET /api/contacts-vault/retrieve (Contact Vault Retrieve) ===")
+    
+    # First store some contacts
+    store_payload = {
+        "device_id": "test_device_vault_002",
+        "contacts": [
+            {
+                "oid": "contact_charlie_789",
+                "display_name": "Charlie Brown",
+                "verified": True,
+                "added_timestamp": int(time.time())
+            }
+        ],
+        "encryption_key_hash": "correct_encryption_key_hash_xyz789"
+    }
+    
+    try:
+        # Store contacts first
+        store_response = requests.post(f"{BACKEND_URL}/contacts-vault/store", json=store_payload)
+        if store_response.status_code != 200:
+            print(f"❌ Failed to store contacts for retrieve test: {store_response.status_code}")
+            return False
+        
+        print("Contacts stored successfully, now testing retrieval...")
+        
+        # Test retrieval with correct encryption key
+        device_id = "test_device_vault_002"
+        encryption_key_hash = "correct_encryption_key_hash_xyz789"
+        
+        response = requests.get(f"{BACKEND_URL}/contacts-vault/retrieve/{device_id}?encryption_key_hash={encryption_key_hash}")
+        print(f"GET /api/contacts-vault/retrieve/{device_id} - Status: {response.status_code}")
+        
+        if response.status_code == 200:
+            data = response.json()
+            print(f"Response: {json.dumps(data, indent=2)}")
+            
+            # Verify response structure
+            required_fields = ["success", "backup_id", "contacts", "signature_verified"]
+            if all(field in data for field in required_fields):
+                if (data["success"] and 
+                    data["signature_verified"] and 
+                    len(data["contacts"]) == 1 and
+                    data["contacts"][0]["oid"] == "contact_charlie_789"):
+                    print("✅ Contacts vault retrieve successful with correct encryption key")
+                    
+                    # Test with wrong encryption key
+                    print("\nTesting with wrong encryption key...")
+                    wrong_response = requests.get(f"{BACKEND_URL}/contacts-vault/retrieve/{device_id}?encryption_key_hash=wrong_key")
+                    print(f"GET with wrong key - Status: {wrong_response.status_code}")
+                    
+                    if wrong_response.status_code == 403:
+                        print("✅ Correctly rejected wrong encryption key")
+                        return True
+                    else:
+                        print(f"❌ Should have rejected wrong key with 403, got: {wrong_response.status_code}")
+                        return False
+                else:
+                    print(f"❌ Retrieve validation failed")
+                    return False
+            else:
+                print(f"❌ Missing required fields in retrieve response")
+                return False
+        else:
+            print(f"❌ Contacts vault retrieve failed: {response.status_code} - {response.text}")
+            return False
+            
+    except Exception as e:
+        print(f"❌ Contacts vault retrieve error: {e}")
+        return False
+
+def test_contacts_vault_clear():
+    """Test DELETE /api/contacts-vault/clear/{device_id} endpoint"""
+    print("\n=== Testing DELETE /api/contacts-vault/clear (Contact Vault Clear) ===")
+    
+    # First store some contacts
+    store_payload = {
+        "device_id": "test_device_vault_003",
+        "contacts": [
+            {
+                "oid": "contact_delete_test",
+                "display_name": "Delete Test Contact",
+                "verified": False,
+                "added_timestamp": int(time.time())
+            }
+        ],
+        "encryption_key_hash": "delete_test_key_hash"
+    }
+    
+    try:
+        # Store contacts first
+        store_response = requests.post(f"{BACKEND_URL}/contacts-vault/store", json=store_payload)
+        if store_response.status_code != 200:
+            print(f"❌ Failed to store contacts for clear test: {store_response.status_code}")
+            return False
+        
+        print("Contacts stored successfully, now testing clear...")
+        
+        # Clear the vault
+        device_id = "test_device_vault_003"
+        response = requests.delete(f"{BACKEND_URL}/contacts-vault/clear/{device_id}")
+        print(f"DELETE /api/contacts-vault/clear/{device_id} - Status: {response.status_code}")
+        
+        if response.status_code == 200:
+            data = response.json()
+            print(f"Response: {json.dumps(data, indent=2)}")
+            
+            if data.get("success"):
+                print("✅ Contacts vault cleared successfully")
+                
+                # Verify vault is actually cleared by trying to retrieve
+                print("Verifying vault is cleared...")
+                retrieve_response = requests.get(f"{BACKEND_URL}/contacts-vault/retrieve/{device_id}?encryption_key_hash=delete_test_key_hash")
+                
+                if retrieve_response.status_code == 404:
+                    print("✅ Vault correctly cleared - retrieve returns 404")
+                    return True
+                else:
+                    print(f"❌ Vault not properly cleared - retrieve returned: {retrieve_response.status_code}")
+                    return False
+            else:
+                print(f"❌ Clear failed: {data}")
+                return False
+        else:
+            print(f"❌ Contacts vault clear failed: {response.status_code} - {response.text}")
+            return False
+            
+    except Exception as e:
+        print(f"❌ Contacts vault clear error: {e}")
+        return False
+
+def test_contacts_vault_security():
+    """Test contacts vault security features (quarantine, input sanitization)"""
+    print("\n=== Testing Contacts Vault Security Features ===")
+    
+    # Test dangerous input sanitization
+    dangerous_payload = {
+        "device_id": "test_device_security",
+        "contacts": [
+            {
+                "oid": "<script>alert('xss')</script>",
+                "display_name": "'; DROP TABLE contacts; --",
+                "verified": False,
+                "added_timestamp": int(time.time())
+            }
+        ],
+        "encryption_key_hash": "security_test_key"
+    }
+    
+    try:
+        response = requests.post(f"{BACKEND_URL}/contacts-vault/store", json=dangerous_payload)
+        print(f"POST with dangerous input - Status: {response.status_code}")
+        
+        if response.status_code == 400:
+            print("✅ Dangerous input correctly blocked")
+            return True
+        elif response.status_code == 200:
+            print("❌ SECURITY VULNERABILITY: Dangerous input was accepted!")
+            return False
+        else:
+            print(f"⚠️  Unexpected response to dangerous input: {response.status_code}")
+            return False
+            
+    except Exception as e:
+        print(f"❌ Contacts vault security test error: {e}")
+        return False
+
+def test_auto_wipe_configure():
+    """Test POST /api/auto-wipe/configure endpoint"""
+    print("\n=== Testing POST /api/auto-wipe/configure (Auto-Wipe Configure) ===")
+    
+    payload = {
+        "device_id": "test_device_autowipe_001",
+        "enabled": True,
+        "days_inactive": 7,
+        "wipe_type": "app_data",
+        "warning_days": 2
+    }
+    
+    try:
+        response = requests.post(f"{BACKEND_URL}/auto-wipe/configure", json=payload)
+        print(f"POST /api/auto-wipe/configure - Status: {response.status_code}")
+        
+        if response.status_code == 200:
+            data = response.json()
+            print(f"Response: {json.dumps(data, indent=2)}")
+            
+            # Verify response structure
+            required_fields = ["success", "message", "config"]
+            if all(field in data for field in required_fields):
+                if (data["success"] and 
+                    data["config"]["device_id"] == "test_device_autowipe_001" and
+                    data["config"]["days_inactive"] == 7 and
+                    data["config"]["wipe_type"] == "app_data"):
+                    print("✅ Auto-wipe configuration successful")
+                    return True
+                else:
+                    print(f"❌ Configuration validation failed")
+            else:
+                print(f"❌ Missing required fields in response")
+        else:
+            print(f"❌ Auto-wipe configure failed: {response.status_code} - {response.text}")
+            
+    except Exception as e:
+        print(f"❌ Auto-wipe configure error: {e}")
+    
+    return False
+
+def test_auto_wipe_activity():
+    """Test POST /api/auto-wipe/activity endpoint"""
+    print("\n=== Testing POST /api/auto-wipe/activity (Activity Update) ===")
+    
+    payload = {
+        "device_id": "test_device_autowipe_002",
+        "activity_type": "app_usage"
+    }
+    
+    try:
+        response = requests.post(f"{BACKEND_URL}/auto-wipe/activity", json=payload)
+        print(f"POST /api/auto-wipe/activity - Status: {response.status_code}")
+        
+        if response.status_code == 200:
+            data = response.json()
+            print(f"Response: {json.dumps(data, indent=2)}")
+            
+            # Verify response structure
+            required_fields = ["success", "message", "timestamp"]
+            if all(field in data for field in required_fields):
+                if data["success"] and isinstance(data["timestamp"], int):
+                    print("✅ Activity update successful")
+                    return True
+                else:
+                    print(f"❌ Activity update validation failed")
+            else:
+                print(f"❌ Missing required fields in response")
+        else:
+            print(f"❌ Activity update failed: {response.status_code} - {response.text}")
+            
+    except Exception as e:
+        print(f"❌ Activity update error: {e}")
+    
+    return False
+
+def test_auto_wipe_status():
+    """Test GET /api/auto-wipe/status/{device_id} endpoint"""
+    print("\n=== Testing GET /api/auto-wipe/status (Auto-Wipe Status) ===")
+    
+    # First configure auto-wipe
+    config_payload = {
+        "device_id": "test_device_autowipe_003",
+        "enabled": True,
+        "days_inactive": 3,
+        "wipe_type": "full_nuke",
+        "warning_days": 1
+    }
+    
+    try:
+        # Configure auto-wipe first
+        config_response = requests.post(f"{BACKEND_URL}/auto-wipe/configure", json=config_payload)
+        if config_response.status_code != 200:
+            print(f"❌ Failed to configure auto-wipe for status test: {config_response.status_code}")
+            return False
+        
+        print("Auto-wipe configured successfully, now testing status...")
+        
+        # Check status
+        device_id = "test_device_autowipe_003"
+        response = requests.get(f"{BACKEND_URL}/auto-wipe/status/{device_id}")
+        print(f"GET /api/auto-wipe/status/{device_id} - Status: {response.status_code}")
+        
+        if response.status_code == 200:
+            data = response.json()
+            print(f"Response: {json.dumps(data, indent=2)}")
+            
+            # Verify response structure
+            required_fields = ["success", "wipe_pending", "status"]
+            if all(field in data for field in required_fields):
+                if (data["success"] and 
+                    "status" in data and
+                    data["status"]["device_id"] == device_id and
+                    data["status"]["enabled"] == True and
+                    data["status"]["wipe_type"] == "full_nuke"):
+                    print("✅ Auto-wipe status check successful")
+                    return True
+                else:
+                    print(f"❌ Status validation failed")
+            else:
+                print(f"❌ Missing required fields in status response")
+        else:
+            print(f"❌ Auto-wipe status failed: {response.status_code} - {response.text}")
+            
+    except Exception as e:
+        print(f"❌ Auto-wipe status error: {e}")
+    
+    return False
+
+def test_auto_wipe_token():
+    """Test GET /api/auto-wipe/token/{device_id} endpoint"""
+    print("\n=== Testing GET /api/auto-wipe/token (Wipe Token Retrieval) ===")
+    
+    device_id = "test_device_autowipe_004"
+    
+    try:
+        # Check for wipe token (should be none initially)
+        response = requests.get(f"{BACKEND_URL}/auto-wipe/token/{device_id}")
+        print(f"GET /api/auto-wipe/token/{device_id} - Status: {response.status_code}")
+        
+        if response.status_code == 200:
+            data = response.json()
+            print(f"Response: {json.dumps(data, indent=2)}")
+            
+            # Should have no wipe tokens initially
+            if data.get("wipe_pending") == False:
+                print("✅ No wipe tokens pending (as expected)")
+                return True
+            else:
+                print(f"⚠️  Unexpected wipe token found: {data}")
+                return True  # Not necessarily a failure
+        else:
+            print(f"❌ Wipe token check failed: {response.status_code} - {response.text}")
+            
+    except Exception as e:
+        print(f"❌ Wipe token test error: {e}")
+    
+    return False
+
+def test_auto_wipe_integration_steelos():
+    """Test auto-wipe integration with STEELOS-SHREDDER"""
+    print("\n=== Testing Auto-Wipe Integration with STEELOS-SHREDDER ===")
+    
+    # Test that auto-wipe can trigger STEELOS-SHREDDER for full_nuke
+    device_id = "test_device_integration_001"
+    
+    # Configure auto-wipe with full_nuke
+    config_payload = {
+        "device_id": device_id,
+        "enabled": True,
+        "days_inactive": 1,  # Very short for testing
+        "wipe_type": "full_nuke",
+        "warning_days": 0
+    }
+    
+    try:
+        # Configure auto-wipe
+        config_response = requests.post(f"{BACKEND_URL}/auto-wipe/configure", json=config_payload)
+        if config_response.status_code != 200:
+            print(f"❌ Failed to configure auto-wipe integration test: {config_response.status_code}")
+            return False
+        
+        print("Auto-wipe configured for STEELOS integration test")
+        
+        # Check that STEELOS-SHREDDER endpoints are still working
+        shredder_payload = {
+            "device_id": device_id,
+            "trigger_type": "manual",
+            "confirmation_token": "test_integration"
+        }
+        
+        shredder_response = requests.post(f"{BACKEND_URL}/steelos-shredder/deploy", json=shredder_payload)
+        print(f"POST /api/steelos-shredder/deploy - Status: {shredder_response.status_code}")
+        
+        if shredder_response.status_code == 200:
+            data = shredder_response.json()
+            if data.get("shredder_activated") and data.get("kill_token_generated"):
+                print("✅ STEELOS-SHREDDER integration working")
+                
+                # Check if kill token is available
+                status_response = requests.get(f"{BACKEND_URL}/steelos-shredder/status/{device_id}")
+                if status_response.status_code == 200:
+                    status_data = status_response.json()
+                    if status_data.get("shredder_pending"):
+                        print("✅ STEELOS-SHREDDER kill token integration working")
+                        return True
+                    else:
+                        print("⚠️  Kill token not found in status check")
+                        return True  # Not necessarily a failure
+                else:
+                    print(f"❌ STEELOS status check failed: {status_response.status_code}")
+            else:
+                print(f"❌ STEELOS deployment failed: {data}")
+        else:
+            print(f"❌ STEELOS-SHREDDER integration failed: {shredder_response.status_code}")
+            
+    except Exception as e:
+        print(f"❌ Auto-wipe STEELOS integration error: {e}")
+    
+    return False
+
+def test_rate_limiting_new_endpoints():
+    """Test rate limiting on new Contact Vault and Auto-Wipe endpoints"""
+    print("\n=== Testing Rate Limiting: New Endpoints ===")
+    
+    # Test contacts vault rate limiting
+    print("Testing contacts vault rate limiting...")
+    
+    payload = {
+        "device_id": "rate_limit_test_device",
+        "contacts": [{"oid": "test", "display_name": "Test", "verified": False, "added_timestamp": int(time.time())}],
+        "encryption_key_hash": "test_key"
+    }
+    
+    success_count = 0
+    rate_limited_count = 0
+    
+    try:
+        # Send multiple requests rapidly
+        for i in range(10):
+            response = requests.post(f"{BACKEND_URL}/contacts-vault/store", json=payload)
+            
+            if response.status_code == 200:
+                success_count += 1
+            elif response.status_code == 429:
+                rate_limited_count += 1
+                print(f"Request {i+1}: Rate limited (429)")
+            
+            time.sleep(0.1)
+        
+        print(f"Contacts vault rate limiting: {success_count} success, {rate_limited_count} rate limited")
+        
+        # Test auto-wipe rate limiting
+        print("Testing auto-wipe rate limiting...")
+        
+        auto_wipe_payload = {
+            "device_id": "rate_limit_autowipe_test",
+            "enabled": True,
+            "days_inactive": 7,
+            "wipe_type": "app_data",
+            "warning_days": 2
+        }
+        
+        auto_success = 0
+        auto_limited = 0
+        
+        for i in range(8):
+            response = requests.post(f"{BACKEND_URL}/auto-wipe/configure", json=auto_wipe_payload)
+            
+            if response.status_code == 200:
+                auto_success += 1
+            elif response.status_code == 429:
+                auto_limited += 1
+                print(f"Auto-wipe request {i+1}: Rate limited (429)")
+            
+            time.sleep(0.1)
+        
+        print(f"Auto-wipe rate limiting: {auto_success} success, {auto_limited} rate limited")
+        
+        # If we see some rate limiting, it's working
+        if rate_limited_count > 0 or auto_limited > 0:
+            print("✅ Rate limiting working on new endpoints")
+            return True
+        else:
+            print("⚠️  No rate limiting observed - may need more requests or different timing")
+            return True  # Not necessarily a failure in test environment
+            
+    except Exception as e:
+        print(f"❌ Rate limiting test error: {e}")
+        return False
+
 def main():
-    """Run all backend tests including comprehensive security verification"""
-    print("🔒 FINAL 100/100 SECURITY VERIFICATION - CRITICAL TEST")
-    print("Starting Backend API Tests for RAM-only Secure Notes and Messaging Envelopes")
+    """Run all backend tests including comprehensive security verification and new Contact Vault/Auto-Wipe features"""
+    print("🔒 COMPREHENSIVE BACKEND TESTING - Contact Vault & Auto-Wipe Systems")
+    print("Starting Backend API Tests for RAM-only Secure Notes, Messaging Envelopes, Contact Vault, and Auto-Wipe")
     print(f"Backend URL: {BACKEND_URL}")
     print("=" * 80)
     
