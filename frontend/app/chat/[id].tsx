@@ -134,11 +134,11 @@ export default function ChatRoom() {
         sealedSenderCiphertext = JSON.stringify(steelosEnvelope);
       }
       
-      // Send the double-layer encrypted STEELOS SECURE message
+      // Send the double-layer encrypted STEELOS SECURE message with prefix
       await sendEnvelope({ 
         to_oid: peerOid, 
         from_oid: from, 
-        ciphertext: sealedSenderCiphertext 
+        ciphertext: `STEELOS_SECURE:${sealedSenderCiphertext}` // Add prefix for badge detection
       });
       
       console.log('🎯 STEELOS SECURE: Double-layer message delivered (THE BIRD + SEALED SENDER)');
