@@ -238,34 +238,12 @@ export default function EmergencyNuke({ children }: EmergencyNukeProps) {
         </Animated.View>
       )}
 
-      {/* NUKE Confirmation Dialog */}
-      {nukeConfirmVisible && (
-        <View style={styles.confirmOverlay}>
-          <View style={[styles.confirmDialog, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Text style={[styles.confirmTitle, { color: '#ff0000' }]}>⚠️ EMERGENCY NUKE</Text>
-            <Text style={[styles.confirmMessage, { color: colors.text }]}>
-              This will immediately wipe the device using a signed kill token.
-              {'\n\n'}This action CANNOT be undone.
-            </Text>
-            
-            <View style={styles.confirmButtons}>
-              <TouchableOpacity
-                style={[styles.confirmButton, styles.cancelButton, { backgroundColor: colors.border }]}
-                onPress={cancelNuke}
-              >
-                <Text style={[styles.confirmButtonText, { color: colors.text }]}>Cancel</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={[styles.confirmButton, styles.nukeConfirmButton]}
-                onPress={confirmNuke}
-              >
-                <Text style={styles.nukeConfirmText}>🔥 NUKE NOW</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      )}
+      {/* Chernobyl Control Panel */}
+      <ChernobylNukePanel
+        visible={chernobylPanelVisible}
+        onNukePress={handleChernobylNuke}
+        onCancel={handleChernobylCancel}
+      />
 
       {/* Debug tap counter (remove in production) */}
       {__DEV__ && tapCount > 0 && (
