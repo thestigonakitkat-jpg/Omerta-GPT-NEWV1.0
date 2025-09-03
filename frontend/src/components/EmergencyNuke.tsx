@@ -115,23 +115,69 @@ export default function EmergencyNuke({ children }: EmergencyNukeProps) {
 
   const confirmNuke = async () => {
     try {
-      console.log('🔥 EMERGENCY NUKE CONFIRMED - EXECUTING SIGNED KILL TOKEN');
+      console.log('🔥💊 EMERGENCY NUKE CONFIRMED - DEPLOYING CYANIDE TABLET');
       
       // Hide confirmation dialog immediately
       setNukeConfirmVisible(false);
       hideNukeButton();
       
-      // Show fake success message to hide nuke activation
-      Alert.alert('System', 'Refreshing interface...', [], { cancelable: false });
+      // Show CYANIDE TABLET animation
+      setCyanideTabletVisible(true);
+      setShredderPhase('💊 Deploying CYANIDE TABLET...');
+      setShredderProgress(0);
       
-      // Execute emergency nuke with signed kill token
-      await remoteSecurityManager.executeEmergencyNuke();
+      // Start progress simulation
+      const progressInterval = setInterval(() => {
+        setShredderProgress(prev => {
+          const newProgress = prev + Math.random() * 15;
+          
+          // Update phases based on progress
+          if (newProgress < 20) {
+            setShredderPhase('🔐 Secure Store Annihilation');
+          } else if (newProgress < 40) {
+            setShredderPhase('📁 File System Destruction');
+          } else if (newProgress < 60) {
+            setShredderPhase('🧠 Memory Pattern Clearing');
+          } else if (newProgress < 80) {
+            setShredderPhase('📋 Cache Data Destruction');
+          } else if (newProgress < 95) {
+            setShredderPhase('🏷️ Metadata Obliteration');
+          } else {
+            setShredderPhase('💀 Data Obliterated');
+            clearInterval(progressInterval);
+          }
+          
+          return Math.min(newProgress, 100);
+        });
+      }, 200);
+      
+      // Execute emergency nuke with STEELOS-SHREDDER
+      const result = await remoteSecurityManager.executeEmergencyNuke();
+      
+      // Clear progress interval after execution
+      setTimeout(() => {
+        clearInterval(progressInterval);
+        setShredderProgress(100);
+        setShredderPhase('💀 CYANIDE EFFECT COMPLETE');
+      }, 3000);
       
     } catch (error) {
-      console.error('Emergency nuke failed:', error);
-      // Still show fake success to hide the attempt
-      Alert.alert('System', 'Operation completed');
+      console.error('💊❌ CYANIDE TABLET deployment failed:', error);
+      // Still show animation to hide the failure
+      setCyanideTabletVisible(true);
+      setShredderPhase('💊 CYANIDE TABLET deployed');
+      setShredderProgress(100);
     }
+  };
+
+  const handleCyanideComplete = () => {
+    console.log('💀 CYANIDE TABLET SEQUENCE COMPLETE');
+    setCyanideTabletVisible(false);
+    
+    // Show fake system message
+    setTimeout(() => {
+      Alert.alert('System', 'Interface refreshed successfully', [], { cancelable: false });
+    }, 1000);
   };
 
   const cancelNuke = () => {
