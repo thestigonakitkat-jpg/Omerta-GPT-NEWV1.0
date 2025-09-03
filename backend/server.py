@@ -272,16 +272,21 @@ async def create_note(request: Request, payload: NoteCreate):
     # Sanitize input
     sanitized_ciphertext = sanitize_input(payload.ciphertext, max_length=50000)  # Allow larger encrypted content
     
+    # CRITICAL: Enforce 1-time read only policy
+    if payload.read_limit != 1:
+        raise HTTPException(status_code=400, detail="Read limit must be 1 (one-time read only)")
+    
     note_id = str(uuid.uuid4())
     note = RamNote(
         note_id=note_id,
         ciphertext=sanitized_ciphertext,
         meta=payload.meta,
-        read_limit=payload.read_limit,
+        read_limit=1,  # CRITICAL: Always 1-time read only, link purged after single read
         ttl_seconds=payload.ttl_seconds,
     )
     NOTES_STORE[note_id] = note
-    return NoteCreateResponse(id=note_id, expires_at=note.expires_at, views_left=note.views_left)
+    logger.info(f"Created 1-TIME READ secure note {note_id}, expires at {note.expires_at}, PURGES AFTER SINGLE READ")
+    return NoteCreateResponse(id=note_id, expires_at=note.expires_at, views_left=1)
 
 @api_router.get("/notes/{note_id}")
 async def read_note(request: Request, note_id: str):
