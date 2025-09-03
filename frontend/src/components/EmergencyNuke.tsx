@@ -10,6 +10,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert, Animated, Vibration } from 'react-native';
 import { useTheme } from '../state/theme';
 import { remoteSecurityManager } from '../utils/remoteSecurity';
+import CyanideTablet from './CyanideTablet';
+import { steelosShredder } from '../utils/steelosShredder';
 
 interface EmergencyNukeProps {
   children: React.ReactNode;
