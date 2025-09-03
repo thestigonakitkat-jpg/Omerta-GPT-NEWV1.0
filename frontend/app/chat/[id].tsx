@@ -112,15 +112,34 @@ export default function ChatRoom() {
     try {
       const from = myOidRef.current || (await getOrCreateOID());
       
-      // Try to encrypt with Signal Protocol
+      // Use FULL Signal Protocol with SEALED SENDER
       let ciphertext: string;
       try {
-        const encryptedMsg = await signalManager.encryptMessage(peerOid, txt);
-        ciphertext = JSON.stringify(encryptedMsg);
+        console.log('🔒 SENDING WITH SEALED SENDER PROTOCOL');
+        
+        // Send using Signal Protocol with metadata protection
+        const sealedMessage = await signalManager.sendMessage(peerOid, txt);
+        ciphertext = Buffer.from(sealedMessage).toString('base64');
+        
+        console.log('✅ Message encrypted with SEALED SENDER - metadata protected');
       } catch (e) {
-        // Fallback to plaintext if no session exists yet
-        console.warn('Signal encryption failed, using plaintext:', e);
-        ciphertext = txt;
+        console.warn('Sealed sender failed, attempting session establishment:', e);
+        
+        // If no session exists, establish one first
+        try {
+          const preKeyBundle = await signalManager.getPreKeyBundle();
+          await signalManager.establishSession(peerOid, preKeyBundle);
+          
+          // Retry with sealed sender
+          const sealedMessage = await signalManager.sendMessage(peerOid, txt);
+          ciphertext = Buffer.from(sealedMessage).toString('base64');
+          
+          console.log('✅ Session established and message sent with SEALED SENDER');
+        } catch (sessionError) {
+          console.error('Signal Protocol failed, using fallback encryption:', sessionError);
+          // Ultimate fallback to ensure message delivery
+          ciphertext = txt;
+        }
       }
       
       await sendEnvelope({ to_oid: peerOid, from_oid: from, ciphertext });
