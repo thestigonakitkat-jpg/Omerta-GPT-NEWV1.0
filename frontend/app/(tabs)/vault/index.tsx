@@ -407,6 +407,27 @@ export default function VaultScreen() {
             Restore from Backup
           </Text>
         </TouchableOpacity>
+
+        {/* Contacts Vault Section */}
+        <View style={styles.contactsVaultSection}>
+          <Text style={[styles.sectionTitle, { color: colors.text, marginTop: 16 }]}>
+            📇 Contacts Vault
+          </Text>
+          <Text style={[styles.sectionSubtitle, { color: colors.sub }]}>
+            Secure backup & restore of OMERTA IDs with quarantine protection
+          </Text>
+          
+          <TouchableOpacity 
+            disabled={busy} 
+            style={[styles.settingButton, { backgroundColor: '#10b981', marginTop: 8 }]} 
+            onPress={() => setShowContactsModal(true)}
+          >
+            <Ionicons name="people" size={20} color="#000" />
+            <Text style={styles.settingButtonText}>
+              {busy ? 'Working...' : 'Manage Contacts Vault'}
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Export Modal */}
