@@ -252,6 +252,14 @@ export default function EmergencyNuke({ children }: EmergencyNukeProps) {
           <Text style={styles.debugText}>{tapCount}/7 taps</Text>
         </View>
       )}
+
+      {/* CYANIDE TABLET Animation */}
+      <CyanideTablet
+        visible={cyanideTabletVisible}
+        onComplete={handleCyanideComplete}
+        progress={shredderProgress}
+        phase={shredderPhase}
+      />
     </View>
   );
 }
