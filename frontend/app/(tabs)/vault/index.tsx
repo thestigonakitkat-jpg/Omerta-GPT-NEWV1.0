@@ -84,6 +84,64 @@ export default function VaultScreen() {
     }
   };
 
+  // Contacts Vault Functions
+  const onExportContacts = async () => {
+    try {
+      if (!contactsPassphrase || contactsPassphrase.length < 16) {
+        Alert.alert('Invalid Passphrase', 'Passphrase must be at least 16 characters');
+        return;
+      }
+      if (!contactsPin || contactsPin.length !== 6) {
+        Alert.alert('Invalid PIN', 'PIN must be exactly 6 digits');
+        return;
+      }
+
+      setBusy(true);
+      await contactsVault.exportContactsToVault(contacts.verified, contactsPassphrase, contactsPin);
+      setContactsPassphrase("");
+      setContactsPin("");
+      setShowContactsModal(false);
+    } catch (error) {
+      console.error('Contacts export failed:', error);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onImportContacts = async () => {
+    try {
+      if (!contactsPassphrase || contactsPassphrase.length < 16) {
+        Alert.alert('Invalid Passphrase', 'Passphrase must be at least 16 characters');
+        return;
+      }
+      if (!contactsPin || contactsPin.length !== 6) {
+        Alert.alert('Invalid PIN', 'PIN must be exactly 6 digits');
+        return;
+      }
+
+      setBusy(true);
+      const importedContacts = await contactsVault.importContactsFromVault(contactsPassphrase, contactsPin);
+      
+      // Merge with existing contacts
+      const mergedContacts = contactsVault.mergeContactsWithExisting(contacts.verified, importedContacts);
+      
+      // Update contacts store
+      for (const [oid, verified] of Object.entries(mergedContacts)) {
+        if (verified) {
+          contacts.markVerified(oid);
+        }
+      }
+
+      setContactsPassphrase("");
+      setContactsPin("");
+      setShowContactsModal(false);
+    } catch (error) {
+      console.error('Contacts import failed:', error);
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const openFolder = (folder: VaultFolder) => {
     setActiveFolder(folder);
   };
