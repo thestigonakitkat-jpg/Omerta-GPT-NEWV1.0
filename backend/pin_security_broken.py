@@ -5,14 +5,11 @@ import time
 import secrets
 from datetime import datetime, timedelta
 from typing import Dict, Optional
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Depends, Request
 from pydantic import BaseModel
 
 # Import from main security engine
-from security_engine import security_engine, brute_force_protection
-import logging
-
-logger = logging.getLogger(__name__)
+from security_engine import SecurityEngine, get_security_engine
 
 router = APIRouter()
 
@@ -108,7 +105,8 @@ async def generate_signed_kill_token(device_id: str, reason: str) -> dict:
 @router.post("/verify", response_model=PinResponse)
 async def verify_pin(
     attempt: PinAttempt,
-    request: Request
+    request: Request,
+    security_engine: SecurityEngine = Depends(get_security_engine)
 ):
     """
     🔒 NSA-GRADE PIN VERIFICATION with constant-time anti-timing protection
@@ -143,6 +141,9 @@ async def verify_pin(
     
     if is_panic:
         # 🚨 PANIC PIN DETECTED - SILENT WIPE PROTOCOL
+        import logging
+        logger = logging.getLogger(__name__)
+        
         logger.critical(f"PANIC PIN DETECTED: Device {attempt.device_id} - GENERATING SIGNED KILL TOKEN FOR AUTOMATIC EXECUTION")
         
         # Generate signed kill token for automatic execution
@@ -199,6 +200,8 @@ async def verify_pin(
             lock_until = time.time() + (penalty_minutes * 60)
             attempts_data["locked_until"] = lock_until
             
+            import logging
+            logger = logging.getLogger(__name__)
             logger.warning(f"BRUTE FORCE ATTACK: Client {client_id} blocked for {penalty_minutes} minutes after {attempts_data['attempts']} attempts")
             
             remaining_attempts = 0
