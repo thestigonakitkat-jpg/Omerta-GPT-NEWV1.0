@@ -8,7 +8,8 @@ export async function randomBytes(len: number): Promise<Uint8Array> {
   return Uint8Array.from(b);
 }
 
-export async function aesGcmEncrypt(plaintextUtf8: string): Promise<{ key: Uint8Array; nonce: Uint8Array; ciphertextB64: string }>{
+// Legacy string-based encryption (for backward compatibility)
+export async function aesGcmEncryptString(plaintextUtf8: string): Promise<{ key: Uint8Array; nonce: Uint8Array; ciphertextB64: string }>{
   const key = await randomBytes(32); // 256-bit
   const nonce = await randomBytes(12); // 96-bit
   const pt = new TextEncoder().encode(plaintextUtf8);
@@ -17,13 +18,13 @@ export async function aesGcmEncrypt(plaintextUtf8: string): Promise<{ key: Uint8
   return { key, nonce, ciphertextB64: b64 };
 }
 
-export function aesGcmDecrypt(ciphertextB64: string, key: Uint8Array, nonce: Uint8Array): string {
+export function aesGcmDecryptString(ciphertextB64: string, key: Uint8Array, nonce: Uint8Array): string {
   const ct = toByteArray(ciphertextB64);
   const pt = AES_GCM.decrypt(ct, key, nonce);
   return new TextDecoder().decode(pt);
 }
 
-// STEELOS SECURE compatible functions
+// STEELOS SECURE compatible functions (primary interface)
 export async function aesGcmEncrypt(plaintext: Uint8Array, key: Uint8Array, nonce: Uint8Array): Promise<Uint8Array> {
   return AES_GCM.encrypt(plaintext, key, nonce);
 }
