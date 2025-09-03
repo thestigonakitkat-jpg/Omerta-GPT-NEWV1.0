@@ -324,4 +324,73 @@ const styles = StyleSheet.create({
   eye: { position: 'absolute', right: 12, top: 14 },
   btn: { marginTop: 12, paddingVertical: 12, borderRadius: 10, alignItems: "center" },
   btnText: { color: "#000", fontWeight: "800" },
+  autoWipeSection: {
+    marginTop: 16,
+  },
+  sectionSubtitle: {
+    fontSize: 14,
+    marginBottom: 12,
+    lineHeight: 20,
+  },
+  statusCard: {
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 16,
+  },
+  statusRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  statusLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  statusValue: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  autoWipeControls: {
+    marginTop: 8,
+  },
+  switchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  wipeTypeButtons: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 8,
+  },
+  wipeTypeButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    gap: 6,
+  },
+  wipeTypeText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  warningBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    marginTop: 8,
+    gap: 8,
+  },
+  warningText: {
+    fontSize: 13,
+    fontWeight: '600',
+    flex: 1,
+  },
 });
