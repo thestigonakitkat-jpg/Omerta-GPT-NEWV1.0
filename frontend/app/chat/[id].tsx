@@ -453,6 +453,40 @@ export default function ChatRoom() {
                 onChangeText={setInput}
                 multiline
               />
+              {/* STEELOS SECURE Timer Modal */}
+              {steelosSecureModal.visible && (
+                <Modal transparent animationType="fade">
+                  <View style={styles.steelosModal}>
+                    <View style={[styles.steelosModalContent, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                      <View style={styles.steelosModalHeader}>
+                        <Text style={styles.steelosModalIcon}>🔓</Text>
+                        <Text style={[styles.steelosModalTitle, { color: colors.text }]}>STEELOS SECURE</Text>
+                        <Text style={[styles.steelosModalSubtitle, { color: colors.sub }]}>Message decrypted • Auto-destruct active</Text>
+                      </View>
+                      
+                      <View style={styles.steelosModalMessage}>
+                        <Text style={[styles.steelosModalText, { color: colors.text }]}>
+                          {steelosSecureModal.message}
+                        </Text>
+                      </View>
+                      
+                      <View style={styles.steelosModalTimer}>
+                        <Text style={[styles.timerText, { color: colors.accent }]}>
+                          ⏱️ Auto-destruct in {steelosSecureModal.timer}s
+                        </Text>
+                      </View>
+                      
+                      <TouchableOpacity 
+                        style={[styles.steelosModalClose, { backgroundColor: colors.accent }]}
+                        onPress={() => setSteelosSecureModal({ visible: false, message: '', timer: 0, messageId: '' })}
+                      >
+                        <Text style={styles.steelosModalCloseText}>🗑️ Destroy Now</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </Modal>
+              )}
+
               {privacyTyping && (
                 <Pressable style={styles.blurWrap}>
                   <BlurView intensity={60} tint="dark" style={styles.blur} />
