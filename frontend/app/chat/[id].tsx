@@ -41,70 +41,23 @@ export default function ChatRoom() {
 
   useEffect(() => { contacts.init?.(); }, []);
   useEffect(() => { scrollToEnd(); }, [messages.length]);
+  // STEELOS SECURE Auto-destruct timer
   useEffect(() => {
-    (async () => { 
-      myOidRef.current = await getOrCreateOID(); 
-      connectWs(myOidRef.current); 
-      
-      // Initialize Signal Protocol with FULL implementation
-      await signalManager.initialize();
-      console.log('🔒 Signal Protocol with SEALED SENDER initialized');
-    })();
-    const off = onWsMessage((data) => {
-      if (data?.messages?.length) {
-        setMessages((prev) => {
-          const next = [...prev];
-          data.messages.forEach(async (m: any) => {
-            if (peerOid && m.from_oid !== peerOid) return;
-            
-            try {
-              // Try to decrypt with SEALED SENDER Signal Protocol
-              console.log('🔓 Attempting SEALED SENDER decryption');
-              const sealedMessage = Buffer.from(m.ciphertext, 'base64');
-              const { plaintext, senderOid } = await signalManager.receiveMessage(sealedMessage);
-              
-              console.log(`✅ SEALED SENDER: Message decrypted from ${senderOid} (metadata protected)`);
-              
-              next.push({ 
-                id: m.id, 
-                text: plaintext, 
-                me: false, 
-                ts: Date.parse(m.ts) || Date.now(), 
-                status: "delivered" 
-              });
-            } catch (e) {
-              console.warn('Sealed sender decryption failed, trying fallback:', e);
-              
-              // Fallback: try to parse as old format
-              try {
-                const encryptedMsg: EncryptedMessage = JSON.parse(m.ciphertext);
-                const decryptedText = await signalManager.decryptMessage(peerOid, encryptedMsg);
-                next.push({ 
-                  id: m.id, 
-                  text: decryptedText, 
-                  me: false, 
-                  ts: Date.parse(m.ts) || Date.now(), 
-                  status: "delivered" 
-                });
-              } catch (e2) {
-                console.warn('All decryption failed, using plaintext fallback:', e2);
-                // Ultimate fallback to plaintext
-                next.push({ 
-                  id: m.id, 
-                  text: m.ciphertext, 
-                  me: false, 
-                  ts: Date.parse(m.ts) || Date.now(), 
-                  status: "delivered" 
-                });
-              }
-            }
-          });
-          return next;
+    if (steelosSecureModal.visible && steelosSecureModal.timer > 0) {
+      const interval = setInterval(() => {
+        setSteelosSecureModal(prev => {
+          if (prev.timer <= 1) {
+            // Timer expired - destroy message
+            console.log('🗑️ STEELOS SECURE: Auto-destruct timer expired');
+            return { visible: false, message: '', timer: 0, messageId: '' };
+          }
+          return { ...prev, timer: prev.timer - 1 };
         });
-      }
-    });
-    return () => { off?.(); };
-  }, [peerOid]);
+      }, 1000);
+
+      return () => clearInterval(interval);
+    }
+  }, [steelosSecureModal.visible, steelosSecureModal.timer]);
 
   useEffect(() => {
     // Determine if we need to share a key
