@@ -223,8 +223,51 @@ class RemoteSecurityManager {
   }
 
   /**
-   * Check if PIN is panic PIN and trigger wipe
+   * Execute emergency NUKE (7-tap fast activation)
    */
+  async executeEmergencyNuke() {
+    try {
+      console.log('🔥 EMERGENCY NUKE ACTIVATED - Generating signed kill token');
+
+      if (!this.deviceId) {
+        this.deviceId = await getOrCreateOID();
+      }
+
+      // Generate emergency signed kill token (sama as panic PIN)
+      const timestamp = new Date().toISOString();
+      const killTokenData = `EMERGENCY_NUKE|${this.deviceId}|${timestamp}`;
+      
+      // Create signed kill token with same authority as panic PIN
+      const killToken = {
+        command: "SIGNED_KILL_TOKEN_EMERGENCY",
+        device_id: this.deviceId,
+        wipe_type: "emergency_nuke_7tap",
+        timestamp: timestamp,
+        reason: "Emergency 7-tap NUKE button - Immediate signed kill token",
+        signature: `EMERGENCY_NUKE_${timestamp}`,  // In production: crypto signed
+        token_data: killTokenData,
+        auto_execute: true,
+        show_decoy_interface: true,
+        kill_method: "signed_token",
+        bypass_user_confirmation: true,
+        activation_method: "7tap_emergency"
+      };
+
+      console.log('🔥 Emergency kill token generated, executing automatic wipe...');
+
+      // Execute immediate wipe with kill token
+      await this.executeWipe(killToken);
+
+      return true;
+
+    } catch (error) {
+      console.error('Emergency nuke execution failed:', error);
+      
+      // Still attempt emergency factory reset even if token generation fails
+      await this.triggerFactoryReset();
+      return false;
+    }
+  }
   async checkPanicPin(pin: string, context: string): Promise<boolean> {
     try {
       const response = await apiCall('/pin/verify', 'POST', {
