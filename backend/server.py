@@ -148,7 +148,7 @@ class StatusCheckCreate(BaseModel):
 # Secure Note (RAM-only, Cryptgeon-style)
 MAX_TTL_SECONDS = 7 * 24 * 60 * 60  # up to one week
 MIN_READ_LIMIT = 1
-MAX_READ_LIMIT = 3
+MAX_READ_LIMIT = 1  # CRITICAL: Always 1-time read only, link purged after single read
 
 class NoteCreate(BaseModel):
     ciphertext: str  # base64 or opaque string, server does not inspect
