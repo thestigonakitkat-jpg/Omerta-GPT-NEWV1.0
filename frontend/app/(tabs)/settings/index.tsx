@@ -1,11 +1,12 @@
-import React, { useState } from "react";
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, Platform } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, Platform, ScrollView, Switch } from "react-native";
 import { useSecurity } from "../../../src/state/security";
 import { useRouter } from "expo-router";
 import { openFactoryResetSettings } from "../../../src/utils/android";
 import { useTheme } from "../../../src/state/theme";
 import { accents, AccentKey } from "../../../src/theme/colors";
 import { Ionicons } from "@expo/vector-icons";
+import { autoWipe, AutoWipeStatus } from "../../../src/utils/autoWipe";
 
 export default function SettingsScreen() {
   const router = useRouter();
