@@ -59,6 +59,44 @@ export default function SettingsScreen() {
     Alert.alert("Saved", `Auto-lock set to ${Math.round(v/1000)}s`);
   };
 
+  const onAutoWipeSave = async () => {
+    try {
+      setAutoWipeLoading(true);
+      const days = parseInt(autoWipeDays, 10);
+      
+      if (days < 1 || days > 14) {
+        Alert.alert("Invalid Days", "Auto-wipe days must be between 1 and 14");
+        return;
+      }
+
+      if (autoWipeType === 'full_nuke') {
+        Alert.alert(
+          "⚠️ DANGER: Full NUKE Confirmation",
+          `You are enabling FULL DEVICE NUKE with STEELOS-SHREDDER.\n\nThis will COMPLETELY OBLITERATE all data after ${days} days of inactivity.\n\nAre you absolutely sure?`,
+          [
+            { text: "Cancel", style: "cancel" },
+            { 
+              text: "ENABLE NUKE", 
+              style: "destructive",
+              onPress: async () => {
+                await autoWipe.configureAutoWipe(autoWipeEnabled, days, autoWipeType, 2);
+                await loadAutoWipeStatus();
+              }
+            }
+          ]
+        );
+        return;
+      }
+
+      await autoWipe.configureAutoWipe(autoWipeEnabled, days, autoWipeType, 2);
+      await loadAutoWipeStatus();
+    } catch (error) {
+      console.error('Auto-wipe configuration failed:', error);
+    } finally {
+      setAutoWipeLoading(false);
+    }
+  };
+
   const triggerPanic = async () => {
     if (panicPin.length !== 6) { Alert.alert("Enter Panic PIN", "Provide the 6-digit panic PIN to simulate duress."); return; }
     const ok = await sec.isPanicPin(panicPin);
