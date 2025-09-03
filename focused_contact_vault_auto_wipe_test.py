@@ -401,9 +401,9 @@ def test_auto_wipe_integration_steelos():
     config_payload = {
         "device_id": device_id,
         "enabled": True,
-        "days_inactive": 1,  # Very short for testing
+        "days_inactive": 2,  # Very short for testing
         "wipe_type": "full_nuke",
-        "warning_days": 0
+        "warning_days": 1  # Must be >= 1 according to validation
     }
     
     try:
