@@ -270,62 +270,65 @@ export default function ChatRoom() {
   );
 
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
-      <View style={{ flex: 1, backgroundColor: colors.bg }}>
-        <View style={[styles.header, { borderBottomColor: colors.border }]}> 
-          <TouchableOpacity style={styles.back} onPress={() => router.back()}>
-            <Ionicons name="chevron-back" size={22} color={colors.text} />
-          </TouchableOpacity>
-          <View style={styles.headerInfo}>
-            <View style={[styles.headerAvatar, { backgroundColor: colors.card }]}><Text style={[styles.headerAvatarText, { color: colors.text }]}>{peerOid?.charAt(0) || 'A'}</Text></View>
-            <View>
-              <Text style={[styles.headerTitle, { color: colors.text }]}>{peerOid || 'Alias'}</Text>
-              <Text style={[styles.headerSub, { color: colors.sub }]}>{typing ? "typing…" : "online"}</Text>
+    <EmergencyNuke>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
+        <View style={{ flex: 1, backgroundColor: colors.bg }}>
+          {/* Chat UI wrapped in EmergencyNuke for 7-tap activation */}
+          <View style={[styles.header, { borderBottomColor: colors.border }]}> 
+            <TouchableOpacity style={styles.back} onPress={() => router.back()}>
+              <Ionicons name="chevron-back" size={22} color={colors.text} />
+            </TouchableOpacity>
+            <View style={styles.headerInfo}>
+              <View style={[styles.headerAvatar, { backgroundColor: colors.card }]}><Text style={[styles.headerAvatarText, { color: colors.text }]}>{peerOid?.charAt(0) || 'A'}</Text></View>
+              <View>
+                <Text style={[styles.headerTitle, { color: colors.text }]}>{peerOid || 'Alias'}</Text>
+                <Text style={[styles.headerSub, { color: colors.sub }]}>{typing ? "typing…" : "online"}</Text>
+              </View>
             </View>
+            {isVerified && <HandshakeBadge small={false} />}
+            <TouchableOpacity style={{ padding: 8, marginLeft: 8 }} onPress={() => setSettingsOpen(!settingsOpen)}>
+              <Ionicons name="settings-outline" size={18} color={colors.text} />
+            </TouchableOpacity>
           </View>
-          {isVerified && <HandshakeBadge small={false} />}
-          <TouchableOpacity style={{ padding: 8, marginLeft: 8 }} onPress={() => setSettingsOpen(!settingsOpen)}>
-            <Ionicons name="settings-outline" size={18} color={colors.text} />
-          </TouchableOpacity>
-        </View>
-        {settingsOpen && <HeaderSettings />}
+          {settingsOpen && <HeaderSettings />}
 
-        <KeyShareBanner />
+          <KeyShareBanner />
 
-        <FlatList
-          ref={listRef}
-          data={messages}
-          keyExtractor={(it) => it.id}
-          renderItem={renderItem}
-          contentContainerStyle={{ padding: 12, paddingBottom: 90 }}
-          onContentSizeChange={scrollToEnd}
-        />
+          <FlatList
+            ref={listRef}
+            data={messages}
+            keyExtractor={(it) => it.id}
+            renderItem={renderItem}
+            contentContainerStyle={{ padding: 12, paddingBottom: 90 }}
+            onContentSizeChange={scrollToEnd}
+          />
 
-        <View style={[styles.composer, { borderTopColor: colors.border, backgroundColor: colors.bg }]}>
-          <TouchableOpacity style={styles.iconBtn} onPress={() => setPrivacyTyping(!privacyTyping)}>
-            <Ionicons name={privacyTyping ? "eye-off" : "eye"} size={18} color={colors.sub} />
-          </TouchableOpacity>
-          <View style={{ flex: 1, position: 'relative' }}>
-            <TextInput
-              style={[styles.input, { backgroundColor: colors.card, color: colors.text }]}
-              placeholder="Message"
-              placeholderTextColor={colors.muted}
-              value={input}
-              onChangeText={setInput}
-              multiline
-            />
-            {privacyTyping && (
-              <Pressable style={styles.blurWrap}>
-                <BlurView intensity={60} tint="dark" style={styles.blur} />
-              </Pressable>
-            )}
+          <View style={[styles.composer, { borderTopColor: colors.border, backgroundColor: colors.bg }]}>
+            <TouchableOpacity style={styles.iconBtn} onPress={() => setPrivacyTyping(!privacyTyping)}>
+              <Ionicons name={privacyTyping ? "eye-off" : "eye"} size={18} color={colors.sub} />
+            </TouchableOpacity>
+            <View style={{ flex: 1, position: 'relative' }}>
+              <TextInput
+                style={[styles.input, { backgroundColor: colors.card, color: colors.text }]}
+                placeholder="Message"
+                placeholderTextColor={colors.muted}
+                value={input}
+                onChangeText={setInput}
+                multiline
+              />
+              {privacyTyping && (
+                <Pressable style={styles.blurWrap}>
+                  <BlurView intensity={60} tint="dark" style={styles.blur} />
+                </Pressable>
+              )}
+            </View>
+            <TouchableOpacity style={[styles.sendBtn, { backgroundColor: colors.accent }]} onPress={onSend}>
+              <Ionicons name="send" size={18} color="#000" />
+            </TouchableOpacity>
           </View>
-          <TouchableOpacity style={[styles.sendBtn, { backgroundColor: colors.accent }]} onPress={onSend}>
-            <Ionicons name="send" size={18} color="#000" />
-          </TouchableOpacity>
         </View>
-      </View>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </EmergencyNuke>
   );
 }
 
