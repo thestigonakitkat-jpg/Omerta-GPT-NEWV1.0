@@ -11,7 +11,7 @@ import sys
 from datetime import datetime, timezone
 
 # Get backend URL from environment
-BACKEND_URL = "https://cryptoguard-7.preview.emergentagent.com/api"
+BACKEND_URL = "https://steelos-secure.preview.emergentagent.com/api"
 
 def test_status_endpoint():
     """Test that the status endpoint still works (regression test)"""
