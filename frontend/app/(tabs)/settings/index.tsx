@@ -311,7 +311,7 @@ export default function SettingsScreen() {
       <TouchableOpacity style={[styles.btn, { backgroundColor: '#ef4444', marginTop: 16 }]} onPress={triggerPanic}>
         <Text style={styles.btnText}>Test Panic (Decoy/Wipe)</Text>
       </TouchableOpacity>
-    </View>
+    </ScrollView>
   );
 }
 
