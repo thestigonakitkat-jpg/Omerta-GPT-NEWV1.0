@@ -24,6 +24,7 @@ export default function EmergencyNuke({ children }: EmergencyNukeProps) {
   const [showNukeButton, setShowNukeButton] = useState(false);
   const [nukeConfirmVisible, setNukeConfirmVisible] = useState(false);
   const [cyanideTabletVisible, setCyanideTabletVisible] = useState(false);
+  const [chernobylPanelVisible, setChernobylPanelVisible] = useState(false);
   const [shredderProgress, setShredderProgress] = useState(0);
   const [shredderPhase, setShredderPhase] = useState('Initializing...');
   const tapTimeoutRef = useRef<NodeJS.Timeout>();
