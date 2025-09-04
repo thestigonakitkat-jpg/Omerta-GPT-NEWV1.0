@@ -524,6 +524,81 @@ export default function SettingsScreen() {
         </View>
       </View>
 
+      {/* Dual-Key Nuclear Submarine Protocol Section */}
+      <View style={styles.autoWipeSection}>
+        <Text style={[styles.h1, { color: colors.text }]}>🚢⚛️ Nuclear Submarine Protocol</Text>
+        <Text style={[styles.sectionSubtitle, { color: colors.sub }]}>
+          Two-Person Integrity for critical system operations. Prevents single points of failure in security-critical scenarios.
+        </Text>
+
+        <View style={[styles.statusCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={styles.statusRow}>
+            <Text style={[styles.statusLabel, { color: colors.sub }]}>Protocol Status:</Text>
+            <Text style={[styles.statusValue, { color: colors.accent }]}>STANDBY</Text>
+          </View>
+          <View style={styles.statusRow}>
+            <Text style={[styles.statusLabel, { color: colors.sub }]}>Available Systems:</Text>
+            <Text style={[styles.statusValue, { color: colors.text }]}>Design A + Design B</Text>
+          </View>
+        </View>
+
+        <View style={styles.wipeTypeButtons}>
+          <TouchableOpacity
+            style={[
+              styles.wipeTypeButton,
+              { 
+                backgroundColor: nuclearProtocolType === 'dual_key' ? '#3b82f6' : colors.card,
+                borderColor: colors.border
+              }
+            ]}
+            onPress={() => setNuclearProtocolType('dual_key')}
+          >
+            <Ionicons name="people" size={16} color={nuclearProtocolType === 'dual_key' ? '#fff' : colors.text} />
+            <Text style={[
+              styles.wipeTypeText,
+              { color: nuclearProtocolType === 'dual_key' ? '#fff' : colors.text }
+            ]}>
+              Design A: Dual-Command Bridge
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.wipeTypeButton,
+              { 
+                backgroundColor: nuclearProtocolType === 'split_master_key' ? '#f59e0b' : colors.card,
+                borderColor: colors.border
+              }
+            ]}
+            onPress={() => setNuclearProtocolType('split_master_key')}
+          >
+            <Ionicons name="key" size={16} color={nuclearProtocolType === 'split_master_key' ? '#fff' : colors.text} />
+            <Text style={[
+              styles.wipeTypeText,
+              { color: nuclearProtocolType === 'split_master_key' ? '#fff' : colors.text }
+            ]}>
+              Design B: Split Master Key
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={[styles.warningBox, { backgroundColor: '#fef2f2', borderColor: '#ef4444' }]}>
+          <Ionicons name="nuclear" size={16} color="#ef4444" />
+          <Text style={[styles.warningText, { color: '#dc2626' }]}>
+            NUCLEAR SUBMARINE PROTOCOL: Critical operations require two-person authorization. Use only in emergency scenarios or when developer recovery is needed.
+          </Text>
+        </View>
+
+        <TouchableOpacity 
+          style={[styles.btn, { backgroundColor: '#ef4444', marginTop: 16 }]} 
+          onPress={() => setNuclearPanelVisible(true)}
+        >
+          <Text style={styles.btnText}>
+            🚢⚛️ ACTIVATE NUCLEAR SUBMARINE PROTOCOL
+          </Text>
+        </TouchableOpacity>
+      </View>
+
       <Text style={[styles.h1, { color: colors.text, marginTop: 16 }]}>Appearance</Text>
       <ModeRow />
       <Text style={[styles.label, { color: colors.sub, marginTop: 8 }]}>Accent</Text>
