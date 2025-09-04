@@ -128,6 +128,8 @@ class ContactsVaultManager {
       return { isValid: false, confidence: 0, threat: 'DNA validation error' };
     }
   }
+
+  private async generateEncryptionKeyHash(passphrase: string, pin: string): Promise<string> {
     try {
       // Simple hash generation for demonstration
       // In production, use proper key derivation (Argon2id)
