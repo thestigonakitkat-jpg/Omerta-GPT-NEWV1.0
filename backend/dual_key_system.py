@@ -551,7 +551,7 @@ async def initiate_split_master_key_operation(request: Request, operation_type: 
 async def provide_master_key_fragment(request: Request, fragment_request: SplitMasterKeyRequest):
     """Provide a key fragment for split master key operation"""
     try:
-        await rate_limit_middleware(request, "master_key_fragment", max_requests=10, window_minutes=60)
+        await rate_limit_middleware(request, "master_key_fragment")
         
         # Sanitize inputs
         key_holder_id = sanitize_dual_key_input(fragment_request.key_holder_id, max_length=50)
