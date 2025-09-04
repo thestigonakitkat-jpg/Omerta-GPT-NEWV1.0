@@ -56,8 +56,24 @@ export class CryptographicDNAValidator {
   private static instance: CryptographicDNAValidator;
   private dnaMarkers: CryptographicDNA | null = null;
   private validationSecret: Uint8Array | null = null;
+  private evolutionConfig: DNAEvolutionConfig;
+  private evolutionTimer: NodeJS.Timeout | null = null;
 
-  private constructor() {}
+  private constructor() {
+    // Default evolution configuration - randomized timing
+    this.evolutionConfig = {
+      minEvolutionHours: 1,
+      maxEvolutionHours: 48,
+      gracePeriodhours: 720, // 30 days
+      validatorEndpoints: [
+        'https://validator1.omerta.network',
+        'https://validator2.omerta.network', 
+        'https://validator3.omerta.network'
+      ]
+    };
+    
+    this.startEvolutionTimer();
+  }
 
   static getInstance(): CryptographicDNAValidator {
     if (!CryptographicDNAValidator.instance) {
