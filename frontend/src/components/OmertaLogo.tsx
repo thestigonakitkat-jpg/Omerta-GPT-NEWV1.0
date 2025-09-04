@@ -101,7 +101,7 @@ export default function OmertaLogo({ size = 48, showText = true }: { size?: numb
       
       {showText && (
         <View style={styles.textContainer}>
-          <Text style={[styles.titleText, { color: colors.text }]}>OMERTA</Text>
+          <Text style={[styles.titleText, { color: colors.text }]}>OMERTÀ</Text>
           <Text style={[styles.subtitleText, { color: redAccent }]}>STEELOS SECURE</Text>
         </View>
       )}
