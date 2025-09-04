@@ -7,6 +7,7 @@ import { useTheme } from "../../../src/state/theme";
 import { accents, AccentKey } from "../../../src/theme/colors";
 import { Ionicons } from "@expo/vector-icons";
 import { autoWipe, AutoWipeStatus } from "../../../src/utils/autoWipe";
+import { activeAuthWipe, ActiveAuthStatus } from "../../../src/utils/activeAuthWipe";
 
 export default function SettingsScreen() {
   const router = useRouter();
