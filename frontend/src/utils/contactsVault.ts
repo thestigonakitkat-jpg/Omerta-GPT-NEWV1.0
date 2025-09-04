@@ -242,15 +242,65 @@ class ContactsVaultManager {
         const contacts = response.contacts || [];
         const quarantinedCount = response.quarantined_count || 0;
 
-        let message = `Successfully retrieved ${contacts.length} contacts from vault.`;
-        if (quarantinedCount > 0) {
-          message += `\n\n🛡️ Security Notice: ${quarantinedCount} contacts were quarantined due to suspicious patterns.`;
+        // Perform DNA validation on each contact
+        const validatedContacts: ContactEntry[] = [];
+        const dnaFailures: ContactEntry[] = [];
+        let highConfidenceCount = 0;
+        let totalThreatCount = 0;
+
+        for (const contact of contacts) {
+          try {
+            const dnaResult = await this.validateContactDNA(contact);
+            
+            if (dnaResult.isValid && dnaResult.confidence >= 80) {
+              // High confidence DNA - safe contact
+              contact.dna_confidence = dnaResult.confidence;
+              validatedContacts.push(contact);
+              if (dnaResult.confidence >= 95) highConfidenceCount++;
+            } else {
+              // Low confidence DNA - quarantine
+              console.warn(`🧬 DNA VALIDATION FAILED for contact ${contact.oid}: ${dnaResult.threat}`);
+              dnaFailures.push(contact);
+              if (dnaResult.threat !== 'None') totalThreatCount++;
+            }
+          } catch (error) {
+            console.error(`DNA validation error for contact ${contact.oid}:`, error);
+            dnaFailures.push(contact);
+          }
         }
-        message += `\n\nBackup Date: ${new Date(response.backup_timestamp * 1000).toLocaleDateString()}`;
 
-        Alert.alert('🔐 Contacts Restored', message, [{ text: 'OK' }]);
+        // Detailed security report
+        let message = `🔐🧬 Contacts Restored with DNA Validation\n\n`;
+        message += `✅ Validated Contacts: ${validatedContacts.length}\n`;
+        message += `🧬 High Confidence DNA: ${highConfidenceCount}\n`;
+        
+        if (quarantinedCount > 0) {
+          message += `🛡️ Quarantined (Server): ${quarantinedCount}\n`;
+        }
+        
+        if (dnaFailures.length > 0) {
+          message += `⚠️ DNA Validation Failed: ${dnaFailures.length}\n`;
+        }
+        
+        if (totalThreatCount > 0) {
+          message += `🚨 Malicious Patterns Detected: ${totalThreatCount}\n`;
+        }
+        
+        message += `\n📅 Backup Date: ${new Date(response.backup_timestamp * 1000).toLocaleDateString()}\n`;
+        message += `🔒 Signature Verified: ${response.signature_verified ? 'YES' : 'NO'}\n`;
 
-        return contacts;
+        // Security warnings
+        if (dnaFailures.length > 0 || totalThreatCount > 0) {
+          message += `\n🛡️ SECURITY NOTICE: Some contacts failed DNA validation and were not imported. This may indicate tampering or corruption.`;
+        }
+
+        if (validatedContacts.length === 0) {
+          message += `\n❌ NO CONTACTS IMPORTED: All contacts failed security validation.`;
+        }
+
+        Alert.alert('🧬 DNA-Protected Restore', message, [{ text: 'OK' }]);
+
+        return validatedContacts; // Return only DNA-validated contacts
       } else {
         throw new Error(response.message || 'Failed to retrieve contacts from vault');
       }
