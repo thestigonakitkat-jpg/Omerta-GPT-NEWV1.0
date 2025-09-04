@@ -119,7 +119,7 @@ export const DisguisedAppIcon: React.FC = () => {
       setModalVisible(false);
       Alert.alert(
         'Icon Reset',
-        'App icon reset to OMERTA default. Restart the app to see changes.',
+        'App icon reset to OMERTÀ default. Restart the app to see changes.',
         [{ text: 'OK' }]
       );
     } catch (error) {
