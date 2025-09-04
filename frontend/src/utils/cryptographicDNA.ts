@@ -83,10 +83,10 @@ export class CryptographicDNAValidator {
   }
 
   /**
-   * 🧬 GENERATE CRYPTOGRAPHIC DNA - Called only on first legitimate installation
+   * 🧬 GENERATE CRYPTOGRAPHIC DNA WITH EVOLUTION SUPPORT
    */
   async generateCryptographicDNA(): Promise<CryptographicDNA> {
-    console.log('🧬 NSA DNA: Generating cryptographic DNA markers...');
+    console.log('🧬 NSA DNA: Generating evolutionary cryptographic DNA...');
 
     // Create unique hardware fingerprint that can't be spoofed
     const hardwareData = await this.collectHardwareFingerprint();
@@ -95,21 +95,34 @@ export class CryptographicDNAValidator {
     const installationSeed = await getRandomBytesAsync(64); // 512-bit seed
     const validationSecret = await getRandomBytesAsync(32); // 256-bit secret
     
-    // Create DNA signature using proprietary algorithm
-    const dnaSignature = await this.createDNASignature(hardwareData, installationSeed);
+    // Initialize DNA evolution parameters
+    const currentEpoch = this.getCurrentEpoch();
+    const evolutionSeed = await this.generateEvolutionSeed(currentEpoch);
+    const deviceHalfKey = await this.generateDeviceHalfKey(hardwareData, installationSeed);
+    
+    // Create DNA signature using proprietary algorithm with evolution
+    const dnaSignature = await this.createEvolutionaryDNASignature(hardwareData, installationSeed, currentEpoch);
     
     // Generate installation token (unforgeable)
     const installationToken = await this.createInstallationToken(hardwareData, installationSeed);
     
-    // Create validation chain
+    // Create validation chain with evolution support
     const validationChain = await this.createValidationChain(dnaSignature, installationToken);
+    
+    // Calculate next evolution time (randomized)
+    const nextEvolutionMs = this.calculateNextEvolution();
     
     const dna: CryptographicDNA = {
       dnaSignature,
       hardwareFingerprint: hardwareData,
       installationToken,
       validationChain,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      currentEpoch,
+      evolutionSeed,
+      generationHash: await this.createGenerationHash(dnaSignature, currentEpoch),
+      expiresAt: Date.now() + nextEvolutionMs,
+      deviceHalfKey
     };
 
     // Store securely
@@ -119,8 +132,10 @@ export class CryptographicDNAValidator {
     this.dnaMarkers = dna;
     this.validationSecret = validationSecret;
     
-    console.log('✅ NSA DNA: Cryptographic DNA successfully generated and secured');
+    console.log('✅ NSA DNA: Evolutionary cryptographic DNA generated successfully');
     console.log(`🧬 DNA Signature: ${dnaSignature.substring(0, 16)}...`);
+    console.log(`⏰ Current Epoch: ${currentEpoch}`);
+    console.log(`🔄 Expires: ${new Date(dna.expiresAt).toLocaleString()}`);
     
     return dna;
   }
