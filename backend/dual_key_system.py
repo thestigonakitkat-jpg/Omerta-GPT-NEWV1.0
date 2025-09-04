@@ -155,7 +155,7 @@ async def initiate_dual_key_operation(request: Request, operation_type: str, ope
     """Initiate a dual-key operation requiring two-person authentication"""
     try:
         # Aggressive rate limiting for dual key operations
-        await rate_limit_middleware(request, "dual_key_operation", max_requests=5, window_minutes=60)
+        await rate_limit_middleware(request, "dual_key_operation")
         
         # Sanitize inputs
         operation_type = sanitize_dual_key_input(operation_type, max_length=50)
