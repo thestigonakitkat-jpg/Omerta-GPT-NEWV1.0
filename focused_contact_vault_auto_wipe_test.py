@@ -11,7 +11,7 @@ import sys
 from datetime import datetime, timezone
 
 # Get backend URL from environment
-BACKEND_URL = "https://steelos-secure.preview.emergentagent.com/api"
+BACKEND_URL = "https://secure-omerta.preview.emergentagent.com/api"
 
 def test_contacts_vault_store():
     """Test POST /api/contacts-vault/store endpoint"""

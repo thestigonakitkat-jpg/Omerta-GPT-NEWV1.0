@@ -9,7 +9,7 @@ import json
 import time
 import sys
 
-BACKEND_URL = "https://steelos-secure.preview.emergentagent.com/api"
+BACKEND_URL = "https://secure-omerta.preview.emergentagent.com/api"
 
 def test_rate_limiting_quick():
     """Quick test of rate limiting functionality"""
