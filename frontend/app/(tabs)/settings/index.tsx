@@ -679,6 +679,133 @@ export default function SettingsScreen() {
         </TouchableOpacity>
       </View>
 
+      {/* Text Blur Privacy Section */}
+      <View style={styles.autoWipeSection}>
+        <Text style={[styles.h1, { color: colors.text }]}>🔒 Text Blur Privacy</Text>
+        <Text style={[styles.sectionSubtitle, { color: colors.sub }]}>
+          Automatically blur sensitive text after a configurable delay. Perfect for preventing shoulder surfing and unauthorized viewing.
+        </Text>
+
+        <View style={styles.autoWipeControls}>
+          <View style={styles.switchRow}>
+            <Text style={[styles.label, { color: colors.text, flex: 1 }]}>Enable Text Blur</Text>
+            <Switch
+              value={textBlurEnabled}
+              onValueChange={setTextBlurEnabled}
+              trackColor={{ false: colors.border, true: colors.accent }}
+              thumbColor={textBlurEnabled ? '#ffffff' : colors.sub}
+            />
+          </View>
+
+          <Text style={[styles.label, { color: colors.sub }]}>Blur Delay</Text>
+          <View style={styles.intervalButtons}>
+            {textBlur.getDelayPresets().slice(0, 7).map((preset) => (
+              <TouchableOpacity
+                key={preset.value}
+                style={[
+                  styles.intervalButton,
+                  { 
+                    backgroundColor: textBlurDelay === preset.value ? colors.accent : colors.card,
+                    borderColor: colors.border
+                  }
+                ]}
+                onPress={() => setTextBlurDelay(preset.value)}
+                disabled={!textBlurEnabled}
+              >
+                <Text style={[
+                  styles.intervalText,
+                  { color: textBlurDelay === preset.value ? '#000' : colors.text }
+                ]}>
+                  {preset.label}
+                </Text>
+                <Text style={[
+                  styles.intervalSubText,
+                  { color: textBlurDelay === preset.value ? '#000' : colors.sub }
+                ]}>
+                  {preset.description}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <View style={[styles.switchRow, { marginTop: 16 }]}>
+            <Text style={[styles.label, { color: colors.text, flex: 1 }]}>PIN to Disable</Text>
+            <Switch
+              value={textBlurPinProtection}
+              onValueChange={setTextBlurPinProtection}
+              trackColor={{ false: colors.border, true: colors.accent }}
+              thumbColor={textBlurPinProtection ? '#ffffff' : colors.sub}
+              disabled={!textBlurEnabled}
+            />
+          </View>
+
+          {textBlurPinProtection && textBlurEnabled && (
+            <View style={styles.inputWrap}>
+              <Text style={[styles.label, { color: colors.sub }]}>Set PIN (4+ digits)</Text>
+              <TextInput
+                style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.card }]}
+                value={textBlurPin}
+                onChangeText={setTextBlurPin}
+                placeholder="Enter PIN"
+                placeholderTextColor={colors.sub}
+                secureTextEntry={!showTextBlurPin}
+                keyboardType="numeric"
+                maxLength={8}
+              />
+              <TouchableOpacity style={styles.eye} onPress={() => setShowTextBlurPin(!showTextBlurPin)}>
+                <Ionicons name={showTextBlurPin ? "eye-off" : "eye"} size={20} color={colors.sub} />
+              </TouchableOpacity>
+            </View>
+          )}
+
+          <TouchableOpacity 
+            style={[styles.btn, { 
+              backgroundColor: textBlurEnabled ? colors.accent : colors.border,
+              marginTop: 16
+            }]} 
+            onPress={saveTextBlurConfig}
+            disabled={!textBlurEnabled}
+          >
+            <Text style={[styles.btnText, { 
+              color: textBlurEnabled ? '#000' : colors.sub 
+            }]}>
+              Save Text Blur Settings
+            </Text>
+          </TouchableOpacity>
+
+          {textBlurEnabled && (
+            <TouchableOpacity 
+              style={[styles.btn, { backgroundColor: '#ef4444', marginTop: 8 }]} 
+              onPress={disableTextBlur}
+            >
+              <Text style={styles.btnText}>
+                Disable Text Blur Protection
+              </Text>
+            </TouchableOpacity>
+          )}
+
+          {/* Demo Section */}
+          {textBlurEnabled && (
+            <View style={[styles.statusCard, { 
+              backgroundColor: colors.card, 
+              borderColor: colors.border,
+              marginTop: 16 
+            }]}>
+              <Text style={[styles.statusLabel, { color: colors.text, marginBottom: 8 }]}>
+                📱 Live Demo
+              </Text>
+              <BlurredText 
+                elementId="demo-text"
+                textStyle={[styles.sectionSubtitle, { color: colors.text }]}
+              >
+                This sensitive message will blur after {textBlur.formatDelay(textBlurDelay)}. 
+                Tap to reset the timer. This protects against shoulder surfing and unauthorized viewing.
+              </BlurredText>
+            </View>
+          )}
+        </View>
+      </View>
+
       <Text style={[styles.h1, { color: colors.text, marginTop: 16 }]}>Appearance</Text>
       <ModeRow />
       <Text style={[styles.label, { color: colors.sub, marginTop: 8 }]}>Accent</Text>
