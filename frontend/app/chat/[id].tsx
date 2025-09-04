@@ -267,7 +267,7 @@ export default function ChatRoom() {
         expires_ttl: 300 // 5 minutes default
       };
       
-      console.log('✅ THE BIRD: Message wrapped in cryptgeon ephemeral encryption');
+      console.log('✅ OMERTÀ-VANISH: Message wrapped in cryptgeon ephemeral encryption');
       
       // LAYER 2: SEALED SENDER (Signal Protocol) - Metadata protection
       let sealedSenderCiphertext: string;
