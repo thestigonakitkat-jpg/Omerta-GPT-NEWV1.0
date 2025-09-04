@@ -141,7 +141,7 @@ Your encrypted picture implementation now achieves **maximum security**:
 
 - ✅ No gallery storage vulnerabilities
 - ✅ Complete metadata sanitization  
-- ✅ Double-layer encryption (THE BIRD + Sealed Sender)
+- ✅ Double-layer encryption (OMERTÀ-VANISH + Sealed Sender)
 - ✅ Zero disk traces
 - ✅ Forensic-resistant design
 - ✅ Auto-destruct capabilities
