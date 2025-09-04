@@ -166,7 +166,7 @@ class DualKeyNuclearProtocolTester:
                 'operation_data': {'override_level': 'critical', 'reason': 'emergency_access'}
             }
             
-            response = self.session.post(f"{API_BASE}/split-master-key/initiate", data=payload)
+            response = self.session.post(f"{API_BASE}/split-master-key/initiate", json=payload)
             
             if response.status_code == 200:
                 data = response.json()
