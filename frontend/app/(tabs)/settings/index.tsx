@@ -52,6 +52,7 @@ export default function SettingsScreen() {
   useEffect(() => {
     loadAutoWipeStatus();
     loadActiveAuthStatus();
+    loadTextBlurConfig();
   }, []);
 
   const loadAutoWipeStatus = async () => {
