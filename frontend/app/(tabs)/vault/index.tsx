@@ -606,6 +606,13 @@ export default function VaultScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* Quarantine Vault Review Modal */}
+      <QuarantineVaultReview
+        visible={showQuarantineReview}
+        onClose={() => setShowQuarantineReview(false)}
+        onTransferComplete={onQuarantineTransferComplete}
+      />
     </View>
   );
 }
