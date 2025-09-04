@@ -57,7 +57,7 @@ class DualKeyNuclearProtocolTester:
                 'operator_b_id': 'sec_officer'
             }
             
-            response = self.session.post(f"{API_BASE}/dual-key/initiate", data=payload)
+            response = self.session.post(f"{API_BASE}/dual-key/initiate", json=payload)
             
             if response.status_code == 200:
                 data = response.json()
