@@ -76,6 +76,94 @@ def generate_backup_signature(device_id: str, timestamp: int, contacts_count: in
     ).hexdigest()
     return signature
 
+def validate_contact_dna(contact: dict) -> dict:
+    """🧬 CRYPTOGRAPHIC DNA VALIDATION for contacts"""
+    try:
+        validation_result = {
+            "is_valid": True,
+            "confidence": 100,
+            "threats_detected": [],
+            "dna_status": "valid"
+        }
+        
+        # Enhanced malicious pattern detection for contacts
+        malicious_patterns = [
+            # Script injection
+            r'<script[\s\S]*?</script>',
+            r'javascript:',
+            r'data:text/html',
+            r'vbscript:',
+            r'on\w+\s*=',
+            # SQL injection
+            r'(union\s+select|drop\s+table|insert\s+into|delete\s+from)',
+            r'(exec\s*\(|execute\s*\(|xp_cmdshell|sp_executesql)',
+            # Command injection
+            r'(\.\./){2,}',
+            r'/(etc/passwd|proc/self|dev/tcp)',
+            r'(nc\s+-l|bash\s+-i|sh\s+-i|cmd\.exe|powershell)',
+            # Encoding attacks
+            r'%[0-9a-f]{2}',
+            r'\\x[0-9a-f]{2}',
+            r'\\u[0-9a-f]{4}',
+            r'(base64|btoa\(|atob\(|fromCharCode)',
+            # Advanced threats
+            r'(eval\s*\(|Function\s*\(|setTimeout\s*\()',
+            r'(document\.|window\.|location\.)',
+            r'(innerHTML|outerHTML|insertAdjacentHTML)',
+            r'(<iframe|<object|<embed|<applet|<meta)'
+        ]
+        
+        contact_string = str(contact).lower()
+        
+        for pattern in malicious_patterns:
+            import re
+            if re.search(pattern, contact_string, re.IGNORECASE):
+                validation_result["threats_detected"].append(pattern)
+                validation_result["confidence"] -= 15
+        
+        # DNA signature validation
+        if "cryptographic_dna" in contact:
+            dna_sig = contact["cryptographic_dna"]
+            if not dna_sig or not dna_sig.startswith("DNA_"):
+                validation_result["confidence"] -= 20
+                validation_result["dna_status"] = "invalid_format"
+            elif len(dna_sig) < 36:  # DNA_ + 32 char hash
+                validation_result["confidence"] -= 15
+                validation_result["dna_status"] = "weak_dna"
+        else:
+            validation_result["confidence"] -= 10
+            validation_result["dna_status"] = "missing_dna"
+        
+        # Size validation
+        oid_len = len(contact.get("oid", ""))
+        name_len = len(contact.get("display_name", ""))
+        
+        if oid_len > 200:
+            validation_result["confidence"] -= 20
+            validation_result["threats_detected"].append("oversized_oid")
+        
+        if name_len > 100:
+            validation_result["confidence"] -= 15
+            validation_result["threats_detected"].append("oversized_name")
+        
+        # Final validation
+        validation_result["confidence"] = max(0, validation_result["confidence"])
+        validation_result["is_valid"] = (
+            validation_result["confidence"] >= 70 and 
+            len(validation_result["threats_detected"]) == 0
+        )
+        
+        return validation_result
+        
+    except Exception as e:
+        logger.error(f"DNA validation error: {e}")
+        return {
+            "is_valid": False,
+            "confidence": 0,
+            "threats_detected": ["validation_error"],
+            "dna_status": "error"
+        }
+
 async def store_contacts_backup(request: Request, payload: ContactsVaultRequest):
     """Store encrypted contacts backup in vault system"""
     try:
