@@ -14,7 +14,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import subprocess
 
 # Get backend URL from environment
-BACKEND_URL = "https://secure-omerta.preview.emergentagent.com/api"
+BACKEND_URL = "https://dual-key-app.preview.emergentagent.com/api"
 
 class SecurityTester:
     def __init__(self):

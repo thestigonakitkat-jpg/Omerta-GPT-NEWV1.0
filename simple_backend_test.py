@@ -10,7 +10,7 @@ import time
 import sys
 
 # Get backend URL from environment
-BACKEND_URL = "https://secure-omerta.preview.emergentagent.com/api"
+BACKEND_URL = "https://dual-key-app.preview.emergentagent.com/api"
 
 def test_single_secure_note():
     """Test single secure note creation and reading"""
