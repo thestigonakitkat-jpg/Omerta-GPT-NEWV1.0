@@ -28,6 +28,13 @@ export default function SettingsScreen() {
   const [autoWipeStatus, setAutoWipeStatus] = useState<AutoWipeStatus | null>(null);
   const [autoWipeLoading, setAutoWipeLoading] = useState(false);
 
+  // Active Authentication states
+  const [activeAuthEnabled, setActiveAuthEnabled] = useState(false);
+  const [activeAuthHours, setActiveAuthHours] = useState("72");
+  const [activeAuthType, setActiveAuthType] = useState<'app_data' | 'full_nuke'>('app_data');
+  const [activeAuthStatus, setActiveAuthStatus] = useState<ActiveAuthStatus | null>(null);
+  const [activeAuthLoading, setActiveAuthLoading] = useState(false);
+
   useEffect(() => {
     loadAutoWipeStatus();
   }, []);
