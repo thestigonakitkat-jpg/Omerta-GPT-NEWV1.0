@@ -13,12 +13,34 @@ import * as Device from 'expo-device';
 import * as Application from 'expo-application';
 import { Platform } from 'react-native';
 
-interface CryptographicDNA {
+export interface CryptographicDNA {
   dnaSignature: string;
   hardwareFingerprint: string;
   installationToken: string;
   validationChain: string;
   timestamp: number;
+  // NEW: DNA Evolution Support
+  currentEpoch: number;
+  evolutionSeed: string;
+  generationHash: string;
+  expiresAt: number;
+  deviceHalfKey: string;
+  networkHalfKey?: string;
+}
+
+export interface DNAEvolutionConfig {
+  minEvolutionHours: number;
+  maxEvolutionHours: number;
+  gracePeriodhours: number;
+  validatorEndpoints: string[];
+}
+
+export interface DNASecurityQuestion {
+  questionId: string;
+  questionText: string;
+  answerHash: string;
+  dnaPosition: number;
+  generatedAt: number;
 }
 
 interface DNAValidationResult {
