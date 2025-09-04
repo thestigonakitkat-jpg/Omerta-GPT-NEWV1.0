@@ -275,7 +275,7 @@ class DualKeyNuclearProtocolTester:
                     'operator_a_id': 'dev_primary',
                     'operator_b_id': 'sec_officer'
                 }
-                response = self.session.post(f"{API_BASE}/dual-key/initiate", data=payload)
+                response = self.session.post(f"{API_BASE}/dual-key/initiate", json=payload)
                 if response.status_code == 429:
                     rate_limit_count += 1
                     break
