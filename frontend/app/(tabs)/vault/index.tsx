@@ -25,6 +25,7 @@ export default function VaultScreen() {
   const [showContactsModal, setShowContactsModal] = useState(false);
   const [contactsPassphrase, setContactsPassphrase] = useState("");
   const [contactsPin, setContactsPin] = useState("");
+  const [showQuarantineReview, setShowQuarantineReview] = useState(false);
   const vault = useVault();
   const contacts = useContacts();
   const { colors } = useTheme();
