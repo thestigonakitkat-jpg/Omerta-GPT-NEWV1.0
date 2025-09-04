@@ -188,7 +188,7 @@ export default function ChatRoom() {
         nonce
       );
       
-      // Create STEELOS SECURE envelope (THE BIRD wrapped message)
+      // Create STEELOS SECURE envelope (OMERTÀ-VANISH wrapped message)
       const steelosEnvelope = {
         type: "STEELOS_SECURE", 
         cryptgeon_blob: Buffer.from(cryptgeonBlob).toString('base64'),
