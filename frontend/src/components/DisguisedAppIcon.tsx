@@ -193,7 +193,7 @@ export const DisguisedAppIcon: React.FC = () => {
                 <Text style={styles.omertaText}>O</Text>
               </View>
               <View style={styles.iconInfo}>
-                <Text style={[styles.iconName, { color: colors.text }]}>OMERTA Default</Text>
+                <Text style={[styles.iconName, { color: colors.text }]}>OMERTÀ Default</Text>
                 <Text style={[styles.iconDescription, { color: colors.sub }]}>
                   Original OMERTA logo with red accents
                 </Text>
