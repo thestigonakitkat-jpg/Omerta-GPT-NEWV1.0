@@ -614,4 +614,26 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     flex: 1,
   },
+  intervalButtons: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 8,
+  },
+  intervalButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    alignItems: 'center',
+    minWidth: 60,
+  },
+  intervalText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  intervalSubText: {
+    fontSize: 11,
+    marginTop: 2,
+  },
 });
