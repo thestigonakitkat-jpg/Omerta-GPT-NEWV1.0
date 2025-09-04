@@ -196,11 +196,13 @@ export default function ChatRoom() {
       console.error('STEELOS SECURE protocol failed:', e);
     }
   };
+
+  const onSend = async () => {
     const txt = input.trim();
     if (!txt) return;
     const info = await keys.ensureKey(peerOid);
     setInput("");
-    const newMsg: Msg = { id: Math.random().toString(36).slice(2), text: txt, me: true, ts: Date.now(), status: "sent" };
+    const newMsg: Msg = { id: Math.random().toString(36).slice(2), text: txt, me: true, ts: Date.now(), status: "sent", type: "text" };
     setMessages((prev) => [...prev, newMsg]);
     scrollToEnd();
 
