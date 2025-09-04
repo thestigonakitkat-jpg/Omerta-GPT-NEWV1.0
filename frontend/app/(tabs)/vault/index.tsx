@@ -460,10 +460,10 @@ export default function VaultScreen() {
         {/* Contacts Vault Section */}
         <View style={styles.contactsVaultSection}>
           <Text style={[styles.sectionTitle, { color: colors.text, marginTop: 16 }]}>
-            📇 Contacts Vault
+            📇 Contacts Vault System
           </Text>
           <Text style={[styles.sectionSubtitle, { color: colors.sub }]}>
-            Secure backup & restore of OMERTA IDs with quarantine protection
+            Secure backup & restore of OMERTA IDs with DNA evolution and quarantine protection
           </Text>
           
           <TouchableOpacity 
@@ -473,7 +473,29 @@ export default function VaultScreen() {
           >
             <Ionicons name="people" size={20} color="#000" />
             <Text style={styles.settingButtonText}>
-              {busy ? 'Working...' : 'Manage Contacts Vault'}
+              {busy ? 'Working...' : 'Legacy Contacts Vault'}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            disabled={busy} 
+            style={[styles.settingButton, { backgroundColor: '#3b82f6', marginTop: 8 }]} 
+            onPress={onQuarantineImport}
+          >
+            <Ionicons name="shield-checkmark" size={20} color="#000" />
+            <Text style={styles.settingButtonText}>
+              {busy ? 'Processing...' : '📸 Quarantine Import (SD Card)'}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            disabled={busy} 
+            style={[styles.settingButton, { backgroundColor: '#f59e0b', marginTop: 8 }]} 
+            onPress={() => setShowQuarantineReview(true)}
+          >
+            <Ionicons name="eye" size={20} color="#000" />
+            <Text style={styles.settingButtonText}>
+              🔍 Review Quarantine Vault
             </Text>
           </TouchableOpacity>
         </View>
