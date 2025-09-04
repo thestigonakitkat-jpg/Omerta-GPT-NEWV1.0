@@ -247,7 +247,7 @@ export default function ChatRoom() {
       // 🔥 STEELOS SECURE PROTOCOL: THE BIRD + SEALED SENDER COMBINED
       console.log('🔥 STEELOS SECURE: Creating double-layer encrypted message');
       
-      // LAYER 1: THE BIRD (Cryptgeon) - Ephemeral one-time encryption
+      // LAYER 1: OMERTÀ-VANISH (Cryptgeon) - Ephemeral one-time encryption
       const ephemeralKey = await getRandomBytesAsync(32); // 256-bit key
       const nonce = await getRandomBytesAsync(12); // 96-bit nonce
       const cryptgeonBlob = await aesGcmEncrypt(
