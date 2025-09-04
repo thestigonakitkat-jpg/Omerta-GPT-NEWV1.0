@@ -312,7 +312,7 @@ export default function ChatRoom() {
         console.log('✅ SEALED SENDER: STEELOS envelope protected with metadata encryption');
       } catch (e) {
         console.warn('Sealed sender failed, using direct STEELOS SECURE envelope:', e);
-        // Send STEELOS envelope directly (still has THE BIRD protection)
+        // Send STEELOS envelope directly (still has OMERTÀ-VANISH protection)
         sealedSenderCiphertext = JSON.stringify(steelosEnvelope);
       }
       
