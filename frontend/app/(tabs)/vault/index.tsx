@@ -11,6 +11,8 @@ import { imageProcessor } from "../../../src/utils/imageProcessor";
 import { DisguisedAppIcon } from "../../../src/components/DisguisedAppIcon";
 import { contactsVault } from "../../../src/utils/contactsVault";
 import { useContacts } from "../../../src/state/contacts";
+import { dualZoneVault } from "../../../src/utils/dualZoneVault";
+import { QuarantineVaultReview } from "../../../src/components/QuarantineVaultReview";
 
 export default function VaultScreen() {
   const [needPin, setNeedPin] = useState(true);
