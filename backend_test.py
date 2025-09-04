@@ -1,17 +1,22 @@
 #!/usr/bin/env python3
 """
-Backend API Testing for RAM-only Secure Notes
-Tests the FastAPI backend endpoints for secure notes functionality
+Comprehensive Backend Testing for Dual-Key Nuclear Submarine Protocol System
+Tests both Design A (Dual-Command Bridge) and Design B (Split Master Key) systems
 """
 
 import requests
 import json
 import time
-import sys
+import hashlib
+import hmac
+import secrets
 from datetime import datetime, timezone
+import sys
+import os
 
 # Get backend URL from environment
-BACKEND_URL = "https://secure-omerta.preview.emergentagent.com/api"
+BACKEND_URL = os.environ.get('EXPO_PUBLIC_BACKEND_URL', 'https://secure-omerta.preview.emergentagent.com')
+API_BASE = f"{BACKEND_URL}/api"
 
 def test_status_endpoint():
     """Test that the status endpoint still works (regression test)"""
