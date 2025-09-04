@@ -37,6 +37,7 @@ export default function SettingsScreen() {
 
   useEffect(() => {
     loadAutoWipeStatus();
+    loadActiveAuthStatus();
   }, []);
 
   const loadAutoWipeStatus = async () => {
@@ -50,6 +51,24 @@ export default function SettingsScreen() {
       }
     } catch (error) {
       console.error('Failed to load auto-wipe status:', error);
+    }
+  };
+
+  const loadActiveAuthStatus = async () => {
+    try {
+      const config = await activeAuthWipe.getConfig();
+      if (config) {
+        setActiveAuthEnabled(config.enabled);
+        setActiveAuthHours(config.auth_interval_hours.toString());
+        setActiveAuthType(config.wipe_type);
+      }
+      
+      const status = await activeAuthWipe.checkAuthenticationStatus();
+      if (status) {
+        setActiveAuthStatus(status);
+      }
+    } catch (error) {
+      console.error('Failed to load active auth status:', error);
     }
   };
 
