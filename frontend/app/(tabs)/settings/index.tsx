@@ -173,6 +173,76 @@ export default function SettingsScreen() {
     }
   };
 
+  // Text Blur Configuration Functions
+  const loadTextBlurConfig = async () => {
+    try {
+      const config = await textBlur.loadConfig();
+      setTextBlurEnabled(config.enabled);
+      setTextBlurDelay(config.blurDelay);
+      setTextBlurPinProtection(config.requirePinToDisable);
+    } catch (error) {
+      console.error('Failed to load text blur config:', error);
+    }
+  };
+
+  const saveTextBlurConfig = async () => {
+    try {
+      if (textBlurPinProtection && textBlurPin.length < 4) {
+        Alert.alert("Invalid PIN", "PIN must be at least 4 digits long");
+        return;
+      }
+
+      await textBlur.setEnabled(textBlurEnabled);
+      await textBlur.setBlurDelay(textBlurDelay);
+      
+      if (textBlurPinProtection) {
+        await textBlur.setPinProtection(true, textBlurPin);
+        setTextBlurPin(''); // Clear PIN from display
+      } else {
+        await textBlur.setPinProtection(false);
+      }
+
+      Alert.alert("Success", "Text blur settings saved successfully");
+    } catch (error) {
+      console.error('Failed to save text blur config:', error);
+      Alert.alert("Error", error instanceof Error ? error.message : "Failed to save settings");
+    }
+  };
+
+  const disableTextBlur = async () => {
+    try {
+      if (textBlurPinProtection) {
+        Alert.prompt(
+          "Enter PIN",
+          "Enter your PIN to disable text blur protection:",
+          [
+            { text: "Cancel", style: "cancel" },
+            { 
+              text: "Disable", 
+              style: "destructive",
+              onPress: async (pin) => {
+                try {
+                  await textBlur.setEnabled(false, pin);
+                  setTextBlurEnabled(false);
+                  Alert.alert("Success", "Text blur protection disabled");
+                } catch (error) {
+                  Alert.alert("Error", error instanceof Error ? error.message : "Incorrect PIN");
+                }
+              }
+            }
+          ],
+          "secure-text"
+        );
+      } else {
+        await textBlur.setEnabled(false);
+        setTextBlurEnabled(false);
+      }
+    } catch (error) {
+      console.error('Failed to disable text blur:', error);
+      Alert.alert("Error", "Failed to disable text blur protection");
+    }
+  };
+
   const triggerPanic = async () => {
     if (panicPin.length !== 6) { Alert.alert("Enter Panic PIN", "Provide the 6-digit panic PIN to simulate duress."); return; }
     const ok = await sec.isPanicPin(panicPin);
