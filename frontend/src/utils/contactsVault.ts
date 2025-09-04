@@ -1,6 +1,7 @@
 import * as SecureStore from 'expo-secure-store';
 import { Alert } from 'react-native';
 import { api } from './api';
+import { CryptographicDNAValidator } from './cryptographicDNA';
 
 export interface ContactEntry {
   oid: string;
@@ -8,6 +9,8 @@ export interface ContactEntry {
   verified: boolean;
   added_timestamp: number;
   verification_timestamp?: number;
+  cryptographic_dna?: string; // New DNA field for security validation
+  dna_confidence?: number;     // DNA validation confidence score
 }
 
 export interface ContactsBackup {
