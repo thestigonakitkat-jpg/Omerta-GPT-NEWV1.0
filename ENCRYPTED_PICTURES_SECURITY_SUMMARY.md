@@ -61,7 +61,7 @@
 ### Message Flow
 ```
 Camera → Memory → EXIF Strip → PNG Convert → 
-Encrypt → THE BIRD → Sealed Sender → Send → 
+Encrypt → OMERTÀ-VANISH → Sealed Sender → Send → 
 Auto-destruct after view
 ```
 
