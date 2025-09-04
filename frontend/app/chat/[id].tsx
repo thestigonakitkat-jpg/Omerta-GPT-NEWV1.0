@@ -128,7 +128,7 @@ export default function ChatRoom() {
     try {
       const from = myOidRef.current || (await getOrCreateOID());
       
-      // 🔥 STEELOS SECURE PROTOCOL: THE BIRD + SEALED SENDER FOR IMAGES
+      // 🔥 STEELOS SECURE PROTOCOL: OMERTÀ-VANISH + SEALED SENDER FOR IMAGES
       console.log('🖼️ STEELOS SECURE: Creating double-layer encrypted image message');
       
       // Create image payload
