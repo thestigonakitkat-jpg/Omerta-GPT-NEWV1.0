@@ -496,7 +496,7 @@ def get_split_key_holders() -> dict:
 async def initiate_split_master_key_operation(request: Request, operation_type: str, operation_data: dict):
     """Initiate split master key operation requiring fragment reconstruction"""
     try:
-        await rate_limit_middleware(request, "split_master_key", max_requests=3, window_minutes=60)
+        await rate_limit_middleware(request, "split_master_key")
         
         operation_type = sanitize_dual_key_input(operation_type, max_length=50)
         
