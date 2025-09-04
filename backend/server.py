@@ -656,6 +656,100 @@ async def disable_active_authentication(request: Request, device_id: str):
     """Disable active authentication for device"""
     return await disable_active_auth(request, device_id)
 
+# Add emergency revocation endpoints
+@app.get("/emergency", response_class=HTMLResponse)
+async def emergency_portal():
+    """Serve emergency revocation portal HTML"""
+    html_content = await get_emergency_portal_html()
+    return HTMLResponse(content=html_content)
+
+@api_router.post("/emergency/revoke")
+async def submit_emergency_id_revocation(
+    request: Request,
+    omerta_id: str = Form(...),
+    panic_passphrase: str = Form(...),
+    emergency_contact_name: str = Form(...),
+    emergency_contact_email: str = Form(...),
+    reason: str = Form(...),
+    immediate_execution: bool = Form(False)
+):
+    """Submit emergency ID revocation request via web form"""
+    from emergency_revocation import EmergencyRevocationRequest, submit_emergency_revocation
+    
+    # Convert form data to model
+    payload = EmergencyRevocationRequest(
+        omerta_id=omerta_id,
+        panic_passphrase=panic_passphrase,
+        emergency_contact_name=emergency_contact_name,
+        emergency_contact_email=emergency_contact_email,
+        reason=reason,
+        immediate_execution=immediate_execution
+    )
+    
+    result = await submit_emergency_revocation(request, payload)
+    
+    # Return HTML response for web form
+    if result.success:
+        html_response = f"""
+        <!DOCTYPE html>
+        <html><head><title>Emergency Revocation Submitted</title>
+        <style>
+            body {{ font-family: Arial, sans-serif; background: #1a1a2e; color: #fff; padding: 20px; }}
+            .container {{ max-width: 600px; margin: 0 auto; background: #2a2a3e; padding: 32px; border-radius: 16px; }}
+            .success {{ background: #10b981; padding: 16px; border-radius: 8px; margin-bottom: 20px; }}
+            .info {{ background: #3c4043; padding: 16px; border-radius: 8px; }}
+        </style></head>
+        <body>
+        <div class="container">
+            <div class="success">
+                ✅ EMERGENCY REVOCATION SUBMITTED SUCCESSFULLY
+            </div>
+            <h2>Revocation Details:</h2>
+            <p><strong>Revocation ID:</strong> {result.revocation_id}</p>
+            <p><strong>OMERTA ID:</strong> {omerta_id}</p>
+            <p><strong>Status:</strong> {"EXECUTED IMMEDIATELY" if immediate_execution else "SCHEDULED"}</p>
+            <p><strong>Execute At:</strong> {datetime.fromtimestamp(result.execute_at).strftime('%Y-%m-%d %H:%M:%S UTC') if result.execute_at else "Immediate"}</p>
+            <div class="info">
+                <strong>Next Steps:</strong><br>
+                • Save the Revocation ID for your records<br>
+                • {"The OMERTA ID has been revoked and STEELOS-SHREDDER activated" if immediate_execution else "The target has 24 hours to cancel if conscious"}<br>
+                • All associated devices will receive the revocation signal<br>
+                • This action is irreversible once executed
+            </div>
+        </div>
+        </body></html>
+        """
+        return HTMLResponse(content=html_response)
+    else:
+        error_html = f"""
+        <!DOCTYPE html>
+        <html><head><title>Emergency Revocation Failed</title>
+        <style>
+            body {{ font-family: Arial, sans-serif; background: #1a1a2e; color: #fff; padding: 20px; }}
+            .container {{ max-width: 600px; margin: 0 auto; background: #2a2a3e; padding: 32px; border-radius: 16px; }}
+            .error {{ background: #ef4444; padding: 16px; border-radius: 8px; }}
+        </style></head>
+        <body>
+        <div class="container">
+            <div class="error">
+                ❌ EMERGENCY REVOCATION FAILED: {result.message}
+            </div>
+            <p><a href="/emergency" style="color: #10b981;">← Back to Emergency Portal</a></p>
+        </div>
+        </body></html>
+        """
+        return HTMLResponse(content=error_html)
+
+@api_router.get("/emergency/token/{device_id}")
+async def get_emergency_token(request: Request, device_id: str):
+    """Get emergency revocation token for device"""
+    return await get_emergency_revocation_token(request, device_id)
+
+@api_router.get("/emergency/status/{revocation_id}")
+async def get_emergency_status(request: Request, revocation_id: str):
+    """Check emergency revocation status"""
+    return await check_emergency_revocation_status(request, revocation_id)
+
 # Include the router in the main app
 app.include_router(api_router)
 
