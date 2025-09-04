@@ -160,14 +160,32 @@ class ContactsVaultManager {
         throw new Error('PIN must be exactly 6 digits');
       }
 
-      // Convert contacts to ContactEntry format
-      const contactEntries: ContactEntry[] = Object.entries(contacts).map(([oid, verified]) => ({
-        oid,
-        display_name: '', // Could be enhanced to store display names
-        verified,
-        added_timestamp: Date.now(),
-        verification_timestamp: verified ? Date.now() : undefined
-      }));
+      // Convert contacts to ContactEntry format with DNA generation
+      const contactEntries: ContactEntry[] = [];
+      let dnaGenerationCount = 0;
+      
+      for (const [oid, verified] of Object.entries(contacts)) {
+        const baseContact: ContactEntry = {
+          oid,
+          display_name: '', // Could be enhanced to store display names
+          verified,
+          added_timestamp: Date.now(),
+          verification_timestamp: verified ? Date.now() : undefined
+        };
+
+        // Generate cryptographic DNA for each contact
+        try {
+          const contactDNA = await this.generateContactDNA(baseContact);
+          baseContact.cryptographic_dna = contactDNA;
+          baseContact.dna_confidence = 100; // Fresh DNA has full confidence
+          dnaGenerationCount++;
+        } catch (error) {
+          console.warn(`Failed to generate DNA for contact ${oid}:`, error);
+          // Continue without DNA if generation fails
+        }
+
+        contactEntries.push(baseContact);
+      }
 
       // Generate encryption key hash for vault access
       const encryptionKeyHash = await this.generateEncryptionKeyHash(passphrase, pin);
@@ -182,8 +200,12 @@ class ContactsVaultManager {
 
       if (response.success) {
         Alert.alert(
-          '🔐 Contacts Vault',
-          `Successfully backed up ${contactEntries.length} contacts to secure vault.\n\nBackup ID: ${response.backup_id}`,
+          '🔐🧬 Contacts Vault + DNA',
+          `Successfully backed up ${contactEntries.length} contacts to secure vault.\n\n` +
+          `🧬 DNA Protected: ${dnaGenerationCount}/${contactEntries.length} contacts\n` +
+          `🔒 Encryption: AES-256 + Argon2id\n` +
+          `🛡️ Quarantine: Active malware scanning\n\n` +
+          `Backup ID: ${response.backup_id}`,
           [{ text: 'OK' }]
         );
         return response;
