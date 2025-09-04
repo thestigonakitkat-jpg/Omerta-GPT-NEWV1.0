@@ -620,7 +620,7 @@ export default function ChatRoom() {
         steelosEnvelope = JSON.parse(steelosData);
       }
       
-      // LAYER 1: Decrypt THE BIRD (cryptgeon) wrapper
+      // LAYER 1: Decrypt OMERTÀ-VANISH (cryptgeon) wrapper
       const cryptgeonBlob = new Uint8Array(Buffer.from(steelosEnvelope.cryptgeon_blob, 'base64'));
       const ephemeralKey = new Uint8Array(Buffer.from(steelosEnvelope.ephemeral_key, 'base64'));
       const nonce = new Uint8Array(Buffer.from(steelosEnvelope.nonce, 'base64'));
