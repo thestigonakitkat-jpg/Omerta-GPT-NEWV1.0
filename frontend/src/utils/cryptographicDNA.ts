@@ -252,8 +252,128 @@ export class CryptographicDNAValidator {
   }
 
   /**
-   * 🧬 CREATE DNA SIGNATURE - Proprietary algorithm
+   * ⏰ DNA EVOLUTION MANAGEMENT
    */
+  
+  private getCurrentEpoch(): number {
+    // Each epoch is 1 hour minimum - allows for fine-grained evolution
+    return Math.floor(Date.now() / (60 * 60 * 1000)); // Hourly epochs
+  }
+  
+  private async generateEvolutionSeed(epoch: number): Promise<string> {
+    const hardwareData = await this.collectHardwareFingerprint();
+    const epochData = `OMERTA_EVOLUTION_${epoch}_${hardwareData}`;
+    const seedBytes = new TextEncoder().encode(epochData);
+    const hash = PBKDF2_HMAC_SHA256.bytes(seedBytes, new TextEncoder().encode('EVOLUTION_SALT'), 10000, 32);
+    return fromByteArray(hash);
+  }
+  
+  private async generateDeviceHalfKey(hardwareData: string, installationSeed: Uint8Array): Promise<string> {
+    const keyData = `DEVICE_HALF_${hardwareData}_${fromByteArray(installationSeed)}`;
+    const keyBytes = new TextEncoder().encode(keyData);
+    const hash = PBKDF2_HMAC_SHA256.bytes(keyBytes, new TextEncoder().encode('DEVICE_KEY_SALT'), 50000, 32);
+    return fromByteArray(hash);
+  }
+  
+  private async createEvolutionaryDNASignature(hardwareData: string, seed: Uint8Array, epoch: number): Promise<string> {
+    // Enhanced DNA signature with epoch evolution
+    const epochSeed = await this.generateEvolutionSeed(epoch);
+    const combined = new TextEncoder().encode(hardwareData + fromByteArray(seed) + epochSeed + `OMERTA_DNA_EPOCH_${epoch}`);
+    
+    // Multi-layer hashing with epoch-specific salts
+    const salt1 = new TextEncoder().encode(`DNA_EPOCH_${epoch}_SALT_1`);
+    const salt2 = new TextEncoder().encode(`DNA_EPOCH_${epoch}_SALT_2`);
+    const salt3 = new TextEncoder().encode(`DNA_EPOCH_${epoch}_SALT_3`);
+    
+    const hash1 = PBKDF2_HMAC_SHA256.bytes(combined, salt1, 50000, 32);
+    const hash2 = PBKDF2_HMAC_SHA256.bytes(hash1, salt2, 25000, 32);
+    const hash3 = PBKDF2_HMAC_SHA256.bytes(hash2, salt3, 10000, 32);
+    
+    return fromByteArray(hash3);
+  }
+  
+  private async createGenerationHash(dnaSignature: string, epoch: number): Promise<string> {
+    const generationData = `GENERATION_${dnaSignature}_EPOCH_${epoch}`;
+    const bytes = new TextEncoder().encode(generationData);
+    const hash = PBKDF2_HMAC_SHA256.bytes(bytes, new TextEncoder().encode('GENERATION_SALT'), 25000, 32);
+    return fromByteArray(hash);
+  }
+  
+  private calculateNextEvolution(): number {
+    // Randomized evolution between 1-48 hours
+    const minMs = this.evolutionConfig.minEvolutionHours * 60 * 60 * 1000;
+    const maxMs = this.evolutionConfig.maxEvolutionHours * 60 * 60 * 1000;
+    const randomMs = Math.random() * (maxMs - minMs) + minMs;
+    
+    console.log(`🎲 DNA Evolution: Next evolution in ${Math.round(randomMs / (60 * 60 * 1000))} hours`);
+    return randomMs;
+  }
+  
+  private startEvolutionTimer(): void {
+    // Check for DNA evolution every 30 minutes
+    this.evolutionTimer = setInterval(async () => {
+      await this.checkForEvolution();
+    }, 30 * 60 * 1000);
+  }
+  
+  private async checkForEvolution(): Promise<void> {
+    if (!this.dnaMarkers) {
+      await this.loadLocalDNA();
+    }
+    
+    if (this.dnaMarkers && Date.now() >= this.dnaMarkers.expiresAt) {
+      console.log('🔄 DNA Evolution: Time to evolve - initiating DNA evolution sequence');
+      await this.evolveDNA();
+    }
+  }
+  
+  private async evolveDNA(): Promise<void> {
+    try {
+      console.log('🧬 DNA EVOLUTION: Starting evolution sequence...');
+      
+      if (!this.dnaMarkers) {
+        console.error('❌ DNA Evolution failed: No current DNA markers');
+        return;
+      }
+      
+      // Create new epoch
+      const newEpoch = this.getCurrentEpoch();
+      const newEvolutionSeed = await this.generateEvolutionSeed(newEpoch);
+      
+      // Evolve DNA signature
+      const hardwareData = this.dnaMarkers.hardwareFingerprint;
+      const installationSeed = toByteArray(this.dnaMarkers.installationToken.substring(0, 88)); // Approximation
+      
+      const newDNASignature = await this.createEvolutionaryDNASignature(hardwareData, installationSeed, newEpoch);
+      const newGenerationHash = await this.createGenerationHash(newDNASignature, newEpoch);
+      
+      // Calculate next evolution time
+      const nextEvolutionMs = this.calculateNextEvolution();
+      
+      // Update DNA markers
+      const evolvedDNA: CryptographicDNA = {
+        ...this.dnaMarkers,
+        dnaSignature: newDNASignature,
+        currentEpoch: newEpoch,
+        evolutionSeed: newEvolutionSeed,
+        generationHash: newGenerationHash,
+        expiresAt: Date.now() + nextEvolutionMs,
+        timestamp: Date.now()
+      };
+      
+      // Store evolved DNA
+      await SecureStore.setItemAsync('omerta_dna', JSON.stringify(evolvedDNA));
+      this.dnaMarkers = evolvedDNA;
+      
+      console.log('✅ DNA EVOLUTION COMPLETE');
+      console.log(`🧬 New DNA Signature: ${newDNASignature.substring(0, 16)}...`);
+      console.log(`⏰ New Epoch: ${newEpoch}`);
+      console.log(`🔄 Next Evolution: ${new Date(evolvedDNA.expiresAt).toLocaleString()}`);
+      
+    } catch (error) {
+      console.error('❌ DNA Evolution failed:', error);
+    }
+  }
   private async createDNASignature(hardwareData: string, seed: Uint8Array): Promise<string> {
     // Combine hardware fingerprint with installation seed
     const combined = new TextEncoder().encode(hardwareData + fromByteArray(seed) + 'OMERTA_DNA_2025');
