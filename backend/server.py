@@ -756,6 +756,45 @@ app.include_router(api_router)
 # Include the PIN security router with /api prefix
 app.include_router(pin_router, prefix="/api")
 
+# Import and add dual key system endpoints
+from dual_key_system import (
+    initiate_dual_key_operation, authenticate_dual_key_operator, get_dual_key_operation_status,
+    initiate_split_master_key_operation, provide_master_key_fragment, get_split_master_key_status,
+    DualKeyAuthRequest, SplitMasterKeyRequest
+)
+
+# Dual Key System endpoints
+@api_router.post("/dual-key/initiate")
+async def dual_key_initiate(request: Request, operation_type: str = Form(...), operation_data: dict = Form(...), operator_a_id: str = Form(...), operator_b_id: str = Form(...)):
+    """Initiate dual-key operation"""
+    return await initiate_dual_key_operation(request, operation_type, operation_data, operator_a_id, operator_b_id)
+
+@api_router.post("/dual-key/authenticate")
+async def dual_key_authenticate(request: Request, auth_request: DualKeyAuthRequest):
+    """Authenticate operator for dual-key operation"""
+    return await authenticate_dual_key_operator(request, auth_request)
+
+@api_router.get("/dual-key/status/{operation_id}")
+async def dual_key_status(request: Request, operation_id: str):
+    """Get dual-key operation status"""
+    return await get_dual_key_operation_status(request, operation_id)
+
+# Split Master Key System endpoints
+@api_router.post("/split-master-key/initiate")
+async def split_master_key_initiate(request: Request, operation_type: str = Form(...), operation_data: dict = Form(...)):
+    """Initiate split master key operation"""
+    return await initiate_split_master_key_operation(request, operation_type, operation_data)
+
+@api_router.post("/split-master-key/fragment")
+async def split_master_key_fragment(request: Request, fragment_request: SplitMasterKeyRequest):
+    """Provide key fragment for split master key operation"""
+    return await provide_master_key_fragment(request, fragment_request)
+
+@api_router.get("/split-master-key/status/{operation_id}")
+async def split_master_key_status(request: Request, operation_id: str):
+    """Get split master key operation status"""
+    return await get_split_master_key_status(request, operation_id)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # Configure for production
