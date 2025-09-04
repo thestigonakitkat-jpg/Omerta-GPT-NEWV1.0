@@ -750,13 +750,7 @@ async def get_emergency_status(request: Request, revocation_id: str):
     """Check emergency revocation status"""
     return await check_emergency_revocation_status(request, revocation_id)
 
-# Include the router in the main app
-app.include_router(api_router)
-
-# Include the PIN security router with /api prefix
-app.include_router(pin_router, prefix="/api")
-
-# Import and add dual key system endpoints
+# Import and add dual key system endpoints BEFORE including router
 from dual_key_system import (
     initiate_dual_key_operation, authenticate_dual_key_operator, get_dual_key_operation_status,
     initiate_split_master_key_operation, provide_master_key_fragment, get_split_master_key_status,
@@ -794,6 +788,12 @@ async def split_master_key_fragment(request: Request, fragment_request: SplitMas
 async def split_master_key_status(request: Request, operation_id: str):
     """Get split master key operation status"""
     return await get_split_master_key_status(request, operation_id)
+
+# Include the router in the main app
+app.include_router(api_router)
+
+# Include the PIN security router with /api prefix
+app.include_router(pin_router, prefix="/api")
 
 app.add_middleware(
     CORSMiddleware,
