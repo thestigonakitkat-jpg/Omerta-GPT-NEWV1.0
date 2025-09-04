@@ -216,7 +216,7 @@ async def initiate_dual_key_operation(request: Request, operation_type: str, ope
 async def authenticate_dual_key_operator(request: Request, auth_request: DualKeyAuthRequest):
     """Authenticate one operator for dual-key operation"""
     try:
-        await rate_limit_middleware(request, "dual_key_auth", max_requests=10, window_minutes=60)
+        await rate_limit_middleware(request, "dual_key_auth")
         
         # Sanitize inputs
         operation_id = sanitize_dual_key_input(auth_request.operation_id, max_length=100)
