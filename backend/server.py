@@ -581,6 +581,7 @@ async def ws_endpoint(ws: WebSocket):
 from contacts_vault import store_contacts_backup, retrieve_contacts_backup, clear_contacts_vault
 from auto_wipe import configure_auto_wipe, update_activity, check_auto_wipe_status, get_wipe_token
 from active_auth import configure_active_authentication, record_authentication, check_active_auth_status, get_active_auth_wipe_token, disable_active_auth
+from emergency_revocation import get_emergency_portal_html, submit_emergency_revocation, get_emergency_revocation_token, check_emergency_revocation_status
 
 # Add contacts vault endpoints
 @api_router.post("/contacts-vault/store")
