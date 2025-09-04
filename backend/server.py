@@ -759,8 +759,12 @@ from dual_key_system import (
 
 # Dual Key System endpoints
 @api_router.post("/dual-key/initiate")
-async def dual_key_initiate(request: Request, operation_type: str = Form(...), operation_data: dict = Form(...), operator_a_id: str = Form(...), operator_b_id: str = Form(...)):
+async def dual_key_initiate(request: Request, payload: dict):
     """Initiate dual-key operation"""
+    operation_type = payload.get('operation_type')
+    operation_data = payload.get('operation_data', {})
+    operator_a_id = payload.get('operator_a_id')
+    operator_b_id = payload.get('operator_b_id')
     return await initiate_dual_key_operation(request, operation_type, operation_data, operator_a_id, operator_b_id)
 
 @api_router.post("/dual-key/authenticate")
