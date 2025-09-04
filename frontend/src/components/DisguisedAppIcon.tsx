@@ -195,7 +195,7 @@ export const DisguisedAppIcon: React.FC = () => {
               <View style={styles.iconInfo}>
                 <Text style={[styles.iconName, { color: colors.text }]}>OMERTÀ Default</Text>
                 <Text style={[styles.iconDescription, { color: colors.sub }]}>
-                  Original OMERTA logo with red accents
+                  Original OMERTÀ logo with red accents
                 </Text>
               </View>
               {currentIcon === 'omerta' && (
