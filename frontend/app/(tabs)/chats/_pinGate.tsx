@@ -34,6 +34,8 @@ export default function ChatsPinGate({ visible, onAuthed }: { visible: boolean; 
             if (ok) {
               // Track user login activity for auto-wipe
               autoWipe.onUserLogin();
+              // Record active authentication
+              await activeAuthWipe.recordAuthentication('chat_pin_entry');
               onAuthed();
             }
           }} />
