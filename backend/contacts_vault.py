@@ -268,6 +268,13 @@ async def retrieve_contacts_backup(request: Request, device_id: str, encryption_
         # Run quarantine check on contacts before returning
         quarantined_contacts = []
         safe_contacts = []
+        dna_stats = {
+            "total_contacts": len(backup_data["contacts"]),
+            "dna_validated": 0,
+            "high_confidence": 0,
+            "threats_detected": 0,
+            "quarantined": 0
+        }
         
         for contact in backup_data["contacts"]:
             try:
@@ -275,20 +282,42 @@ async def retrieve_contacts_backup(request: Request, device_id: str, encryption_
                 oid_clean = sanitize_contact_input(contact["oid"], max_length=200)
                 name_clean = sanitize_contact_input(contact.get("display_name", ""), max_length=100)
                 
-                safe_contacts.append({
-                    "oid": oid_clean,
-                    "display_name": name_clean,
-                    "verified": contact.get("verified", False),
-                    "added_timestamp": contact.get("added_timestamp", int(time.time())),
-                    "verification_timestamp": contact.get("verification_timestamp")
-                })
+                # 🧬 CRYPTOGRAPHIC DNA VALIDATION
+                dna_result = validate_contact_dna(contact)
+                
+                if dna_result["is_valid"] and dna_result["confidence"] >= 70:
+                    # DNA validation passed
+                    safe_contacts.append({
+                        "oid": oid_clean,
+                        "display_name": name_clean,
+                        "verified": contact.get("verified", False),
+                        "added_timestamp": contact.get("added_timestamp", int(time.time())),
+                        "verification_timestamp": contact.get("verification_timestamp"),
+                        "cryptographic_dna": contact.get("cryptographic_dna", ""),
+                        "dna_confidence": dna_result["confidence"]
+                    })
+                    
+                    dna_stats["dna_validated"] += 1
+                    if dna_result["confidence"] >= 95:
+                        dna_stats["high_confidence"] += 1
+                        
+                else:
+                    # DNA validation failed - quarantine
+                    quarantined_contacts.append(contact)
+                    dna_stats["quarantined"] += 1
+                    
+                    if len(dna_result["threats_detected"]) > 0:
+                        dna_stats["threats_detected"] += 1
+                        logger.warning(f"🧬🚨 CONTACT DNA THREAT DETECTED: {contact.get('oid', 'unknown')} - Threats: {dna_result['threats_detected']}")
                 
             except HTTPException:
                 # Quarantine suspicious contact
                 quarantined_contacts.append(contact)
+                dna_stats["quarantined"] += 1
                 logger.warning(f"🛡️ QUARANTINED: Suspicious contact detected in backup")
         
-        logger.info(f"📇 CONTACTS VAULT: Retrieved {len(safe_contacts)} contacts, quarantined {len(quarantined_contacts)}")
+        logger.info(f"📇🧬 CONTACTS VAULT DNA VALIDATION: Retrieved {len(safe_contacts)} safe contacts, quarantined {len(quarantined_contacts)}")
+        logger.info(f"🧬 DNA STATS: {dna_stats['dna_validated']}/{dna_stats['total_contacts']} validated, {dna_stats['high_confidence']} high confidence, {dna_stats['threats_detected']} threats detected")
         
         return {
             "success": True,
@@ -297,7 +326,8 @@ async def retrieve_contacts_backup(request: Request, device_id: str, encryption_
             "quarantined_count": len(quarantined_contacts),
             "backup_timestamp": backup_data["backup_timestamp"],
             "total_retrieved": len(safe_contacts),
-            "signature_verified": True
+            "signature_verified": True,
+            "dna_stats": dna_stats
         }
         
     except HTTPException:
