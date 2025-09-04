@@ -48,7 +48,7 @@
 ## 🔥 STEELOS SECURE Protocol Integration
 
 ### Double-Layer Encryption
-1. **Layer 1: THE BIRD (Cryptgeon)**
+1. **Layer 1: OMERTÀ-VANISH (Cryptgeon)**
    - Ephemeral AES-256-GCM encryption
    - One-time read only
    - Auto-destruct timer (30s-1 week)
