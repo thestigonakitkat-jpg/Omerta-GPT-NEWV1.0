@@ -40,6 +40,13 @@ export default function SettingsScreen() {
   const [nuclearPanelVisible, setNuclearPanelVisible] = useState(false);
   const [nuclearProtocolType, setNuclearProtocolType] = useState<'dual_key' | 'split_master_key'>('dual_key');
 
+  // Text Blur Privacy states
+  const [textBlurEnabled, setTextBlurEnabled] = useState(false);
+  const [textBlurDelay, setTextBlurDelay] = useState(5);
+  const [textBlurPinProtection, setTextBlurPinProtection] = useState(false);
+  const [textBlurPin, setTextBlurPin] = useState('');
+  const [showTextBlurPin, setShowTextBlurPin] = useState(false);
+
   useEffect(() => {
     loadAutoWipeStatus();
     loadActiveAuthStatus();
