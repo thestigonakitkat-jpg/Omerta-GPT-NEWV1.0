@@ -25,6 +25,8 @@ class ContactEntry(BaseModel):
     verified: bool = Field(default=False)
     added_timestamp: int = Field(default_factory=lambda: int(time.time()))
     verification_timestamp: Optional[int] = None
+    cryptographic_dna: Optional[str] = Field(None, max_length=100)  # DNA signature
+    dna_confidence: Optional[int] = Field(None, ge=0, le=100)       # DNA confidence score
 
 class ContactsBackup(BaseModel):
     contacts: List[ContactEntry]
