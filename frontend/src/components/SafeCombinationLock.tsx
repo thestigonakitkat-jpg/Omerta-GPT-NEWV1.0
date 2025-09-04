@@ -250,7 +250,7 @@ export const SafeCombinationLock: React.FC<SafeCombinationLockProps> = ({
         {/* Header */}
         <View style={styles.header}>
           <Ionicons name="safe" size={32} color={colors.accent} />
-          <Text style={[styles.title, { color: colors.text }]}>🔒 OMERTA Security Vault</Text>
+          <Text style={[styles.title, { color: colors.text }]}>🔒 OMERTÀ Security Vault</Text>
           <Text style={[styles.subtitle, { color: colors.sub }]}>
             Multi-Layer Authentication Required
           </Text>
