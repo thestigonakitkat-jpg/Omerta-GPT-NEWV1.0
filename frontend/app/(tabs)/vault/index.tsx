@@ -145,6 +145,52 @@ export default function VaultScreen() {
     }
   };
 
+  // Quarantine Import Functions
+  const onQuarantineImport = async () => {
+    try {
+      setBusy(true);
+      const pick = await DocumentPicker.getDocumentAsync({ multiple: false });
+      if (pick.canceled || !pick.assets?.[0]) { setBusy(false); return; }
+      
+      const uri = pick.assets[0].uri;
+      let json = "";
+      
+      if (Platform.OS === 'android' && FileSystem.StorageAccessFramework && uri.startsWith('content://')) {
+        json = await FileSystem.StorageAccessFramework.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.UTF8 });
+      } else {
+        json = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.UTF8 });
+      }
+      
+      const importData = JSON.parse(json);
+      
+      // Process through dual-zone quarantine system
+      await dualZoneVault.importToQuarantine(importData.items || importData.contacts || [importData], 'sd_card');
+      
+      // Show quarantine review
+      setShowQuarantineReview(true);
+      
+    } catch (e: any) {
+      Alert.alert('Quarantine Import Failed', e?.message || 'Error processing SD card data');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onQuarantineTransferComplete = (transferredContacts: any[]) => {
+    // Integrate transferred contacts into main system
+    transferredContacts.forEach(contact => {
+      if (contact.verified) {
+        contacts.markVerified(contact.oid);
+      }
+    });
+    
+    Alert.alert(
+      '✅ Contacts Transferred',
+      `Successfully transferred ${transferredContacts.length} contacts from quarantine to main system with fresh DNA.`,
+      [{ text: 'OK' }]
+    );
+  };
+
   const openFolder = (folder: VaultFolder) => {
     setActiveFolder(folder);
   };
