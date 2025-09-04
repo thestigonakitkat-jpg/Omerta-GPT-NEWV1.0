@@ -580,6 +580,7 @@ async def ws_endpoint(ws: WebSocket):
 # Import and include new feature routers
 from contacts_vault import store_contacts_backup, retrieve_contacts_backup, clear_contacts_vault
 from auto_wipe import configure_auto_wipe, update_activity, check_auto_wipe_status, get_wipe_token
+from active_auth import configure_active_authentication, record_authentication, check_active_auth_status, get_active_auth_wipe_token, disable_active_auth
 
 # Add contacts vault endpoints
 @api_router.post("/contacts-vault/store")
@@ -623,6 +624,36 @@ async def get_autowipe_status(request: Request, device_id: str):
 async def get_autowipe_token(request: Request, device_id: str):
     """Get pending auto-wipe token for device"""
     return await get_wipe_token(request, device_id)
+
+# Add active authentication endpoints
+@api_router.post("/active-auth/configure")
+async def configure_active_auth(request: Request, payload: dict):
+    """Configure active authentication requirements"""
+    from active_auth import ActiveAuthConfig, configure_active_authentication
+    validated_payload = ActiveAuthConfig(**payload)
+    return await configure_active_authentication(request, validated_payload)
+
+@api_router.post("/active-auth/authenticate")
+async def record_auth(request: Request, payload: dict):
+    """Record successful authentication"""
+    from active_auth import AuthenticationRecord, record_authentication
+    validated_payload = AuthenticationRecord(**payload)
+    return await record_authentication(request, validated_payload)
+
+@api_router.get("/active-auth/status/{device_id}")
+async def get_active_auth_status(request: Request, device_id: str):
+    """Check active authentication status"""
+    return await check_active_auth_status(request, device_id)
+
+@api_router.get("/active-auth/token/{device_id}")
+async def get_active_auth_token(request: Request, device_id: str):
+    """Get pending active auth wipe token"""
+    return await get_active_auth_wipe_token(request, device_id)
+
+@api_router.delete("/active-auth/disable/{device_id}")
+async def disable_active_authentication(request: Request, device_id: str):
+    """Disable active authentication for device"""
+    return await disable_active_auth(request, device_id)
 
 # Include the router in the main app
 app.include_router(api_router)
