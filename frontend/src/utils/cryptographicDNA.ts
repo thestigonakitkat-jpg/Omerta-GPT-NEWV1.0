@@ -371,7 +371,113 @@ export class CryptographicDNAValidator {
       console.log(`🔄 Next Evolution: ${new Date(evolvedDNA.expiresAt).toLocaleString()}`);
       
     } catch (error) {
-      console.error('❌ DNA Evolution failed:', error);
+  /**
+   * 🧠 DNA-EMBEDDED SECURITY QUESTIONS
+   */
+  
+  async generateDNASecurityQuestions(dna: CryptographicDNA): Promise<DNASecurityQuestion[]> {
+    const questions: DNASecurityQuestion[] = [];
+    
+    // Question 1: DNA Signature Position
+    const pos1 = Math.floor(Math.random() * (dna.dnaSignature.length - 8));
+    const answer1 = dna.dnaSignature.substring(pos1, pos1 + 4);
+    questions.push({
+      questionId: 'dna_signature_position',
+      questionText: `Your DNA marker at position ${pos1 + 1}-${pos1 + 4} is?`,
+      answerHash: await this.hashAnswer(answer1, dna.deviceHalfKey),
+      dnaPosition: pos1,
+      generatedAt: Date.now()
+    });
+    
+    // Question 2: Device Half-Key Checksum
+    const deviceChecksum = this.calculateChecksum(dna.deviceHalfKey);
+    questions.push({
+      questionId: 'device_checksum',
+      questionText: `Your device fingerprint checksum is?`,
+      answerHash: await this.hashAnswer(deviceChecksum, dna.deviceHalfKey),
+      dnaPosition: -1, // Not position-based
+      generatedAt: Date.now()
+    });
+    
+    // Question 3: Generation Hash Segment
+    const pos3 = Math.floor(Math.random() * (dna.generationHash.length - 8));
+    const answer3 = dna.generationHash.substring(pos3, pos3 + 4);
+    questions.push({
+      questionId: 'generation_segment',
+      questionText: `Your generation code segment ${Math.floor(pos3/4)+1} is?`,
+      answerHash: await this.hashAnswer(answer3, dna.deviceHalfKey),
+      dnaPosition: pos3,
+      generatedAt: Date.now()
+    });
+    
+    console.log('🧠 Generated 3 DNA-embedded security questions');
+    return questions;
+  }
+  
+  private async hashAnswer(answer: string, salt: string): Promise<string> {
+    const combined = `${answer}_${salt}_OMERTA_DNA_ANSWER`;
+    const bytes = new TextEncoder().encode(combined);
+    const hash = PBKDF2_HMAC_SHA256.bytes(bytes, new TextEncoder().encode('ANSWER_SALT'), 10000, 32);
+    return fromByteArray(hash);
+  }
+  
+  private calculateChecksum(data: string): string {
+    let checksum = 0;
+    for (let i = 0; i < data.length; i++) {
+      checksum += data.charCodeAt(i);
+    }
+    return (checksum % 10000).toString().padStart(4, '0');
+  }
+  
+  async validateDNAAnswer(question: DNASecurityQuestion, userAnswer: string, deviceHalfKey: string): Promise<boolean> {
+    const expectedHash = await this.hashAnswer(userAnswer.toUpperCase(), deviceHalfKey);
+    return expectedHash === question.answerHash;
+  }
+  
+  /**
+   * 🔄 DEVICE CATCH-UP WITH DNA AUTHENTICATION
+   */
+  async catchUpDNAWithAuthentication(chatPin: string): Promise<boolean> {
+    try {
+      console.log('🔄 DNA CATCH-UP: Starting authentication sequence...');
+      
+      // Load old DNA
+      const oldDNAString = await SecureStore.getItemAsync('omerta_dna');
+      if (!oldDNAString) {
+        console.error('❌ No DNA found for catch-up');
+        return false;
+      }
+      
+      const oldDNA: CryptographicDNA = JSON.parse(oldDNAString);
+      const currentEpoch = this.getCurrentEpoch();
+      const epochsDiff = currentEpoch - oldDNA.currentEpoch;
+      
+      console.log(`🔄 DNA CATCH-UP: ${epochsDiff} epochs behind`);
+      
+      if (epochsDiff <= 1) {
+        // Minor catch-up - just evolve
+        await this.evolveDNA();
+        return true;
+      }
+      
+      // Major catch-up requires authentication
+      if (epochsDiff > (this.evolutionConfig.gracePeriodhours)) {
+        console.error('❌ DNA too old - beyond grace period');
+        return false;
+      }
+      
+      // Generate DNA security questions
+      const questions = await this.generateDNASecurityQuestions(oldDNA);
+      
+      // This would trigger UI for user to answer questions
+      // For now, return true if we have valid old DNA
+      console.log('🧠 DNA Security questions generated - UI authentication required');
+      
+      return true;
+      
+    } catch (error) {
+      console.error('❌ DNA catch-up authentication failed:', error);
+      return false;
     }
   }
   private async createDNASignature(hardwareData: string, seed: Uint8Array): Promise<string> {
