@@ -128,7 +128,7 @@ export const DisguisedAppIcon: React.FC = () => {
   };
 
   const getCurrentIconName = () => {
-    if (currentIcon === 'omerta') return 'OMERTA Default';
+    if (currentIcon === 'omerta') return 'OMERTÀ Default';
     const found = DISGUISED_ICONS.find(icon => icon.id === currentIcon);
     return found?.name || 'Unknown';
   };
