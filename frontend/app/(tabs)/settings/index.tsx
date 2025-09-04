@@ -119,8 +119,42 @@ export default function SettingsScreen() {
       await loadAutoWipeStatus();
     } catch (error) {
       console.error('Auto-wipe configuration failed:', error);
+  const onActiveAuthSave = async () => {
+    try {
+      setActiveAuthLoading(true);
+      const hours = parseInt(activeAuthHours, 10);
+      
+      const validHours = [24, 48, 72, 96, 120, 144, 168];
+      if (!validHours.includes(hours)) {
+        Alert.alert("Invalid Hours", "Active auth hours must be 24, 48, 72, 96, 120, 144, or 168 hours");
+        return;
+      }
+
+      if (activeAuthType === 'full_nuke') {
+        Alert.alert(
+          "⚠️ DANGER: Active Auth Full NUKE",
+          `You are enabling ACTIVE AUTHENTICATION with FULL DEVICE NUKE.\n\nIf you don't enter your PIN in OMERTA within ${hours} hours, STEELOS-SHREDDER will COMPLETELY OBLITERATE all data.\n\nThis is a "Dead Man's Switch" - are you absolutely sure?`,
+          [
+            { text: "Cancel", style: "cancel" },
+            { 
+              text: "ENABLE DEAD MAN'S SWITCH", 
+              style: "destructive",
+              onPress: async () => {
+                await activeAuthWipe.configureActiveAuth(activeAuthEnabled, hours, activeAuthType, 6);
+                await loadActiveAuthStatus();
+              }
+            }
+          ]
+        );
+        return;
+      }
+
+      await activeAuthWipe.configureActiveAuth(activeAuthEnabled, hours, activeAuthType, 6);
+      await loadActiveAuthStatus();
+    } catch (error) {
+      console.error('Active auth configuration failed:', error);
     } finally {
-      setAutoWipeLoading(false);
+      setActiveAuthLoading(false);
     }
   };
 
