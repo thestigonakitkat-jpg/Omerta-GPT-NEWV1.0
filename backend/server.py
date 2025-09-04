@@ -145,7 +145,7 @@ class StatusCheck(BaseModel):
 class StatusCheckCreate(BaseModel):
     client_name: str
 
-# Secure Note (RAM-only, Cryptgeon-style)
+# Secure Note (RAM-only, OMERTÀ-Vanish-style)
 MAX_TTL_SECONDS = 7 * 24 * 60 * 60  # up to one week
 MIN_READ_LIMIT = 1
 MAX_READ_LIMIT = 1  # CRITICAL: Always 1-time read only, link purged after single read
