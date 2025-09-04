@@ -144,7 +144,7 @@ export default function ChatRoom() {
         fakeTimestamp: encryptedImage.fakeTimestamp,
       };
       
-      // LAYER 1: THE BIRD (Cryptgeon) - Ephemeral one-time encryption
+      // LAYER 1: OMERTÀ-VANISH (Cryptgeon) - Ephemeral one-time encryption
       const ephemeralKey = await getRandomBytesAsync(32);
       const ephemeralNonce = await getRandomBytesAsync(12);
       const cryptgeonBlob = await aesGcmEncrypt(
