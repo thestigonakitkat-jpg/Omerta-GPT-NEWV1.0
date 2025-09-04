@@ -180,7 +180,7 @@ export const VaultSecurityPuzzle: React.FC<VaultSecurityPuzzleProps> = ({
         {/* Header */}
         <View style={styles.header}>
           <Ionicons name="shield-checkmark" size={32} color={colors.accent} />
-          <Text style={[styles.title, { color: colors.text }]}>🔒 OMERTA Security Verification</Text>
+          <Text style={[styles.title, { color: colors.text }]}>🔒 OMERTÀ Security Verification</Text>
           <Text style={[styles.subtitle, { color: colors.sub }]}>
             {stage === 'initializing' && 'Initializing secure connection...'}
             {stage === 'puzzle' && 'Complete the security puzzle to verify your identity'}
