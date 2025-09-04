@@ -612,6 +612,13 @@ export default function SettingsScreen() {
       <TouchableOpacity style={[styles.btn, { backgroundColor: '#ef4444', marginTop: 16 }]} onPress={triggerPanic}>
         <Text style={styles.btnText}>Test Panic (Decoy/Wipe)</Text>
       </TouchableOpacity>
+
+      {/* Dual-Key Nuclear Submarine Protocol Modal */}
+      <DualKeyNuclearPanel
+        visible={nuclearPanelVisible}
+        onClose={() => setNuclearPanelVisible(false)}
+        operationType={nuclearProtocolType}
+      />
     </ScrollView>
   );
 }
