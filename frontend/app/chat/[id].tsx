@@ -176,7 +176,7 @@ export default function ChatRoom() {
     try {
       const from = myOidRef.current || (await getOrCreateOID());
       
-      // 🔥 STEELOS SECURE PROTOCOL: THE BIRD + SEALED SENDER COMBINED
+      // 🔥 STEELOS SECURE PROTOCOL: OMERTÀ-VANISH + SEALED SENDER COMBINED
       console.log('🔥 STEELOS SECURE: Creating double-layer encrypted message');
       
       // LAYER 1: OMERTÀ-VANISH (Cryptgeon) - Ephemeral one-time encryption
