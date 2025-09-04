@@ -3,7 +3,7 @@
  * - Shows realistic Android home screen with apps and contacts
  * - Browsable interface to fool attackers
  * - Triggered when panic PIN or emergency nuke activated
- * - Hides real OMERTA wipe process
+ * - Hides real OMERTÀ wipe process
  */
 
 import React, { useState, useEffect } from 'react';
