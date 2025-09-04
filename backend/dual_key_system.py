@@ -393,6 +393,403 @@ async def execute_developer_recovery(operation_data: dict):
     # Implementation would perform developer recovery
     return {"action": "developer_recovery", "status": "completed", "timestamp": int(time.time())}
 
+# =============================================================================
+# DESIGN B: SPLIT MASTER KEY SYSTEM
+# =============================================================================
+
+class SplitMasterKeyRequest(BaseModel):
+    key_holder_id: str = Field(..., min_length=5, max_length=50)
+    key_fragment: str = Field(..., min_length=64, max_length=128)
+    pin: str = Field(..., min_length=4, max_length=20)
+    totp_code: str = Field(..., min_length=6, max_length=8)
+    operation_type: str = Field(...)  # "system_reset", "critical_update", "emergency_override"
+    
+    @validator('operation_type')
+    def validate_operation_type(cls, v):
+        if v not in ["system_reset", "critical_update", "emergency_override", "master_unlock"]:
+            raise ValueError("Invalid operation type for split master key")
+        return v
+
+class SplitMasterKeyResponse(BaseModel):
+    success: bool
+    message: str
+    operation_id: Optional[str] = None
+    master_key_status: Optional[str] = None  # "fragment_1_received", "fragment_2_received", "master_key_reconstructed"
+    next_step: Optional[str] = None
+    fragments_received: Optional[int] = None
+    fragments_required: Optional[int] = None
+
+def generate_master_key_fragments(master_key: str, num_fragments: int = 2) -> List[str]:
+    """Split master key into fragments using XOR splitting"""
+    try:
+        master_bytes = bytes.fromhex(master_key) if len(master_key) % 2 == 0 else master_key.encode()
+        fragments = []
+        
+        # Generate n-1 random fragments
+        for i in range(num_fragments - 1):
+            fragment = secrets.token_bytes(len(master_bytes))
+            fragments.append(fragment.hex())
+        
+        # Generate final fragment by XORing master with all previous fragments
+        final_fragment = bytearray(master_bytes)
+        for fragment_hex in fragments:
+            fragment_bytes = bytes.fromhex(fragment_hex)
+            for j in range(len(final_fragment)):
+                final_fragment[j] ^= fragment_bytes[j]
+        
+        fragments.append(final_fragment.hex())
+        return fragments
+        
+    except Exception as e:
+        logger.error(f"Master key fragment generation failed: {e}")
+        raise HTTPException(status_code=500, detail="Failed to generate key fragments")
+
+def reconstruct_master_key(fragments: List[str]) -> str:
+    """Reconstruct master key from fragments using XOR combination"""
+    try:
+        if len(fragments) < 2:
+            raise ValueError("At least 2 fragments required for reconstruction")
+        
+        # Convert first fragment to bytes
+        result = bytes.fromhex(fragments[0])
+        
+        # XOR with all other fragments
+        for fragment_hex in fragments[1:]:
+            fragment_bytes = bytes.fromhex(fragment_hex)
+            if len(fragment_bytes) != len(result):
+                raise ValueError("All fragments must be same length")
+            
+            result = bytes(a ^ b for a, b in zip(result, fragment_bytes))
+        
+        return result.hex()
+        
+    except Exception as e:
+        logger.error(f"Master key reconstruction failed: {e}")
+        raise HTTPException(status_code=500, detail="Failed to reconstruct master key")
+
+def get_split_key_holders() -> dict:
+    """Get split key holders configuration"""
+    return {
+        "dev_alpha": {
+            "holder_type": "primary_developer",
+            "pin_hash": hashlib.sha256("DEV2025".encode()).hexdigest(),
+            "totp_secret": "JBSWY3DPEHPK3PXP",
+            "key_fragment_id": "fragment_alpha",
+            "authority_level": "critical_systems"
+        },
+        "sec_bravo": {
+            "holder_type": "security_lead", 
+            "pin_hash": hashlib.sha256("SEC2025".encode()).hexdigest(),
+            "totp_secret": "JBSWY3DPEHPK3PXQ",
+            "key_fragment_id": "fragment_bravo",
+            "authority_level": "critical_systems"
+        },
+        "emergency_charlie": {
+            "holder_type": "emergency_admin",
+            "pin_hash": hashlib.sha256("EMG2025".encode()).hexdigest(),
+            "totp_secret": "JBSWY3DPEHPK3PXR",
+            "key_fragment_id": "fragment_charlie",
+            "authority_level": "emergency_override"
+        }
+    }
+
+async def initiate_split_master_key_operation(request: Request, operation_type: str, operation_data: dict):
+    """Initiate split master key operation requiring fragment reconstruction"""
+    try:
+        await rate_limit_middleware(request, "split_master_key", max_requests=3, window_minutes=60)
+        
+        operation_type = sanitize_dual_key_input(operation_type, max_length=50)
+        
+        valid_operations = ["system_reset", "critical_update", "emergency_override", "master_unlock"]
+        if operation_type not in valid_operations:
+            raise HTTPException(status_code=400, detail=f"Invalid operation type. Must be one of: {valid_operations}")
+        
+        # Generate operation ID
+        current_timestamp = int(time.time())
+        operation_id = f"SPLIT_KEY_{operation_type.upper()}_{current_timestamp}_{secrets.token_hex(8)}"
+        
+        # Set expiration (10 minutes for split key operations)
+        expires_at = current_timestamp + (10 * 60)
+        
+        # Initialize operation record
+        operation_record = {
+            "operation_id": operation_id,
+            "operation_type": operation_type,
+            "initiated_at": current_timestamp,
+            "expires_at": expires_at,
+            "status": "awaiting_fragments",
+            "operation_data": operation_data,
+            "fragments_received": {},
+            "fragments_required": 2,  # Minimum 2 fragments needed
+            "master_key_reconstructed": False
+        }
+        
+        # Store in security engine
+        if "split_master_operations" not in security_engine.user_sessions:
+            security_engine.user_sessions["split_master_operations"] = {}
+        
+        security_engine.user_sessions["split_master_operations"][operation_id] = operation_record
+        
+        logger.critical(f"🔑🔑 SPLIT MASTER KEY OPERATION INITIATED: {operation_type.upper()} - OpID: {operation_id}")
+        
+        return SplitMasterKeyResponse(
+            success=True,
+            message=f"Split master key operation initiated. {operation_record['fragments_required']} key fragments required within 10 minutes.",
+            operation_id=operation_id,
+            master_key_status="awaiting_fragments",
+            next_step="Key holders must provide their fragments",
+            fragments_received=0,
+            fragments_required=operation_record['fragments_required']
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Split master key operation initiation failed: {e}")
+        raise HTTPException(status_code=500, detail="Failed to initiate split master key operation")
+
+async def provide_master_key_fragment(request: Request, fragment_request: SplitMasterKeyRequest):
+    """Provide a key fragment for split master key operation"""
+    try:
+        await rate_limit_middleware(request, "master_key_fragment", max_requests=10, window_minutes=60)
+        
+        # Sanitize inputs
+        key_holder_id = sanitize_dual_key_input(fragment_request.key_holder_id, max_length=50)
+        operation_type = sanitize_dual_key_input(fragment_request.operation_type, max_length=50)
+        
+        # Find operation awaiting this fragment
+        if "split_master_operations" not in security_engine.user_sessions:
+            raise HTTPException(status_code=404, detail="No split master key operations found")
+        
+        operations = security_engine.user_sessions["split_master_operations"]
+        target_operation = None
+        operation_id = None
+        
+        # Find matching operation by type and status
+        for op_id, operation in operations.items():
+            if (operation["operation_type"] == operation_type and 
+                operation["status"] in ["awaiting_fragments", "partial_fragments"] and
+                int(time.time()) < operation["expires_at"]):
+                target_operation = operation
+                operation_id = op_id
+                break
+        
+        if not target_operation:
+            raise HTTPException(status_code=404, detail="No matching split master key operation found or operation expired")
+        
+        # Verify key holder
+        key_holders = get_split_key_holders()
+        if key_holder_id not in key_holders:
+            logger.warning(f"🚨 UNKNOWN KEY HOLDER ATTEMPT: {key_holder_id}")
+            raise HTTPException(status_code=403, detail="Unknown key holder")
+        
+        key_holder = key_holders[key_holder_id]
+        
+        # Verify PIN
+        pin_hash = hashlib.sha256(fragment_request.pin.encode()).hexdigest()
+        if pin_hash != key_holder["pin_hash"]:
+            logger.warning(f"🚨 SPLIT KEY AUTH FAILURE: Invalid PIN for holder {key_holder_id}")
+            raise HTTPException(status_code=403, detail="Invalid PIN")
+        
+        # Verify TOTP
+        if not verify_totp_code(key_holder["totp_secret"], fragment_request.totp_code):
+            logger.warning(f"🚨 SPLIT KEY AUTH FAILURE: Invalid TOTP for holder {key_holder_id}")
+            raise HTTPException(status_code=403, detail="Invalid TOTP code")
+        
+        # Check if this holder already provided fragment
+        if key_holder_id in target_operation["fragments_received"]:
+            raise HTTPException(status_code=409, detail="Key holder already provided fragment for this operation")
+        
+        # Store the fragment
+        target_operation["fragments_received"][key_holder_id] = {
+            "fragment": fragment_request.key_fragment,
+            "timestamp": int(time.time()),
+            "holder_type": key_holder["holder_type"]
+        }
+        
+        fragments_count = len(target_operation["fragments_received"])
+        fragments_required = target_operation["fragments_required"]
+        
+        logger.info(f"🔑 SPLIT KEY FRAGMENT RECEIVED: {key_holder_id} ({fragments_count}/{fragments_required})")
+        
+        # Check if we have enough fragments
+        if fragments_count >= fragments_required:
+            # Reconstruct master key
+            fragment_values = [frag["fragment"] for frag in target_operation["fragments_received"].values()]
+            
+            try:
+                master_key = reconstruct_master_key(fragment_values)
+                target_operation["master_key"] = master_key
+                target_operation["master_key_reconstructed"] = True
+                target_operation["status"] = "master_key_ready"
+                
+                # Execute the split master key operation
+                execution_result = await execute_split_master_key_operation(target_operation)
+                
+                logger.critical(f"🔑🔑 SPLIT MASTER KEY RECONSTRUCTED & EXECUTED: {operation_type.upper()}")
+                
+                return SplitMasterKeyResponse(
+                    success=True,
+                    message="Master key successfully reconstructed and operation executed.",
+                    operation_id=operation_id,
+                    master_key_status="master_key_reconstructed_and_executed",
+                    next_step="Operation complete",
+                    fragments_received=fragments_count,
+                    fragments_required=fragments_required
+                )
+                
+            except Exception as e:
+                logger.error(f"Master key reconstruction failed: {e}")
+                target_operation["status"] = "reconstruction_failed"
+                raise HTTPException(status_code=500, detail="Failed to reconstruct master key")
+        
+        else:
+            # Still waiting for more fragments
+            target_operation["status"] = "partial_fragments"
+            remaining = fragments_required - fragments_count
+            
+            return SplitMasterKeyResponse(
+                success=True,
+                message=f"Fragment accepted. {remaining} more fragments required.",
+                operation_id=operation_id,
+                master_key_status="partial_fragments",
+                next_step=f"Waiting for {remaining} more key fragments",
+                fragments_received=fragments_count,
+                fragments_required=fragments_required
+            )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Master key fragment provision failed: {e}")
+        raise HTTPException(status_code=500, detail="Failed to process key fragment")
+
+async def execute_split_master_key_operation(operation: dict):
+    """Execute split master key operation after reconstruction"""
+    try:
+        operation_type = operation["operation_type"]
+        operation_data = operation["operation_data"]
+        master_key = operation["master_key"]
+        
+        logger.critical(f"🚀🔑 EXECUTING SPLIT MASTER KEY OPERATION: {operation_type.upper()}")
+        
+        # Execute based on operation type
+        if operation_type == "system_reset":
+            result = await execute_master_system_reset(operation_data, master_key)
+        elif operation_type == "critical_update":
+            result = await execute_master_critical_update(operation_data, master_key)
+        elif operation_type == "emergency_override":
+            result = await execute_master_emergency_override(operation_data, master_key)
+        elif operation_type == "master_unlock":
+            result = await execute_master_unlock(operation_data, master_key)
+        else:
+            raise ValueError(f"Unknown split master key operation: {operation_type}")
+        
+        operation["status"] = "executed"
+        operation["executed_at"] = int(time.time())
+        operation["execution_result"] = result
+        
+        # Clear master key from memory for security
+        operation["master_key"] = "[CLEARED_FOR_SECURITY]"
+        
+        return result
+        
+    except Exception as e:
+        logger.error(f"Split master key operation execution failed: {e}")
+        operation["status"] = "execution_failed"
+        operation["error"] = str(e)
+        raise
+
+async def execute_master_system_reset(operation_data: dict, master_key: str):
+    """Execute master system reset with reconstructed key"""
+    logger.critical("🔄🔑 MASTER SYSTEM RESET: Authorized by reconstructed master key")
+    # Implementation would use master key to perform system reset
+    return {
+        "action": "master_system_reset",
+        "status": "completed",
+        "timestamp": int(time.time()),
+        "master_key_used": True,
+        "reset_level": "complete"
+    }
+
+async def execute_master_critical_update(operation_data: dict, master_key: str):
+    """Execute critical update with reconstructed master key"""
+    logger.critical("📦🔑 MASTER CRITICAL UPDATE: Authorized by reconstructed master key")
+    # Implementation would use master key to install critical updates
+    return {
+        "action": "master_critical_update",
+        "status": "completed",
+        "timestamp": int(time.time()),
+        "master_key_used": True,
+        "update_level": "critical_system"
+    }
+
+async def execute_master_emergency_override(operation_data: dict, master_key: str):
+    """Execute emergency override with reconstructed master key"""
+    logger.critical("🚨🔑 MASTER EMERGENCY OVERRIDE: Authorized by reconstructed master key")
+    # Implementation would use master key for emergency override
+    return {
+        "action": "master_emergency_override",
+        "status": "completed",
+        "timestamp": int(time.time()),
+        "master_key_used": True,
+        "override_level": "emergency_full_access"
+    }
+
+async def execute_master_unlock(operation_data: dict, master_key: str):
+    """Execute master unlock with reconstructed master key"""
+    logger.critical("🔓🔑 MASTER UNLOCK: Authorized by reconstructed master key")
+    # Implementation would use master key to unlock systems
+    return {
+        "action": "master_unlock",
+        "status": "completed", 
+        "timestamp": int(time.time()),
+        "master_key_used": True,
+        "unlock_level": "full_system_access"
+    }
+
+async def get_split_master_key_status(request: Request, operation_id: str):
+    """Get status of split master key operation"""
+    try:
+        await rate_limit_middleware(request, "split_key_status")
+        
+        operation_id = sanitize_dual_key_input(operation_id, max_length=100)
+        
+        if "split_master_operations" not in security_engine.user_sessions:
+            raise HTTPException(status_code=404, detail="No split master key operations found")
+        
+        operations = security_engine.user_sessions["split_master_operations"]
+        if operation_id not in operations:
+            raise HTTPException(status_code=404, detail="Operation not found")
+        
+        operation = operations[operation_id]
+        current_timestamp = int(time.time())
+        
+        # Check if expired
+        if current_timestamp >= operation["expires_at"] and operation["status"] in ["awaiting_fragments", "partial_fragments"]:
+            operation["status"] = "expired"
+        
+        fragments_received = len(operation["fragments_received"])
+        fragments_required = operation["fragments_required"]
+        
+        return {
+            "success": True,
+            "operation_id": operation_id,
+            "status": operation["status"],
+            "operation_type": operation["operation_type"],
+            "time_remaining": max(0, operation["expires_at"] - current_timestamp),
+            "fragments_received": fragments_received,
+            "fragments_required": fragments_required,
+            "master_key_reconstructed": operation.get("master_key_reconstructed", False),
+            "key_holders": list(operation["fragments_received"].keys())
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Get split master key status failed: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get operation status")
+
 async def get_dual_key_operation_status(request: Request, operation_id: str):
     """Get status of dual-key operation"""
     try:
