@@ -8,6 +8,7 @@ import { accents, AccentKey } from "../../../src/theme/colors";
 import { Ionicons } from "@expo/vector-icons";
 import { autoWipe, AutoWipeStatus } from "../../../src/utils/autoWipe";
 import { activeAuthWipe, ActiveAuthStatus } from "../../../src/utils/activeAuthWipe";
+import { DualKeyNuclearPanel } from "../../../src/components/DualKeyNuclearPanel";
 
 export default function SettingsScreen() {
   const router = useRouter();
