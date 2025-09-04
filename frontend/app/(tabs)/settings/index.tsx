@@ -359,6 +359,166 @@ export default function SettingsScreen() {
         </View>
       </View>
 
+      {/* Active Authentication Section */}
+      <View style={styles.autoWipeSection}>
+        <Text style={[styles.h1, { color: colors.text, marginTop: 16 }]}>🕒 Active Authentication (Dead Man's Switch)</Text>
+        <Text style={[styles.sectionSubtitle, { color: colors.sub }]}>
+          Requires you to actively enter your PIN in OMERTA within specified intervals
+        </Text>
+
+        {activeAuthStatus && (
+          <View style={[styles.statusCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={styles.statusRow}>
+              <Text style={[styles.statusLabel, { color: colors.sub }]}>Status:</Text>
+              <Text style={[styles.statusValue, { color: activeAuthStatus.enabled ? '#10b981' : colors.sub }]}>
+                {activeAuthStatus.enabled ? 'ENABLED' : 'DISABLED'}
+              </Text>
+            </View>
+            {activeAuthStatus.enabled && (
+              <>
+                <View style={styles.statusRow}>
+                  <Text style={[styles.statusLabel, { color: colors.sub }]}>Hours until auth required:</Text>
+                  <Text style={[styles.statusValue, { 
+                    color: activeAuthStatus.hours_until_auth_required <= 6 ? '#ef4444' : 
+                           activeAuthStatus.hours_until_auth_required <= 24 ? '#f59e0b' : '#10b981' 
+                  }]}>
+                    {activeAuthStatus.hours_until_auth_required}h
+                  </Text>
+                </View>
+                <View style={styles.statusRow}>
+                  <Text style={[styles.statusLabel, { color: colors.sub }]}>Wipe type:</Text>
+                  <Text style={[styles.statusValue, { 
+                    color: activeAuthStatus.wipe_type === 'full_nuke' ? '#ef4444' : '#3b82f6' 
+                  }]}>
+                    {activeAuthStatus.wipe_type === 'full_nuke' ? 'FULL NUKE 💀' : 'App Data 🧹'}
+                  </Text>
+                </View>
+                <View style={styles.statusRow}>
+                  <Text style={[styles.statusLabel, { color: colors.sub }]}>Last authentication:</Text>
+                  <Text style={[styles.statusValue, { color: colors.text }]}>
+                    {new Date(activeAuthStatus.last_authentication * 1000).toLocaleString()}
+                  </Text>
+                </View>
+                {activeAuthStatus.warning_active && (
+                  <View style={[styles.warningBox, { backgroundColor: '#fef2f2', borderColor: '#ef4444' }]}>
+                    <Ionicons name="warning" size={16} color="#ef4444" />
+                    <Text style={[styles.warningText, { color: '#dc2626' }]}>
+                      ⚠️ AUTHENTICATION REQUIRED SOON - Enter your PIN to reset timer!
+                    </Text>
+                  </View>
+                )}
+              </>
+            )}
+          </View>
+        )}
+
+        <View style={styles.autoWipeControls}>
+          <View style={styles.switchRow}>
+            <Text style={[styles.label, { color: colors.text, flex: 1 }]}>Enable Active Authentication</Text>
+            <Switch
+              value={activeAuthEnabled}
+              onValueChange={setActiveAuthEnabled}
+              trackColor={{ false: colors.border, true: colors.accent }}
+              thumbColor={activeAuthEnabled ? '#ffffff' : colors.sub}
+            />
+          </View>
+
+          <Text style={[styles.label, { color: colors.sub }]}>Authentication interval (hours)</Text>
+          <View style={styles.intervalButtons}>
+            {[24, 48, 72, 96, 120, 144, 168].map((hours) => (
+              <TouchableOpacity
+                key={hours}
+                style={[
+                  styles.intervalButton,
+                  { 
+                    backgroundColor: activeAuthHours === hours.toString() ? colors.accent : colors.card,
+                    borderColor: colors.border
+                  }
+                ]}
+                onPress={() => setActiveAuthHours(hours.toString())}
+                disabled={!activeAuthEnabled}
+              >
+                <Text style={[
+                  styles.intervalText,
+                  { color: activeAuthHours === hours.toString() ? '#000' : colors.text }
+                ]}>
+                  {hours}h
+                </Text>
+                <Text style={[
+                  styles.intervalSubText,
+                  { color: activeAuthHours === hours.toString() ? '#000' : colors.sub }
+                ]}>
+                  {hours === 24 ? '1d' : hours === 48 ? '2d' : hours === 72 ? '3d' : 
+                   hours === 96 ? '4d' : hours === 120 ? '5d' : hours === 144 ? '6d' : '7d'}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <Text style={[styles.label, { color: colors.sub, marginTop: 12 }]}>Wipe Type</Text>
+          <View style={styles.wipeTypeButtons}>
+            <TouchableOpacity
+              style={[
+                styles.wipeTypeButton,
+                { 
+                  backgroundColor: activeAuthType === 'app_data' ? '#3b82f6' : colors.card,
+                  borderColor: colors.border
+                }
+              ]}
+              onPress={() => setActiveAuthType('app_data')}
+              disabled={!activeAuthEnabled}
+            >
+              <Ionicons name="apps" size={16} color={activeAuthType === 'app_data' ? '#fff' : colors.text} />
+              <Text style={[
+                styles.wipeTypeText,
+                { color: activeAuthType === 'app_data' ? '#fff' : colors.text }
+              ]}>
+                App Data Only
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.wipeTypeButton,
+                { 
+                  backgroundColor: activeAuthType === 'full_nuke' ? '#ef4444' : colors.card,
+                  borderColor: colors.border
+                }
+              ]}
+              onPress={() => setActiveAuthType('full_nuke')}
+              disabled={!activeAuthEnabled}
+            >
+              <Ionicons name="skull" size={16} color={activeAuthType === 'full_nuke' ? '#fff' : colors.text} />
+              <Text style={[
+                styles.wipeTypeText,
+                { color: activeAuthType === 'full_nuke' ? '#fff' : colors.text }
+              ]}>
+                DEAD MAN'S SWITCH 💀
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {activeAuthType === 'full_nuke' && (
+            <View style={[styles.warningBox, { backgroundColor: '#fef2f2', borderColor: '#ef4444' }]}>
+              <Ionicons name="skull" size={16} color="#ef4444" />
+              <Text style={[styles.warningText, { color: '#dc2626' }]}>
+                DEAD MAN'S SWITCH: If you don't authenticate within the interval, STEELOS-SHREDDER will obliterate everything!
+              </Text>
+            </View>
+          )}
+
+          <TouchableOpacity 
+            style={[styles.btn, { backgroundColor: colors.accent, marginTop: 16 }]} 
+            onPress={onActiveAuthSave}
+            disabled={activeAuthLoading}
+          >
+            <Text style={styles.btnText}>
+              {activeAuthLoading ? 'Configuring...' : 'Save Active Authentication Settings'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
       <Text style={[styles.h1, { color: colors.text, marginTop: 16 }]}>Appearance</Text>
       <ModeRow />
       <Text style={[styles.label, { color: colors.sub, marginTop: 8 }]}>Accent</Text>
