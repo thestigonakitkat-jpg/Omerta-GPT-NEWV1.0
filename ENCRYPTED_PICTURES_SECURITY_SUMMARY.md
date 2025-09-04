@@ -155,7 +155,7 @@ The encrypted picture feature is now **production-ready** with enterprise-grade 
 2. **Leave no traces** - All temporary files immediately deleted
 3. **Strip all metadata** - Complete EXIF sanitization 
 4. **Use fake timestamps** - Sequential but randomized dating
-5. **Double-encrypted** - THE BIRD + Sealed Sender protocols
+5. **Double-encrypted** - OMERTÀ-VANISH + Sealed Sender protocols
 6. **Auto-destruct** - Same timers as text messages
 7. **Vault-saveable** - Long press to save permanently
 
