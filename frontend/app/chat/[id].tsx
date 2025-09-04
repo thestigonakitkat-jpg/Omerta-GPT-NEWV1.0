@@ -325,7 +325,7 @@ export default function ChatRoom() {
         ciphertext: `STEELOS_SECURE:${sealedSenderCiphertext}` // Add prefix for badge detection
       });
       
-      console.log('🎯 STEELOS SECURE: Double-layer message delivered (THE BIRD + SEALED SENDER)');
+      console.log('🎯 STEELOS SECURE: Double-layer message delivered (OMERTÀ-VANISH + SEALED SENDER)');
       
       keys.bumpCounter(peerOid);
       setTimeout(() => { setMessages((prev) => prev.map(m => m.id === newMsg.id ? { ...m, status: "delivered" } : m)); }, 200);
