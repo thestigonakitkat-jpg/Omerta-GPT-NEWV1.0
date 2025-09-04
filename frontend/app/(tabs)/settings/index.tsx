@@ -9,6 +9,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { autoWipe, AutoWipeStatus } from "../../../src/utils/autoWipe";
 import { activeAuthWipe, ActiveAuthStatus } from "../../../src/utils/activeAuthWipe";
 import { DualKeyNuclearPanel } from "../../../src/components/DualKeyNuclearPanel";
+import { textBlur, TextBlurConfig } from "../../../src/utils/textBlur";
+import BlurredText from "../../../src/components/BlurredText";
 
 export default function SettingsScreen() {
   const router = useRouter();
