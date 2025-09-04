@@ -170,7 +170,7 @@ export const DisguisedAppIcon: React.FC = () => {
             <View style={styles.warningText}>
               <Text style={[styles.warningTitle, { color: colors.text }]}>Stealth Mode</Text>
               <Text style={[styles.warningSubtitle, { color: colors.sub }]}>
-                Disguised icons help OMERTA blend in with other apps for enhanced privacy and security.
+                Disguised icons help OMERTÀ blend in with other apps for enhanced privacy and security.
               </Text>
             </View>
           </View>
