@@ -49,7 +49,85 @@ class ContactsVaultManager {
     }
   }
 
-  private async generateEncryptionKeyHash(passphrase: string, pin: string): Promise<string> {
+  private async generateContactDNA(contact: ContactEntry): Promise<string> {
+    try {
+      const dnaValidator = CryptographicDNAValidator.getInstance();
+      
+      // Generate DNA based on contact data + device characteristics
+      const contactData = `${contact.oid}_${contact.display_name}_${contact.verified}_${contact.added_timestamp}`;
+      const deviceDNA = await dnaValidator.generateCryptographicDNA();
+      
+      // Create unique DNA signature for this contact
+      const encoder = new TextEncoder();
+      const combinedData = encoder.encode(`OMERTA_CONTACT_DNA_${contactData}_${deviceDNA.dnaSignature}`);
+      const dnaHash = await crypto.subtle.digest('SHA-256', combinedData);
+      const dnaArray = Array.from(new Uint8Array(dnaHash));
+      const dnaHex = dnaArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      
+      return `DNA_${dnaHex.substring(0, 32)}`;
+    } catch (error) {
+      console.error('Failed to generate contact DNA:', error);
+      return `DNA_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    }
+  }
+
+  private async validateContactDNA(contact: ContactEntry): Promise<{ isValid: boolean; confidence: number; threat: string }> {
+    try {
+      const dnaValidator = CryptographicDNAValidator.getInstance();
+      
+      if (!contact.cryptographic_dna) {
+        return { isValid: false, confidence: 0, threat: 'Missing DNA signature' };
+      }
+
+      // Regenerate expected DNA
+      const expectedDNA = await this.generateContactDNA(contact);
+      
+      // Check DNA patterns for malicious indicators
+      const maliciousPatterns = [
+        /script/i, /eval\(/i, /javascript:/i, /data:/i, /vbscript:/i,
+        /onload/i, /onerror/i, /onclick/i, /onfocus/i, /onmouseover/i,
+        /<iframe/i, /<object/i, /<embed/i, /<applet/i, /<meta/i,
+        /drop\s+table/i, /union\s+select/i, /insert\s+into/i, /delete\s+from/i,
+        /xp_cmdshell/i, /sp_executesql/i, /exec\(/i, /execute\(/i,
+        /\.\.\/\.\.\//i, /\/etc\/passwd/i, /\/proc\/self/i, /\/dev\/tcp/i,
+        /nc\s+-l/i, /bash\s+-i/i, /sh\s+-i/i, /cmd\.exe/i, /powershell/i,
+        /%[0-9a-f]{2}/i, /\\x[0-9a-f]{2}/i, /\\u[0-9a-f]{4}/i,
+        /base64/i, /btoa\(/i, /atob\(/i, /fromCharCode/i, /String\.raw/i
+      ];
+
+      // Check contact data for malicious patterns
+      const contactString = JSON.stringify(contact).toLowerCase();
+      let threatCount = 0;
+      let detectedThreats: string[] = [];
+
+      for (const pattern of maliciousPatterns) {
+        if (pattern.test(contactString)) {
+          threatCount++;
+          detectedThreats.push(pattern.source);
+        }
+      }
+
+      // DNA validation
+      const dnaMatch = contact.cryptographic_dna === expectedDNA;
+      
+      // Calculate confidence score
+      let confidence = 100;
+      if (!dnaMatch) confidence -= 30;
+      if (threatCount > 0) confidence -= (threatCount * 20);
+      if (contact.oid.length > 200) confidence -= 10; // Suspicious long OID
+      if (contact.display_name.length > 100) confidence -= 10; // Suspicious long name
+      
+      confidence = Math.max(0, confidence);
+
+      const isValid = confidence >= 80 && threatCount === 0;
+      const threat = detectedThreats.length > 0 ? `Malicious patterns: ${detectedThreats.join(', ')}` : 'None';
+
+      return { isValid, confidence, threat };
+    } catch (error) {
+      console.error('Contact DNA validation failed:', error);
+      return { isValid: false, confidence: 0, threat: 'DNA validation error' };
+    }
+  }
     try {
       // Simple hash generation for demonstration
       // In production, use proper key derivation (Argon2id)
