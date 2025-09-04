@@ -779,8 +779,10 @@ async def dual_key_status(request: Request, operation_id: str):
 
 # Split Master Key System endpoints
 @api_router.post("/split-master-key/initiate")
-async def split_master_key_initiate(request: Request, operation_type: str = Form(...), operation_data: dict = Form(...)):
+async def split_master_key_initiate(request: Request, payload: dict):
     """Initiate split master key operation"""
+    operation_type = payload.get('operation_type')
+    operation_data = payload.get('operation_data', {})
     return await initiate_split_master_key_operation(request, operation_type, operation_data)
 
 @api_router.post("/split-master-key/fragment")
