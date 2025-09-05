@@ -759,7 +759,7 @@ export default function ChatRoom() {
                 </Pressable>
               )}
             </View>
-            <TouchableOpacity style={[styles.sendBtn, { backgroundColor: colors.accent }]} onPress={onSend}>
+            <TouchableOpacity style={[styles.sendBtn, { backgroundColor: colors.accent }]} onPress={sendMessage}>
               <Ionicons name="send" size={18} color="#000" />
             </TouchableOpacity>
           </View>
