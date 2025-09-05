@@ -9,7 +9,7 @@ import json
 import time
 import sys
 
-BACKEND_URL = "https://dual-key-app.preview.emergentagent.com/api"
+BACKEND_URL = "https://crypto-vault-21.preview.emergentagent.com/api"
 
 def test_rate_limiting_quick():
     """Quick test of rate limiting functionality"""
