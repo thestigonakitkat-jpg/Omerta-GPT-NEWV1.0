@@ -221,10 +221,10 @@ export class CryptographicDNAValidator {
   private async collectHardwareFingerprint(): Promise<string> {
     const fingerprint = {
       // Device identifiers
-      deviceId: 'omerta-device-' + Math.random().toString(36),
-      deviceName: 'OMERTÀ Secure Device',
-      manufacturer: 'STEELOS',
-      modelName: 'SecurePhone',
+      deviceId: Device.deviceName || 'omerta-device-' + Math.random().toString(36),
+      deviceName: Device.deviceName || 'OMERTÀ Secure Device',
+      manufacturer: Device.manufacturer || 'STEELOS',
+      modelName: Device.modelName || 'SecurePhone',
       osName: Platform.OS,
       osVersion: Platform.Version.toString(),
       
@@ -233,8 +233,8 @@ export class CryptographicDNAValidator {
       version: Platform.Version.toString(),
       
       // App specific
-      applicationId: 'com.steelos.omerta',
-      nativeApplicationVersion: '1.0.0',
+      applicationId: Application.applicationId || 'com.steelos.omerta',
+      nativeApplicationVersion: Application.nativeApplicationVersion || '1.0.0',
       
       // Timing-based entropy (unique per installation)
       installationEntropy: Date.now().toString(36) + Math.random().toString(36)
