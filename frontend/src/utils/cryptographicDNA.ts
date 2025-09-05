@@ -221,12 +221,12 @@ export class CryptographicDNAValidator {
   private async collectHardwareFingerprint(): Promise<string> {
     const fingerprint = {
       // Device identifiers
-      deviceId: Device.osInternalBuildId || 'unknown',
-      deviceName: Device.deviceName || 'unknown',
-      manufacturer: Device.manufacturer || 'unknown',
-      modelName: Device.modelName || 'unknown',
-      osName: Device.osName || 'unknown',
-      osVersion: Device.osVersion || 'unknown',
+      deviceId: 'omerta-device-' + Math.random().toString(36),
+      deviceName: 'OMERTÀ Secure Device',
+      manufacturer: 'STEELOS',
+      modelName: 'SecurePhone',
+      osName: Platform.OS,
+      osVersion: Platform.Version.toString(),
       
       // Platform specific
       platform: Platform.OS,
