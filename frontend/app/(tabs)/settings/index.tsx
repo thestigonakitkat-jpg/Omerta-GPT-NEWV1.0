@@ -800,7 +800,7 @@ export default function SettingsScreen() {
               </Text>
               <Text style={[styles.sectionSubtitle, { color: colors.text }]}>
                 This sensitive message demonstrates the blur protection system. 
-                It will blur after {textBlur.formatDelay ? textBlur.formatDelay(textBlurDelay) : '5s'}. 
+                It will blur after 5 seconds. 
                 Tap to reset the timer. This protects against shoulder surfing and unauthorized viewing.
               </Text>
             </View>
