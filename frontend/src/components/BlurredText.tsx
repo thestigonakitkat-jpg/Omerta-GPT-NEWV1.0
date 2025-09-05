@@ -151,7 +151,7 @@ export default function BlurredText({
         }
         return prev - 1;
       });
-    }, 1000);
+    }, 1000) as NodeJS.Timeout;
 
     textBlur.resetTimer(elementId, () => {
       if (mountedRef.current) {
