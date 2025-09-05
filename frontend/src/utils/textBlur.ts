@@ -107,7 +107,7 @@ class TextBlurManager {
     const timer = setTimeout(() => {
       onBlur();
       this.blurTimers.delete(elementId);
-    }, this.config.blurDelay * 1000);
+    }, this.config.blurDelay * 1000) as NodeJS.Timeout;
 
     this.blurTimers.set(elementId, timer);
   }
