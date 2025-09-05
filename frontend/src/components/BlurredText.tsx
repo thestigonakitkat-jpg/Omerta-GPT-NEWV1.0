@@ -34,7 +34,7 @@ export default function BlurredText({
   const textBlur = useTextBlur();
   const { colors } = useTheme();
   const mountedRef = useRef(true);
-  const countdownTimerRef = useRef<NodeJS.Timeout>();
+  const countdownTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     mountedRef.current = true;
