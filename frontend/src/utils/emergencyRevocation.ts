@@ -53,6 +53,12 @@ class EmergencyRevocationManager {
 
   private async initializeDeviceId(): Promise<void> {
     try {
+      // Use fallback for web compatibility
+      if (typeof window !== 'undefined' && !SecureStore.getItemAsync) {
+        this.deviceId = `web_emergency_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        return;
+      }
+      
       let deviceId = await SecureStore.getItemAsync('omerta_device_id');
       if (!deviceId) {
         deviceId = `omerta_emergency_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
