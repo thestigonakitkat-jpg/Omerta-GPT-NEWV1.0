@@ -44,7 +44,7 @@ class TextBlurManager {
   async saveConfig(config: Partial<TextBlurConfig>): Promise<void> {
     try {
       this.config = { ...this.config, ...config };
-      await AsyncStorage.setItem(TEXT_BLUR_STORAGE_KEY, JSON.stringify(this.config));
+      await SecureStore.setItemAsync(TEXT_BLUR_STORAGE_KEY, JSON.stringify(this.config));
       this.notifyListeners();
     } catch (error) {
       console.error('Failed to save text blur config:', error);
