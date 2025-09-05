@@ -9,8 +9,8 @@ import { getRandomBytesAsync } from "expo-crypto";
 import { AES_GCM, PBKDF2_HMAC_SHA256 } from "asmcrypto.js";
 import { fromByteArray, toByteArray } from "base64-js";
 import * as SecureStore from 'expo-secure-store';
-import * as Device from 'expo-device';
-import * as Application from 'expo-application';
+// import * as Device from 'expo-device';
+// import * as Application from 'expo-application';
 import { Platform } from 'react-native';
 
 export interface CryptographicDNA {
