@@ -323,12 +323,13 @@ metadata:
 
 test_plan:
   current_focus:
-    - "OMERTÀ Comprehensive Security Testing Completed"
-    - "All critical backend systems verified and operational"
+    - "CRITICAL: Fix frontend bundling and expo-secure-store compatibility issues"
+    - "Update Expo packages to compatible versions"
+    - "Resolve web/native module compatibility for browser testing"
   stuck_tasks:
-    - "None"
+    - "Chats: Secure Note create/open (client AES-GCM, cards, 2FA modal)"
   test_all: false
-  test_priority: "production_ready"
+  test_priority: "critical_fixes_first"
 
 agent_communication:
   - agent: "main"
