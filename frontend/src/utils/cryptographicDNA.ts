@@ -380,7 +380,7 @@ export class CryptographicDNAValidator {
    * 🧠 DNA-EMBEDDED SECURITY QUESTIONS
    */
   
-  async generateDNASecurityQuestions(dna: CryptographicDNA): Promise<DNASecurityQuestion[]> {
+  /*async generateDNASecurityQuestions(dna: CryptographicDNA): Promise<DNASecurityQuestion[]> {
     const questions: DNASecurityQuestion[] = [];
     
     // Question 1: DNA Signature Position
