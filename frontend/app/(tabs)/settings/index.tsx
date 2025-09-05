@@ -794,13 +794,11 @@ export default function SettingsScreen() {
               <Text style={[styles.statusLabel, { color: colors.text, marginBottom: 8 }]}>
                 📱 Live Demo
               </Text>
-              <BlurredText 
-                elementId="demo-text"
-                textStyle={[styles.sectionSubtitle, { color: colors.text }]}
-              >
-                This sensitive message will blur after {textBlur.formatDelay(textBlurDelay)}. 
+              <Text style={[styles.sectionSubtitle, { color: colors.text }]}>
+                This sensitive message demonstrates the blur protection system. 
+                It will blur after {textBlur.formatDelay ? textBlur.formatDelay(textBlurDelay) : '5s'}. 
                 Tap to reset the timer. This protects against shoulder surfing and unauthorized viewing.
-              </BlurredText>
+              </Text>
             </View>
           )}
         </View>
