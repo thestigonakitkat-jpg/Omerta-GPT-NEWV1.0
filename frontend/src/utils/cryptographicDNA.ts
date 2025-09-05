@@ -371,6 +371,11 @@ export class CryptographicDNAValidator {
       console.log(`🔄 Next Evolution: ${new Date(evolvedDNA.expiresAt).toLocaleString()}`);
       
     } catch (error) {
+      console.error('DNA Evolution failed:', error);
+      throw error;
+    }
+  }
+
   /**
    * 🧠 DNA-EMBEDDED SECURITY QUESTIONS
    */
