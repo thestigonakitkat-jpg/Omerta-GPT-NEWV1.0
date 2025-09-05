@@ -243,7 +243,7 @@ frontend:
     implemented: true
     working: false
     file: "/app/frontend/app/(tabs)/chats/index.tsx"
-    stuck_count: 1
+    stuck_count: 2
     priority: "high"
     needs_retesting: false
     status_history:
@@ -256,6 +256,9 @@ frontend:
       - working: false
         agent: "testing"
         comment: "❌ BROWSER RENDERING ISSUE: Expo app shows blank screen in web browser despite excellent code implementation. App is mobile-first and may have web compatibility issues. Code review shows complete secure notes functionality with AES-GCM encryption, TTL, read limits, 2FA modal, and proper UI integration. Requires testing on actual mobile device or Expo Go app."
+      - working: false
+        agent: "testing"
+        comment: "❌ CRITICAL FRONTEND BUNDLING ERRORS: App fails to load due to expo-secure-store compatibility issues. Multiple TypeScript errors: 1) _ExpoSecureStore.default.getValueWithKeyAsync is not a function 2) emergencyRevocation.ts and remoteSecurity.ts modules failing to initialize 3) identity.ts getOrCreateOID() function breaking 4) Package version mismatches (expo@53.0.20 vs expected 53.0.22, expo-secure-store@14.2.3 vs 14.2.4, etc.) 5) Web compatibility issues with native modules. App shows blank gray screen in browser. Attempted fixes: added web compatibility checks, temporarily disabled problematic modules, but core bundling issues persist. Requires package updates and proper web/native module compatibility fixes."
   - task: "PIN gates (Chats/Vault) and Panic self-wipe flow"
     implemented: true
     working: "NA"
