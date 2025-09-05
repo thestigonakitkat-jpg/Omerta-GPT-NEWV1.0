@@ -3,8 +3,8 @@ import { useEffect } from "react";
 import * as ScreenCapture from "expo-screen-capture";
 import { Platform, AppState } from "react-native";
 import { useContacts } from "../src/state/contacts";
-import { autoWipe } from "../src/utils/autoWipe";
-import { emergencyRevocation } from "../src/utils/emergencyRevocation";
+// import { autoWipe } from "../src/utils/autoWipe";
+// import { emergencyRevocation } from "../src/utils/emergencyRevocation";
 
 export default function RootLayout() {
   const contacts = useContacts();
@@ -14,10 +14,10 @@ export default function RootLayout() {
     contacts.init();
 
     // Initialize auto-wipe activity tracking
-    autoWipe.updateActivity('app_launch');
+    // autoWipe.updateActivity('app_launch');
 
     // Initialize emergency revocation monitoring
-    emergencyRevocation.checkForEmergencyRevocation();
+    // emergencyRevocation.checkForEmergencyRevocation();
 
     // Global anti-screenshot/screen recording
     let active = true;
@@ -32,11 +32,11 @@ export default function RootLayout() {
     // Handle app state changes for monitoring systems
     const handleAppStateChange = (nextAppState: string) => {
       if (nextAppState === 'active') {
-        autoWipe.onAppForeground();
-        emergencyRevocation.onAppForeground();
+        // autoWipe.onAppForeground();
+        // emergencyRevocation.onAppForeground();
       } else if (nextAppState === 'background') {
-        autoWipe.onAppBackground();
-        emergencyRevocation.onAppBackground();
+        // autoWipe.onAppBackground();
+        // emergencyRevocation.onAppBackground();
       }
     };
 
@@ -51,8 +51,8 @@ export default function RootLayout() {
       })();
       
       subscription?.remove();
-      autoWipe.destroy(); // Cleanup timers
-      emergencyRevocation.destroy(); // Cleanup emergency timers
+      // autoWipe.destroy(); // Cleanup timers
+      // emergencyRevocation.destroy(); // Cleanup emergency timers
     };
   }, []);
 
