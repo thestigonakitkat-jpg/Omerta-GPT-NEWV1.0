@@ -14,6 +14,12 @@ config.resolver.alias = {
   'node-gyp-build': require.resolve('./src/utils/node-gyp-build-shim.js'),
 };
 
+// Platform-specific resolvers for problematic modules
+config.resolver.resolverMainFields = ['react-native', 'browser', 'main'];
+
+// Add platform extensions for better resolution
+config.resolver.sourceExts = [...config.resolver.sourceExts, 'web.ts', 'web.tsx', 'web.js', 'web.jsx'];
+
 // Reduce the number of workers to decrease resource usage
 config.maxWorkers = 2;
 
