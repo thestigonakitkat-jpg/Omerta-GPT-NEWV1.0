@@ -134,6 +134,11 @@ export default function SettingsScreen() {
       await loadAutoWipeStatus();
     } catch (error) {
       console.error('Auto-wipe configuration failed:', error);
+    } finally {
+      setAutoWipeLoading(false);
+    }
+  };
+
   const onActiveAuthSave = async () => {
     try {
       setActiveAuthLoading(true);
