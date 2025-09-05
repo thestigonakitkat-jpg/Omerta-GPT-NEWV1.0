@@ -380,7 +380,8 @@ export class CryptographicDNAValidator {
    * 🧠 DNA-EMBEDDED SECURITY QUESTIONS
    */
   
-  /*async generateDNASecurityQuestions(dna: CryptographicDNA): Promise<DNASecurityQuestion[]> {
+  /*
+  async generateDNASecurityQuestions(dna: CryptographicDNA): Promise<DNASecurityQuestion[]> {
     const questions: DNASecurityQuestion[] = [];
     
     // Question 1: DNA Signature Position
@@ -433,6 +434,7 @@ export class CryptographicDNAValidator {
     }
     return (checksum % 10000).toString().padStart(4, '0');
   }
+  */
   
   async validateDNAAnswer(question: DNASecurityQuestion, userAnswer: string, deviceHalfKey: string): Promise<boolean> {
     const expectedHash = await this.hashAnswer(userAnswer.toUpperCase(), deviceHalfKey);
