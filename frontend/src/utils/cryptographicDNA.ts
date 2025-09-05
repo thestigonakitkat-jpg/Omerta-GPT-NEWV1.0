@@ -233,8 +233,8 @@ export class CryptographicDNAValidator {
       version: Platform.Version.toString(),
       
       // App specific
-      applicationId: Application.applicationId || 'unknown',
-      nativeApplicationVersion: Application.nativeApplicationVersion || 'unknown',
+      applicationId: 'com.steelos.omerta',
+      nativeApplicationVersion: '1.0.0',
       
       // Timing-based entropy (unique per installation)
       installationEntropy: Date.now().toString(36) + Math.random().toString(36)
