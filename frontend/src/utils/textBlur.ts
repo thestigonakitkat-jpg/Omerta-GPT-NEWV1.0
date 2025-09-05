@@ -28,7 +28,7 @@ class TextBlurManager {
   // Load configuration from storage
   async loadConfig(): Promise<TextBlurConfig> {
     try {
-      const stored = await AsyncStorage.getItem(TEXT_BLUR_STORAGE_KEY);
+      const stored = await SecureStore.getItemAsync(TEXT_BLUR_STORAGE_KEY);
       if (stored) {
         this.config = { ...DEFAULT_CONFIG, ...JSON.parse(stored) };
       }
