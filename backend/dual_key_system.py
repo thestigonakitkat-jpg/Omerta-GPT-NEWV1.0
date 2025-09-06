@@ -344,21 +344,62 @@ async def execute_dual_key_operation(operation: dict):
         raise
 
 def get_dual_key_operators() -> dict:
-    """Get dual key operators (in production, from secure storage)"""
-    # This is a simplified version - in production, operators would be stored securely
+    """Get dual key operators from secure environment variables"""
+    import os
+    
+    # Generate secure random credentials if not set in environment
+    dev_password_hash = os.environ.get('DUAL_KEY_DEV_PASSWORD_HASH')
+    sec_password_hash = os.environ.get('DUAL_KEY_SEC_PASSWORD_HASH')
+    dev_totp_secret = os.environ.get('DUAL_KEY_DEV_TOTP_SECRET')
+    sec_totp_secret = os.environ.get('DUAL_KEY_SEC_TOTP_SECRET')
+    dev_key_fragment = os.environ.get('DUAL_KEY_DEV_FRAGMENT')
+    sec_key_fragment = os.environ.get('DUAL_KEY_SEC_FRAGMENT')
+    
+    # If environment variables not set, generate secure random values
+    if not all([dev_password_hash, sec_password_hash, dev_totp_secret, sec_totp_secret, dev_key_fragment, sec_key_fragment]):
+        import secrets
+        import base64
+        
+        logger.warning("🚨 DUAL KEY CREDENTIALS NOT SET IN ENVIRONMENT - GENERATING RANDOM VALUES")
+        logger.warning("🔐 SET THESE ENVIRONMENT VARIABLES FOR PRODUCTION:")
+        
+        if not dev_password_hash:
+            dev_password_hash = hashlib.sha256(secrets.token_urlsafe(32).encode()).hexdigest()
+            logger.warning(f"DUAL_KEY_DEV_PASSWORD_HASH={dev_password_hash}")
+        
+        if not sec_password_hash:
+            sec_password_hash = hashlib.sha256(secrets.token_urlsafe(32).encode()).hexdigest()
+            logger.warning(f"DUAL_KEY_SEC_PASSWORD_HASH={sec_password_hash}")
+            
+        if not dev_totp_secret:
+            dev_totp_secret = base64.b32encode(secrets.token_bytes(20)).decode().strip('=')
+            logger.warning(f"DUAL_KEY_DEV_TOTP_SECRET={dev_totp_secret}")
+            
+        if not sec_totp_secret:
+            sec_totp_secret = base64.b32encode(secrets.token_bytes(20)).decode().strip('=')
+            logger.warning(f"DUAL_KEY_SEC_TOTP_SECRET={sec_totp_secret}")
+            
+        if not dev_key_fragment:
+            dev_key_fragment = secrets.token_hex(32)
+            logger.warning(f"DUAL_KEY_DEV_FRAGMENT={dev_key_fragment}")
+            
+        if not sec_key_fragment:
+            sec_key_fragment = secrets.token_hex(32)
+            logger.warning(f"DUAL_KEY_SEC_FRAGMENT={sec_key_fragment}")
+    
     return {
         "dev_primary": {
             "operator_type": "developer",
-            "password_hash": hashlib.sha256("DevSecure2025!".encode()).hexdigest(),
-            "totp_secret": "JBSWY3DPEHPK3PXP",  # Base32 secret
-            "key_fragment": "a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456",
+            "password_hash": dev_password_hash,
+            "totp_secret": dev_totp_secret,
+            "key_fragment": dev_key_fragment,
             "public_key": "dev_public_key_placeholder"
         },
         "sec_officer": {
             "operator_type": "security_officer", 
-            "password_hash": hashlib.sha256("SecOfficer2025!".encode()).hexdigest(),
-            "totp_secret": "JBSWY3DPEHPK3PXQ",  # Different Base32 secret
-            "key_fragment": "f6e5d4c3b2a1098765432109876543210fedcba0987654321fedcba09876543",
+            "password_hash": sec_password_hash,
+            "totp_secret": sec_totp_secret,
+            "key_fragment": sec_key_fragment,
             "public_key": "sec_public_key_placeholder"
         }
     }
