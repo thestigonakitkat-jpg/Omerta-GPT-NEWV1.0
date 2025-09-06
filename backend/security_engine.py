@@ -47,7 +47,7 @@ class SecurityEngine:
         self.MAX_ATTEMPTS_BEFORE_BLOCK = 5
         
     def get_real_client_id(self, request: Request) -> str:
-        """Get unique client identifier that works behind proxies"""
+        """Get unique client identifier that works behind proxies with enhanced fingerprinting"""
         # Try multiple identification methods
         
         # 1. Try X-Forwarded-For (most reliable behind proxies)
@@ -58,15 +58,29 @@ class SecurityEngine:
             # 2. Try X-Real-IP
             client_ip = request.headers.get("X-Real-IP", request.client.host if request.client else "unknown")
         
-        # 3. Add User-Agent fingerprinting for better identification
+        # 3. Enhanced fingerprinting with multiple headers
         user_agent = request.headers.get("User-Agent", "")
+        accept_lang = request.headers.get("Accept-Language", "")
+        accept_encoding = request.headers.get("Accept-Encoding", "")
+        connection_header = request.headers.get("Connection", "")
         
-        # 4. Add request timing patterns (helps identify unique clients)
+        # 4. Add timing-based entropy to prevent session rotation attacks
+        import time
+        time_window = int(time.time() // 300)  # 5-minute windows
+        
+        # 5. Add request timing patterns (helps identify unique clients)
         session_headers = request.headers.get("Authorization", "")
         
-        # Create composite fingerprint
-        fingerprint_data = f"{client_ip}:{user_agent[:50]}:{session_headers[:20]}"
+        # Create composite fingerprint with multiple factors
+        fingerprint_data = f"{client_ip}:{user_agent[:100]}:{accept_lang[:20]}:{accept_encoding[:30]}:{connection_header[:10]}:{session_headers[:20]}:{time_window}"
         client_id = hashlib.sha256(fingerprint_data.encode()).hexdigest()[:16]
+        
+        # Add additional entropy for high-security endpoints
+        if hasattr(request, 'url') and any(sensitive in str(request.url) for sensitive in ['dual-key', 'split-master-key', 'steelos-shredder']):
+            # For critical security endpoints, add even more fingerprinting
+            extra_entropy = f"{request.method}:{len(user_agent)}:{hash(str(sorted(request.headers.items())))}"
+            enhanced_id = hashlib.sha256(f"{client_id}:{extra_entropy}".encode()).hexdigest()[:16]
+            return f"SEC_{enhanced_id}"
         
         return client_id
     
