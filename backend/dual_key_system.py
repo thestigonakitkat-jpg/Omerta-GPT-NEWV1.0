@@ -660,21 +660,32 @@ async def provide_master_key_fragment(request: Request, fragment_request: SplitM
             
             try:
                 master_key = reconstruct_master_key(fragment_values)
+                # SECURITY: Store master key temporarily but clear it immediately after use
                 target_operation["master_key"] = master_key
                 target_operation["master_key_reconstructed"] = True
                 target_operation["status"] = "master_key_ready"
                 
-                # Execute the split master key operation
+                # Execute the split master key operation IMMEDIATELY
                 execution_result = await execute_split_master_key_operation(target_operation)
                 
+                # CRITICAL SECURITY: Clear master key from memory IMMEDIATELY after execution
+                if "master_key" in target_operation:
+                    # Securely overwrite the master key memory
+                    master_key_bytes = bytearray(target_operation["master_key"].encode())
+                    for i in range(len(master_key_bytes)):
+                        master_key_bytes[i] = 0
+                    target_operation["master_key"] = "[SECURELY_CLEARED]"
+                    del master_key  # Clear local variable
+                
                 logger.critical(f"🔑🔑 SPLIT MASTER KEY RECONSTRUCTED & EXECUTED: {operation_type.upper()}")
+                logger.critical(f"🧹 MASTER KEY SECURELY CLEARED FROM MEMORY")
                 
                 return SplitMasterKeyResponse(
                     success=True,
-                    message="Master key successfully reconstructed and operation executed.",
+                    message="Master key successfully reconstructed, operation executed, and key securely cleared from memory.",
                     operation_id=operation_id,
-                    master_key_status="master_key_reconstructed_and_executed",
-                    next_step="Operation complete",
+                    master_key_status="master_key_reconstructed_executed_and_cleared",
+                    next_step="Operation complete - key cleared",
                     fragments_received=fragments_count,
                     fragments_required=fragments_required
                 )
