@@ -509,26 +509,68 @@ def reconstruct_master_key(fragments: List[str]) -> str:
         raise HTTPException(status_code=500, detail="Failed to reconstruct master key")
 
 def get_split_key_holders() -> dict:
-    """Get split key holders configuration"""
+    """Get split key holders from secure environment variables"""
+    import os
+    
+    # Load from environment variables
+    dev_pin_hash = os.environ.get('SPLIT_KEY_DEV_PIN_HASH')
+    sec_pin_hash = os.environ.get('SPLIT_KEY_SEC_PIN_HASH')
+    emg_pin_hash = os.environ.get('SPLIT_KEY_EMG_PIN_HASH')
+    dev_totp_secret = os.environ.get('SPLIT_KEY_DEV_TOTP_SECRET')
+    sec_totp_secret = os.environ.get('SPLIT_KEY_SEC_TOTP_SECRET')
+    emg_totp_secret = os.environ.get('SPLIT_KEY_EMG_TOTP_SECRET')
+    
+    # Generate secure random values if not set in environment
+    if not all([dev_pin_hash, sec_pin_hash, emg_pin_hash, dev_totp_secret, sec_totp_secret, emg_totp_secret]):
+        import secrets
+        import base64
+        
+        logger.warning("🚨 SPLIT KEY HOLDER CREDENTIALS NOT SET IN ENVIRONMENT - GENERATING RANDOM VALUES")
+        logger.warning("🔐 SET THESE ENVIRONMENT VARIABLES FOR PRODUCTION:")
+        
+        if not dev_pin_hash:
+            dev_pin_hash = hashlib.sha256(secrets.token_urlsafe(16).encode()).hexdigest()
+            logger.warning(f"SPLIT_KEY_DEV_PIN_HASH={dev_pin_hash}")
+        
+        if not sec_pin_hash:
+            sec_pin_hash = hashlib.sha256(secrets.token_urlsafe(16).encode()).hexdigest()
+            logger.warning(f"SPLIT_KEY_SEC_PIN_HASH={sec_pin_hash}")
+        
+        if not emg_pin_hash:
+            emg_pin_hash = hashlib.sha256(secrets.token_urlsafe(16).encode()).hexdigest()
+            logger.warning(f"SPLIT_KEY_EMG_PIN_HASH={emg_pin_hash}")
+            
+        if not dev_totp_secret:
+            dev_totp_secret = base64.b32encode(secrets.token_bytes(20)).decode().strip('=')
+            logger.warning(f"SPLIT_KEY_DEV_TOTP_SECRET={dev_totp_secret}")
+            
+        if not sec_totp_secret:
+            sec_totp_secret = base64.b32encode(secrets.token_bytes(20)).decode().strip('=')
+            logger.warning(f"SPLIT_KEY_SEC_TOTP_SECRET={sec_totp_secret}")
+            
+        if not emg_totp_secret:
+            emg_totp_secret = base64.b32encode(secrets.token_bytes(20)).decode().strip('=')
+            logger.warning(f"SPLIT_KEY_EMG_TOTP_SECRET={emg_totp_secret}")
+    
     return {
         "dev_alpha": {
             "holder_type": "primary_developer",
-            "pin_hash": hashlib.sha256("DEV2025".encode()).hexdigest(),
-            "totp_secret": "JBSWY3DPEHPK3PXP",
+            "pin_hash": dev_pin_hash,
+            "totp_secret": dev_totp_secret,
             "key_fragment_id": "fragment_alpha",
             "authority_level": "critical_systems"
         },
         "sec_bravo": {
             "holder_type": "security_lead", 
-            "pin_hash": hashlib.sha256("SEC2025".encode()).hexdigest(),
-            "totp_secret": "JBSWY3DPEHPK3PXQ",
+            "pin_hash": sec_pin_hash,
+            "totp_secret": sec_totp_secret,
             "key_fragment_id": "fragment_bravo",
             "authority_level": "critical_systems"
         },
         "emergency_charlie": {
             "holder_type": "emergency_admin",
-            "pin_hash": hashlib.sha256("EMG2025".encode()).hexdigest(),
-            "totp_secret": "JBSWY3DPEHPK3PXR",
+            "pin_hash": emg_pin_hash,
+            "totp_secret": emg_totp_secret,
             "key_fragment_id": "fragment_charlie",
             "authority_level": "emergency_override"
         }
