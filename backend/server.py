@@ -810,9 +810,25 @@ app.add_middleware(
     expose_headers=["X-RateLimit-Limit", "X-RateLimit-Remaining", "X-RateLimit-Reset"]
 )
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
+# Configure logging with security event tracking
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(),
+        logging.FileHandler('/tmp/omerta_security.log')
+    ]
+)
 logger = logging.getLogger(__name__)
+
+# Security event logger
+security_logger = logging.getLogger("OMERTA_SECURITY")
+security_handler = logging.FileHandler('/tmp/omerta_security_events.log')
+security_handler.setFormatter(logging.Formatter(
+    '%(asctime)s - SECURITY_EVENT - %(levelname)s - %(message)s'
+))
+security_logger.addHandler(security_handler)
+security_logger.setLevel(logging.WARNING)
 
 @app.on_event("startup")
 async def on_startup():
