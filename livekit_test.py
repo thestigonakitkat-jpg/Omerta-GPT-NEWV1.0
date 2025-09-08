@@ -12,7 +12,7 @@ from datetime import datetime
 from typing import Dict, List
 
 # Configuration
-BACKEND_URL = "https://stealth-comms.preview.emergentagent.com/api"
+BACKEND_URL = "https://stealth-comms-1.preview.emergentagent.com/api"
 
 class LiveKitTester:
     def __init__(self):
