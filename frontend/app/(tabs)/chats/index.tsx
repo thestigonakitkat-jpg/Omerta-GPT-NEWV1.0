@@ -135,6 +135,12 @@ export default function ChatsScreen() {
         {/* Header with OMERTA Logo */}
         <View style={styles.header}>
           <OmertaLogo size={32} showText={true} />
+          <TouchableOpacity 
+            style={[styles.videoCallButton, { backgroundColor: colors.accent }]}
+            onPress={() => router.push('/video-lobby')}
+          >
+            <Text style={styles.videoCallText}>📹</Text>
+          </TouchableOpacity>
         </View>
         
         <Text style={[styles.h1, { color: colors.text }]}>Chats (Preview)</Text>
