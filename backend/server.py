@@ -845,6 +845,185 @@ async def split_master_key_status(request: Request, operation_id: str):
     """Get split master key operation status"""
     return await get_split_master_key_status(request, operation_id)
 
+# ---------------------------
+# LiveKit Video Calling Endpoints
+# ---------------------------
+
+@api_router.post("/livekit/token", response_model=LiveKitTokenResponse)
+@limiter.limit("10/minute")
+async def generate_livekit_token(
+    request: Request, 
+    token_request: LiveKitTokenRequest
+):
+    """
+    Generate LiveKit access token for video calling
+    Rate limited to 10 requests per minute to prevent abuse
+    """
+    try:
+        # Validate input
+        room_name = sanitize_input(token_request.room_name, 100)
+        participant_name = token_request.participant_name
+        if participant_name:
+            participant_name = sanitize_input(participant_name, 100)
+        
+        # Generate unique participant identity (could integrate with OMERTÀ user system)
+        participant_identity = f"user_{str(uuid.uuid4())[:8]}"
+        
+        # TODO: Add user authentication validation here
+        # user_id = get_authenticated_user(request)
+        # if not livekit_manager.validate_room_access(user_id, room_name):
+        #     raise HTTPException(status_code=403, detail="Access denied to room")
+        
+        # Generate token
+        token_data = livekit_manager.generate_access_token(
+            room_name=room_name,
+            participant_identity=participant_identity,
+            participant_name=participant_name,
+            metadata=token_request.metadata,
+            ttl_hours=token_request.ttl_hours
+        )
+        
+        # Log security event
+        security_logger.info(f"LiveKit token generated for room {room_name}, participant {participant_identity}")
+        
+        return LiveKitTokenResponse(**token_data)
+        
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"LiveKit token generation failed: {str(e)}")
+        raise HTTPException(status_code=500, detail="Token generation failed")
+
+@api_router.post("/livekit/room/create")
+@limiter.limit("5/minute")
+async def create_livekit_room(
+    request: Request,
+    room_create: LiveKitRoomCreate
+):
+    """
+    Create a new LiveKit room with specified configuration
+    Rate limited to 5 requests per minute
+    """
+    try:
+        # Validate input
+        room_name = sanitize_input(room_create.room_name, 100)
+        
+        # TODO: Add user authentication
+        # user_id = get_authenticated_user(request)
+        creator_id = f"user_{str(uuid.uuid4())[:8]}"  # Temporary placeholder
+        
+        # Create room
+        room_info = livekit_manager.create_room(
+            room_name=room_name,
+            creator_id=creator_id,
+            room_config={
+                "max_participants": room_create.max_participants,
+                "is_private": room_create.is_private,
+                "requires_approval": room_create.requires_approval,
+                "voice_scrambler_enabled": room_create.voice_scrambler_enabled,
+                "face_blur_enabled": room_create.face_blur_enabled,
+                "recording_enabled": room_create.recording_enabled
+            }
+        )
+        
+        # Log security event
+        security_logger.info(f"LiveKit room created: {room_name} by {creator_id}")
+        
+        return {"status": "success", "room": room_info}
+        
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"LiveKit room creation failed: {str(e)}")
+        raise HTTPException(status_code=500, detail="Room creation failed")
+
+@api_router.get("/livekit/rooms")
+@limiter.limit("20/minute")
+async def list_livekit_rooms(request: Request):
+    """
+    List active LiveKit rooms
+    Rate limited to 20 requests per minute
+    """
+    try:
+        # TODO: Add user authentication and filter by access
+        # user_id = get_authenticated_user(request)
+        # rooms = livekit_manager.list_active_rooms(user_id)
+        
+        rooms = livekit_manager.list_active_rooms()
+        
+        return {"status": "success", "rooms": rooms}
+        
+    except Exception as e:
+        logger.error(f"LiveKit room listing failed: {str(e)}")
+        raise HTTPException(status_code=500, detail="Room listing failed")
+
+@api_router.get("/livekit/room/{room_name}")
+@limiter.limit("30/minute")
+async def get_livekit_room_info(request: Request, room_name: str):
+    """
+    Get information about a specific LiveKit room
+    Rate limited to 30 requests per minute
+    """
+    try:
+        room_name = sanitize_input(room_name, 100)
+        
+        # TODO: Add user authentication and access validation
+        # user_id = get_authenticated_user(request)
+        # if not livekit_manager.validate_room_access(user_id, room_name):
+        #     raise HTTPException(status_code=403, detail="Access denied to room")
+        
+        room_info = livekit_manager.get_room_info(room_name)
+        
+        if not room_info:
+            raise HTTPException(status_code=404, detail="Room not found")
+        
+        # Remove sensitive information for public API
+        public_info = {
+            "room_name": room_info["room_name"],
+            "created_at": room_info["created_at"],
+            "participant_count": len(room_info.get("participants", [])),
+            "max_participants": room_info.get("max_participants", 4),
+            "is_private": room_info.get("is_private", False),
+            "requires_approval": room_info.get("requires_approval", False),
+            "voice_scrambler_enabled": room_info.get("voice_scrambler_enabled", True),
+            "face_blur_enabled": room_info.get("face_blur_enabled", True)
+        }
+        
+        return {"status": "success", "room": public_info}
+        
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"LiveKit room info retrieval failed: {str(e)}")
+        raise HTTPException(status_code=500, detail="Room info retrieval failed")
+
+@api_router.post("/livekit/session/end")
+@limiter.limit("60/minute")
+async def end_livekit_session(
+    request: Request,
+    session_end: LiveKitSessionEnd
+):
+    """
+    End a LiveKit session and cleanup resources
+    Rate limited to 60 requests per minute
+    """
+    try:
+        session_id = sanitize_input(session_end.session_id, 100)
+        
+        success = livekit_manager.end_session(session_id)
+        
+        if success:
+            security_logger.info(f"LiveKit session ended: {session_id}")
+            return {"status": "success", "message": "Session ended successfully"}
+        else:
+            raise HTTPException(status_code=404, detail="Session not found")
+        
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"LiveKit session end failed: {str(e)}")
+        raise HTTPException(status_code=500, detail="Session end failed")
+
 # Include the router in the main app
 app.include_router(api_router)
 
