@@ -22,7 +22,10 @@ class AdminSystemTester:
     def __init__(self):
         self.session = requests.Session()
         self.test_results = []
-        self.operation_ids = {}
+        self.admin_session_token = None
+        self.admin_id = None
+        self.operation_id = None
+        self.seed_info = None
         
     def log_test(self, test_name: str, success: bool, details: str = ""):
         """Log test result"""
@@ -37,12 +40,6 @@ class AdminSystemTester:
             'details': details,
             'timestamp': datetime.now(timezone.utc).isoformat()
         })
-        
-    def generate_totp_code(self, secret: str) -> str:
-        """Generate TOTP code for testing (mock implementation)"""
-        # For testing, we'll use a predictable code based on current time
-        current_time = int(time.time()) // 30
-        return str((current_time % 1000000)).zfill(6)
     
     def test_dual_key_initiate(self):
         """Test Design A: Dual-Key Operation Initiation"""
