@@ -90,226 +90,221 @@ class AdminSystemTester:
         except Exception as e:
             self.log_test("Invalid Admin Authentication Rejection", False, f"Exception: {str(e)}")
     
-    def test_dual_key_authenticate(self):
-        """Test Design A: Dual-Key Operator Authentication"""
-        if 'dual_key' not in self.operation_ids:
-            self.log_test("Dual-Key Authentication", False, "No operation ID available")
-            return
-            
+    def test_seed_info_retrieval(self):
+        """Test GET /api/admin/seed/info to get 12-word seed split into 6/6"""
+        print("\n🌱 Testing Admin Seed Info Retrieval")
+        
         try:
-            operation_id = self.operation_ids['dual_key']
-            
-            # Test first operator authentication
-            auth_payload = {
-                'operation_id': operation_id,
-                'operator_id': 'dev_primary',
-                'key_fragment': 'a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456',
-                'password': 'DevSecure2025!',
-                'totp_code': self.generate_totp_code('JBSWY3DPEHPK3PXP'),
-                'cryptographic_signature': 'test_signature_dev_primary'
-            }
-            
-            response = self.session.post(f"{API_BASE}/dual-key/authenticate", json=auth_payload)
+            response = self.session.get(f"{API_BASE}/admin/seed/info")
             
             if response.status_code == 200:
                 data = response.json()
-                if data.get('success'):
-                    self.log_test("Dual-Key First Operator Auth", True, 
-                                f"Status: {data.get('status')}, Next: {data.get('next_step')}")
+                if data.get('status') == 'success' and data.get('seed_info'):
+                    seed_info = data['seed_info']
+                    self.seed_info = seed_info
                     
-                    # Test second operator authentication
-                    auth_payload2 = {
-                        'operation_id': operation_id,
-                        'operator_id': 'sec_officer',
-                        'key_fragment': 'f6e5d4c3b2a1098765432109876543210fedcba0987654321fedcba09876543',
-                        'password': 'SecOfficer2025!',
-                        'totp_code': self.generate_totp_code('JBSWY3DPEHPK3PXQ'),
-                        'cryptographic_signature': 'test_signature_sec_officer'
-                    }
+                    admin1_words = seed_info.get('admin1_words', [])
+                    admin2_words = seed_info.get('admin2_words', [])
                     
-                    response2 = self.session.post(f"{API_BASE}/dual-key/authenticate", json=auth_payload2)
-                    
-                    if response2.status_code == 200:
-                        data2 = response2.json()
-                        if data2.get('success') and data2.get('status') == 'executed':
-                            self.log_test("Dual-Key Second Operator Auth & Execution", True,
-                                        f"Operation executed successfully: {data2.get('message')}")
-                        else:
-                            self.log_test("Dual-Key Second Operator Auth", False, f"Execution failed: {data2}")
+                    if len(admin1_words) == 6 and len(admin2_words) == 6:
+                        self.log_test("Seed Info Retrieval", True, 
+                                    f"Admin1 words: {' '.join(admin1_words[:3])}... Admin2 words: {' '.join(admin2_words[:3])}...")
                     else:
-                        self.log_test("Dual-Key Second Operator Auth", False,
-                                    f"HTTP {response2.status_code}: {response2.text}")
+                        self.log_test("Seed Info Retrieval", False, 
+                                    f"Invalid seed split: Admin1={len(admin1_words)} words, Admin2={len(admin2_words)} words")
                 else:
-                    self.log_test("Dual-Key First Operator Auth", False, f"Auth failed: {data}")
+                    self.log_test("Seed Info Retrieval", False, f"Invalid response: {data}")
             else:
-                self.log_test("Dual-Key First Operator Auth", False,
+                self.log_test("Seed Info Retrieval", False, 
                             f"HTTP {response.status_code}: {response.text}")
                 
         except Exception as e:
-            self.log_test("Dual-Key Authentication", False, f"Exception: {str(e)}")
+            self.log_test("Seed Info Retrieval", False, f"Exception: {str(e)}")
     
-    def test_dual_key_status(self):
-        """Test Design A: Dual-Key Operation Status"""
-        if 'dual_key' not in self.operation_ids:
-            self.log_test("Dual-Key Status Check", False, "No operation ID available")
+    def test_multisig_operation_initiation(self):
+        """Test POST /api/admin/multisig/initiate for remote_kill operations"""
+        print("\n🚀 Testing Multi-Sig Operation Initiation")
+        
+        if not self.admin_session_token:
+            self.log_test("Multi-Sig Operation Initiation", False, "No admin session token available")
             return
-            
-        try:
-            operation_id = self.operation_ids['dual_key']
-            response = self.session.get(f"{API_BASE}/dual-key/status/{operation_id}")
-            
-            if response.status_code == 200:
-                data = response.json()
-                if data.get('success'):
-                    self.log_test("Dual-Key Status Check", True,
-                                f"Status: {data.get('status')}, Type: {data.get('operation_type')}")
-                else:
-                    self.log_test("Dual-Key Status Check", False, f"Invalid response: {data}")
-            else:
-                self.log_test("Dual-Key Status Check", False,
-                            f"HTTP {response.status_code}: {response.text}")
-                
-        except Exception as e:
-            self.log_test("Dual-Key Status Check", False, f"Exception: {str(e)}")
-    
-    def test_split_master_key_initiate(self):
-        """Test Design B: Split Master Key Operation Initiation"""
-        print("\n🔑🔑 Testing Design B: Split Master Key System")
         
         try:
             payload = {
-                'operation_type': 'emergency_override',
-                'operation_data': {'override_level': 'critical', 'reason': 'emergency_access'}
+                'session_token': self.admin_session_token,
+                'operation_type': 'remote_kill',
+                'target_device_id': 'target_device_67890',
+                'operation_data': {
+                    'reason': 'Security breach detected',
+                    'priority': 'critical'
+                }
             }
             
-            response = self.session.post(f"{API_BASE}/split-master-key/initiate", json=payload)
+            response = self.session.post(f"{API_BASE}/admin/multisig/initiate", json=payload)
             
             if response.status_code == 200:
                 data = response.json()
                 if data.get('success') and data.get('operation_id'):
-                    self.operation_ids['split_key'] = data['operation_id']
-                    self.log_test("Split Master Key Initiation", True,
-                                f"Operation ID: {data['operation_id']}, Fragments required: {data.get('fragments_required')}")
+                    self.operation_id = data['operation_id']
+                    self.log_test("Multi-Sig Operation Initiation", True, 
+                                f"Operation ID: {data['operation_id']}, Type: {data.get('operation_type')}, Expires: {datetime.fromtimestamp(data['expires_at']).strftime('%H:%M:%S')}")
                 else:
-                    self.log_test("Split Master Key Initiation", False, f"Invalid response: {data}")
+                    self.log_test("Multi-Sig Operation Initiation", False, f"Invalid response: {data}")
             else:
-                self.log_test("Split Master Key Initiation", False,
+                self.log_test("Multi-Sig Operation Initiation", False, 
                             f"HTTP {response.status_code}: {response.text}")
                 
         except Exception as e:
-            self.log_test("Split Master Key Initiation", False, f"Exception: {str(e)}")
+            self.log_test("Multi-Sig Operation Initiation", False, f"Exception: {str(e)}")
     
-    def test_split_master_key_fragments(self):
-        """Test Design B: Split Master Key Fragment Provision"""
-        if 'split_key' not in self.operation_ids:
-            self.log_test("Split Master Key Fragments", False, "No operation ID available")
+    def test_multisig_operation_signing(self):
+        """Test POST /api/admin/multisig/sign with seed words and passphrase"""
+        print("\n✍️ Testing Multi-Sig Operation Signing")
+        
+        if not self.operation_id:
+            self.log_test("Multi-Sig Operation Signing", False, "No operation ID available")
             return
-            
+        
+        if not self.seed_info:
+            self.log_test("Multi-Sig Operation Signing", False, "No seed info available")
+            return
+        
         try:
-            # Test first key holder fragment
-            fragment_payload1 = {
-                'key_holder_id': 'dev_alpha',
-                'key_fragment': 'a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456',
-                'pin': 'DEV2025',
-                'totp_code': self.generate_totp_code('JBSWY3DPEHPK3PXP'),
-                'operation_type': 'emergency_override'
+            # Test first admin signature
+            admin1_words = self.seed_info.get('admin1_words', [])
+            
+            payload1 = {
+                'operation_id': self.operation_id,
+                'admin_seed_words': admin1_words,
+                'admin_passphrase': 'Omertaisthecode#01',
+                'admin_id': 'admin1'
             }
             
-            response1 = self.session.post(f"{API_BASE}/split-master-key/fragment", json=fragment_payload1)
+            response1 = self.session.post(f"{API_BASE}/admin/multisig/sign", json=payload1)
             
             if response1.status_code == 200:
                 data1 = response1.json()
                 if data1.get('success'):
-                    self.log_test("Split Key First Fragment", True,
-                                f"Status: {data1.get('master_key_status')}, Fragments: {data1.get('fragments_received')}/{data1.get('fragments_required')}")
+                    signatures_received = data1.get('signatures_received', 0)
+                    self.log_test("Multi-Sig First Admin Signature", True, 
+                                f"Signatures: {signatures_received}/2, Completed: {data1.get('operation_completed', False)}")
                     
-                    # Test second key holder fragment
-                    fragment_payload2 = {
-                        'key_holder_id': 'sec_bravo',
-                        'key_fragment': 'f6e5d4c3b2a1098765432109876543210fedcba0987654321fedcba09876543',
-                        'pin': 'SEC2025',
-                        'totp_code': self.generate_totp_code('JBSWY3DPEHPK3PXQ'),
-                        'operation_type': 'emergency_override'
+                    # Test second admin signature
+                    admin2_words = self.seed_info.get('admin2_words', [])
+                    
+                    payload2 = {
+                        'operation_id': self.operation_id,
+                        'admin_seed_words': admin2_words,
+                        'admin_passphrase': 'Omertaisthecode#01',
+                        'admin_id': 'admin2'
                     }
                     
-                    response2 = self.session.post(f"{API_BASE}/split-master-key/fragment", json=fragment_payload2)
+                    response2 = self.session.post(f"{API_BASE}/admin/multisig/sign", json=payload2)
                     
                     if response2.status_code == 200:
                         data2 = response2.json()
-                        if data2.get('success') and 'reconstructed' in data2.get('master_key_status', ''):
-                            self.log_test("Split Key Second Fragment & Reconstruction", True,
-                                        f"Master key reconstructed and operation executed: {data2.get('message')}")
+                        if data2.get('success') and data2.get('operation_completed'):
+                            execution_result = data2.get('execution_result', {})
+                            self.log_test("Multi-Sig Second Admin Signature & Execution", True,
+                                        f"Operation executed: {execution_result.get('status')}, Kill token deployed: {bool(execution_result.get('kill_token'))}")
                         else:
-                            self.log_test("Split Key Second Fragment", False, f"Reconstruction failed: {data2}")
+                            self.log_test("Multi-Sig Second Admin Signature", False, f"Execution failed: {data2}")
                     else:
-                        self.log_test("Split Key Second Fragment", False,
+                        self.log_test("Multi-Sig Second Admin Signature", False,
                                     f"HTTP {response2.status_code}: {response2.text}")
                 else:
-                    self.log_test("Split Key First Fragment", False, f"Fragment rejected: {data1}")
+                    self.log_test("Multi-Sig First Admin Signature", False, f"Signature failed: {data1}")
             else:
-                self.log_test("Split Key First Fragment", False,
+                self.log_test("Multi-Sig First Admin Signature", False,
                             f"HTTP {response1.status_code}: {response1.text}")
                 
         except Exception as e:
-            self.log_test("Split Master Key Fragments", False, f"Exception: {str(e)}")
+            self.log_test("Multi-Sig Operation Signing", False, f"Exception: {str(e)}")
     
-    def test_split_master_key_status(self):
-        """Test Design B: Split Master Key Operation Status"""
-        if 'split_key' not in self.operation_ids:
-            self.log_test("Split Master Key Status", False, "No operation ID available")
+    def test_operation_status_check(self):
+        """Test GET /api/admin/multisig/status/{operation_id}"""
+        print("\n📊 Testing Operation Status Check")
+        
+        if not self.operation_id:
+            self.log_test("Operation Status Check", False, "No operation ID available")
             return
-            
+        
         try:
-            operation_id = self.operation_ids['split_key']
-            response = self.session.get(f"{API_BASE}/split-master-key/status/{operation_id}")
+            response = self.session.get(f"{API_BASE}/admin/multisig/status/{self.operation_id}")
             
             if response.status_code == 200:
                 data = response.json()
-                if data.get('success'):
-                    self.log_test("Split Master Key Status", True,
-                                f"Status: {data.get('status')}, Key reconstructed: {data.get('master_key_reconstructed')}")
+                if data.get('status') == 'success' and data.get('operation'):
+                    operation = data['operation']
+                    self.log_test("Operation Status Check", True,
+                                f"Status: {operation.get('operation_type')}, Completed: {operation.get('completed')}, Signatures: {operation.get('signatures_received')}/{operation.get('signatures_required')}")
                 else:
-                    self.log_test("Split Master Key Status", False, f"Invalid response: {data}")
+                    self.log_test("Operation Status Check", False, f"Invalid response: {data}")
             else:
-                self.log_test("Split Master Key Status", False,
+                self.log_test("Operation Status Check", False,
                             f"HTTP {response.status_code}: {response.text}")
                 
         except Exception as e:
-            self.log_test("Split Master Key Status", False, f"Exception: {str(e)}")
+            self.log_test("Operation Status Check", False, f"Exception: {str(e)}")
     
-    def test_security_features(self):
-        """Test Security Features: Rate Limiting and Input Sanitization"""
-        print("\n🔒 Testing Security Features")
+    def test_rate_limiting(self):
+        """Test rate limiting on admin endpoints"""
+        print("\n🚦 Testing Rate Limiting")
         
-        # Test rate limiting on dual-key initiate
+        # Test auth rate limiting (5/min)
         try:
-            rate_limit_count = 0
-            for i in range(7):  # Try to exceed 5/hour limit
+            auth_blocked = False
+            for i in range(7):  # Try to exceed 5/min limit
                 payload = {
-                    'operation_type': 'system_reset',
-                    'operation_data': {'test': f'rate_limit_{i}'},
-                    'operator_a_id': 'dev_primary',
-                    'operator_b_id': 'sec_officer'
+                    'admin_passphrase': 'TestPassphrase123',
+                    'device_id': f'test_device_{i}'
                 }
-                response = self.session.post(f"{API_BASE}/dual-key/initiate", json=payload)
+                response = self.session.post(f"{API_BASE}/admin/authenticate", json=payload)
                 if response.status_code == 429:
-                    rate_limit_count += 1
+                    auth_blocked = True
                     break
-                time.sleep(0.1)  # Small delay between requests
+                time.sleep(0.1)
             
-            if rate_limit_count > 0:
-                self.log_test("Dual-Key Rate Limiting", True, f"Rate limit triggered after {i+1} requests")
+            if auth_blocked:
+                self.log_test("Admin Auth Rate Limiting", True, f"Rate limit triggered after {i+1} requests")
             else:
-                self.log_test("Dual-Key Rate Limiting", False, "Rate limiting not working")
+                self.log_test("Admin Auth Rate Limiting", False, "Rate limiting not working for auth")
                 
         except Exception as e:
-            self.log_test("Dual-Key Rate Limiting", False, f"Exception: {str(e)}")
+            self.log_test("Admin Auth Rate Limiting", False, f"Exception: {str(e)}")
         
-        # Test input sanitization
+        # Test multisig initiate rate limiting (3/min)
+        if self.admin_session_token:
+            try:
+                initiate_blocked = False
+                for i in range(5):  # Try to exceed 3/min limit
+                    payload = {
+                        'session_token': self.admin_session_token,
+                        'operation_type': 'remote_kill',
+                        'target_device_id': f'test_target_{i}'
+                    }
+                    response = self.session.post(f"{API_BASE}/admin/multisig/initiate", json=payload)
+                    if response.status_code == 429:
+                        initiate_blocked = True
+                        break
+                    time.sleep(0.1)
+                
+                if initiate_blocked:
+                    self.log_test("Multi-Sig Initiate Rate Limiting", True, f"Rate limit triggered after {i+1} requests")
+                else:
+                    self.log_test("Multi-Sig Initiate Rate Limiting", False, "Rate limiting not working for initiate")
+                    
+            except Exception as e:
+                self.log_test("Multi-Sig Initiate Rate Limiting", False, f"Exception: {str(e)}")
+    
+    def test_input_sanitization(self):
+        """Test input sanitization on admin endpoints"""
+        print("\n🛡️ Testing Input Sanitization")
+        
         try:
             dangerous_payloads = [
                 '<script>alert("xss")</script>',
-                '; DROP TABLE operations; --',
+                '; DROP TABLE admin_sessions; --',
                 '../../../etc/passwd',
                 'javascript:alert(1)',
                 'eval(malicious_code)'
@@ -318,12 +313,10 @@ class AdminSystemTester:
             sanitization_working = 0
             for payload in dangerous_payloads:
                 test_data = {
-                    'operation_type': payload,
-                    'operation_data': {'test': 'sanitization'},
-                    'operator_a_id': 'dev_primary',
-                    'operator_b_id': 'sec_officer'
+                    'admin_passphrase': payload,
+                    'device_id': 'test_device'
                 }
-                response = self.session.post(f"{API_BASE}/dual-key/initiate", data=test_data)
+                response = self.session.post(f"{API_BASE}/admin/authenticate", json=test_data)
                 if response.status_code == 400:
                     sanitization_working += 1
             
@@ -335,145 +328,66 @@ class AdminSystemTester:
         except Exception as e:
             self.log_test("Input Sanitization", False, f"Exception: {str(e)}")
     
-    def test_operation_timeouts(self):
-        """Test Operation Timeout Behavior"""
-        print("\n⏰ Testing Operation Timeouts")
+    def test_invalid_operations(self):
+        """Test invalid operation scenarios"""
+        print("\n❌ Testing Invalid Operation Scenarios")
         
+        # Test signing non-existent operation
         try:
-            # Create a dual-key operation and check timeout behavior
             payload = {
-                'operation_type': 'emergency_access',
-                'operation_data': {'timeout_test': True},
-                'operator_a_id': 'dev_primary',
-                'operator_b_id': 'sec_officer'
+                'operation_id': 'fake_operation_id_12345',
+                'admin_seed_words': ['fake', 'seed', 'words', 'test', 'invalid', 'operation'],
+                'admin_passphrase': 'Omertaisthecode#01',
+                'admin_id': 'admin1'
             }
             
-            response = self.session.post(f"{API_BASE}/dual-key/initiate", data=payload)
+            response = self.session.post(f"{API_BASE}/admin/multisig/sign", json=payload)
             
-            if response.status_code == 200:
-                data = response.json()
-                operation_id = data.get('operation_id')
+            if response.status_code == 404:
+                self.log_test("Invalid Operation ID Rejection", True, "Correctly rejected non-existent operation")
+            else:
+                self.log_test("Invalid Operation ID Rejection", False, f"Should reject invalid operation: HTTP {response.status_code}")
                 
-                if operation_id:
-                    # Check initial status
-                    status_response = self.session.get(f"{API_BASE}/dual-key/status/{operation_id}")
-                    if status_response.status_code == 200:
-                        status_data = status_response.json()
-                        time_remaining = status_data.get('time_remaining', 0)
-                        
-                        if time_remaining > 0 and time_remaining <= 300:  # 5 minutes max
-                            self.log_test("Operation Timeout Configuration", True,
-                                        f"Operation expires in {time_remaining} seconds (≤5 minutes)")
-                        else:
-                            self.log_test("Operation Timeout Configuration", False,
-                                        f"Invalid timeout: {time_remaining} seconds")
-                    else:
-                        self.log_test("Operation Timeout Configuration", False, "Could not check status")
+        except Exception as e:
+            self.log_test("Invalid Operation ID Rejection", False, f"Exception: {str(e)}")
+        
+        # Test invalid seed words
+        if self.operation_id:
+            try:
+                payload = {
+                    'operation_id': self.operation_id,
+                    'admin_seed_words': ['invalid', 'seed', 'words', 'that', 'dont', 'match'],
+                    'admin_passphrase': 'Omertaisthecode#01',
+                    'admin_id': 'admin1'
+                }
+                
+                response = self.session.post(f"{API_BASE}/admin/multisig/sign", json=payload)
+                
+                if response.status_code == 401:
+                    self.log_test("Invalid Seed Words Rejection", True, "Correctly rejected invalid seed words")
                 else:
-                    self.log_test("Operation Timeout Configuration", False, "No operation ID returned")
-            else:
-                self.log_test("Operation Timeout Configuration", False, f"HTTP {response.status_code}")
-                
-        except Exception as e:
-            self.log_test("Operation Timeout Configuration", False, f"Exception: {str(e)}")
-    
-    def test_authentication_validation(self):
-        """Test Authentication and Authorization Validation"""
-        print("\n🔐 Testing Authentication & Authorization")
-        
-        try:
-            # Test invalid operator authentication
-            invalid_auth_payload = {
-                'operation_id': 'fake_operation_id',
-                'operator_id': 'invalid_operator',
-                'key_fragment': 'invalid_fragment',
-                'password': 'wrong_password',
-                'totp_code': '000000',
-                'cryptographic_signature': 'invalid_signature'
-            }
-            
-            response = self.session.post(f"{API_BASE}/dual-key/authenticate", json=invalid_auth_payload)
-            
-            if response.status_code in [403, 404]:
-                self.log_test("Invalid Operator Rejection", True, f"HTTP {response.status_code} - Unauthorized access blocked")
-            else:
-                self.log_test("Invalid Operator Rejection", False, f"Invalid operator not properly rejected: HTTP {response.status_code}")
-                
-        except Exception as e:
-            self.log_test("Invalid Operator Rejection", False, f"Exception: {str(e)}")
-        
-        try:
-            # Test invalid key holder for split master key
-            invalid_fragment_payload = {
-                'key_holder_id': 'unknown_holder',
-                'key_fragment': 'invalid_fragment',
-                'pin': 'WRONG',
-                'totp_code': '000000',
-                'operation_type': 'system_reset'
-            }
-            
-            response = self.session.post(f"{API_BASE}/split-master-key/fragment", json=invalid_fragment_payload)
-            
-            if response.status_code in [403, 404]:
-                self.log_test("Invalid Key Holder Rejection", True, f"HTTP {response.status_code} - Unknown key holder blocked")
-            else:
-                self.log_test("Invalid Key Holder Rejection", False, f"Invalid key holder not properly rejected: HTTP {response.status_code}")
-                
-        except Exception as e:
-            self.log_test("Invalid Key Holder Rejection", False, f"Exception: {str(e)}")
-    
-    def test_cryptographic_signatures(self):
-        """Test Cryptographic Signature Verification"""
-        print("\n🔐 Testing Cryptographic Features")
-        
-        try:
-            # Test that operations generate proper signatures
-            payload = {
-                'operation_type': 'master_override',
-                'operation_data': {'signature_test': True},
-                'operator_a_id': 'dev_primary',
-                'operator_b_id': 'sec_officer'
-            }
-            
-            response = self.session.post(f"{API_BASE}/dual-key/initiate", data=payload)
-            
-            if response.status_code == 200:
-                data = response.json()
-                operation_id = data.get('operation_id')
-                
-                # Check if operation ID contains cryptographic elements
-                if operation_id and len(operation_id) > 32 and 'DUAL_KEY' in operation_id:
-                    self.log_test("Cryptographic Operation ID Generation", True,
-                                f"Operation ID has cryptographic structure: {operation_id[:50]}...")
-                else:
-                    self.log_test("Cryptographic Operation ID Generation", False,
-                                f"Operation ID lacks cryptographic structure: {operation_id}")
-            else:
-                self.log_test("Cryptographic Operation ID Generation", False, f"HTTP {response.status_code}")
-                
-        except Exception as e:
-            self.log_test("Cryptographic Operation ID Generation", False, f"Exception: {str(e)}")
+                    self.log_test("Invalid Seed Words Rejection", False, f"Should reject invalid seed words: HTTP {response.status_code}")
+                    
+            except Exception as e:
+                self.log_test("Invalid Seed Words Rejection", False, f"Exception: {str(e)}")
     
     def run_all_tests(self):
-        """Run all dual-key nuclear submarine protocol tests"""
-        print("🚢⚛️ DUAL-KEY NUCLEAR SUBMARINE PROTOCOL COMPREHENSIVE TESTING")
+        """Run all admin system tests"""
+        print("🔐 ADMIN SYSTEM WITH MULTI-SIGNATURE OPERATIONS COMPREHENSIVE TESTING")
         print("=" * 80)
         
-        # Design A: Dual-Command Bridge System Tests
-        self.test_dual_key_initiate()
-        self.test_dual_key_authenticate()
-        self.test_dual_key_status()
-        
-        # Design B: Split Master Key System Tests
-        self.test_split_master_key_initiate()
-        self.test_split_master_key_fragments()
-        self.test_split_master_key_status()
+        # Core Admin System Tests
+        self.test_admin_authentication()
+        self.test_invalid_admin_authentication()
+        self.test_seed_info_retrieval()
+        self.test_multisig_operation_initiation()
+        self.test_multisig_operation_signing()
+        self.test_operation_status_check()
         
         # Security Feature Tests
-        self.test_security_features()
-        self.test_operation_timeouts()
-        self.test_authentication_validation()
-        self.test_cryptographic_signatures()
+        self.test_rate_limiting()
+        self.test_input_sanitization()
+        self.test_invalid_operations()
         
         # Generate summary
         self.generate_summary()
@@ -481,7 +395,7 @@ class AdminSystemTester:
     def generate_summary(self):
         """Generate test summary"""
         print("\n" + "=" * 80)
-        print("🚢⚛️ DUAL-KEY NUCLEAR SUBMARINE PROTOCOL TEST SUMMARY")
+        print("🔐 ADMIN SYSTEM MULTI-SIGNATURE PROTOCOL TEST SUMMARY")
         print("=" * 80)
         
         total_tests = len(self.test_results)
@@ -501,28 +415,28 @@ class AdminSystemTester:
         
         # Determine overall system status
         critical_tests = [
-            'Dual-Key Operation Initiation',
-            'Dual-Key Second Operator Auth & Execution',
-            'Split Master Key Initiation',
-            'Split Key Second Fragment & Reconstruction'
+            'Admin Authentication',
+            'Seed Info Retrieval',
+            'Multi-Sig Operation Initiation',
+            'Multi-Sig Second Admin Signature & Execution'
         ]
         
         critical_passed = sum(1 for result in self.test_results 
                             if result['success'] and result['test'] in critical_tests)
         
         if critical_passed == len(critical_tests):
-            print("\n🎉 DUAL-KEY NUCLEAR SUBMARINE PROTOCOL: FULLY OPERATIONAL")
-            print("Both Design A (Dual-Command Bridge) and Design B (Split Master Key) systems working!")
+            print("\n🎉 ADMIN SYSTEM MULTI-SIGNATURE PROTOCOL: FULLY OPERATIONAL")
+            print("All critical admin operations working: authentication, multi-sig, remote kill!")
         elif critical_passed >= len(critical_tests) * 0.75:
-            print("\n⚠️ DUAL-KEY NUCLEAR SUBMARINE PROTOCOL: MOSTLY OPERATIONAL")
+            print("\n⚠️ ADMIN SYSTEM MULTI-SIGNATURE PROTOCOL: MOSTLY OPERATIONAL")
             print("Core functionality working with minor issues")
         else:
-            print("\n❌ DUAL-KEY NUCLEAR SUBMARINE PROTOCOL: CRITICAL ISSUES")
+            print("\n❌ ADMIN SYSTEM MULTI-SIGNATURE PROTOCOL: CRITICAL ISSUES")
             print("Major functionality problems detected")
         
         return passed_tests, failed_tests
 
 if __name__ == "__main__":
     print(f"Testing backend at: {API_BASE}")
-    tester = DualKeyNuclearProtocolTester()
+    tester = AdminSystemTester()
     tester.run_all_tests()
