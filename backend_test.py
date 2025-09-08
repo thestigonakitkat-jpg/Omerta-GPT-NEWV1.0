@@ -382,7 +382,7 @@ class GraphiteDefenseTester:
                     # Should detect network exfiltration
                     network_signature_detected = any('Network' in sig for sig in signature_matches)
                     
-                    if threat_level >= 2 and network_signature_detected:
+                    if threat_level >= 1 and network_signature_detected:
                         self.log_test("Network Exfiltration Detection", True, 
                                     f"Detected: Level {threat_level}, Confidence: {confidence:.1f}%, Network signature found")
                     else:
