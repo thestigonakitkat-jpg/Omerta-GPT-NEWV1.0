@@ -1044,11 +1044,28 @@ export default function SettingsScreen() {
         <Text style={styles.btnText}>Test Panic (Decoy/Wipe)</Text>
       </TouchableOpacity>
 
+      {/* Secret Admin Access */}
+      <TouchableOpacity 
+        style={[styles.btn, { backgroundColor: 'transparent', marginTop: 32 }]}
+        onPress={handleSecretTap}
+        activeOpacity={1}
+      >
+        <Text style={[styles.btnText, { color: colors.sub, fontSize: 12 }]}>
+          {tapCount > 0 ? `...${tapCount}` : 'OMERTÀ SECURE v2.0'}
+        </Text>
+      </TouchableOpacity>
+
       {/* Dual-Key Nuclear Submarine Protocol Modal */}
       <DualKeyNuclearPanel
         visible={nuclearPanelVisible}
         onClose={() => setNuclearPanelVisible(false)}
         operationType={nuclearProtocolType}
+      />
+
+      {/* Admin Dashboard Modal */}
+      <AdminDashboard
+        visible={showAdminDashboard}
+        onClose={() => setShowAdminDashboard(false)}
       />
     </ScrollView>
   );
