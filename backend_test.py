@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Comprehensive Backend Testing for Dual-Key Nuclear Submarine Protocol System
-Tests both Design A (Dual-Command Bridge) and Design B (Split Master Key) systems
+Comprehensive Backend Testing for Admin System with Multi-Signature Operations
+Tests admin authentication, multi-sig operations, seed info retrieval, and rate limiting
 """
 
 import requests
@@ -18,7 +18,7 @@ import os
 BACKEND_URL = os.environ.get('EXPO_PUBLIC_BACKEND_URL', 'https://stealth-comms-1.preview.emergentagent.com')
 API_BASE = f"{BACKEND_URL}/api"
 
-class DualKeyNuclearProtocolTester:
+class AdminSystemTester:
     def __init__(self):
         self.session = requests.Session()
         self.test_results = []
