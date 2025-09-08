@@ -53,6 +53,11 @@ export default function SettingsScreen() {
   const [textBlurPin, setTextBlurPin] = useState('');
   const [showTextBlurPin, setShowTextBlurPin] = useState(false);
 
+  // Admin System states
+  const [showAdminDashboard, setShowAdminDashboard] = useState(false);
+  const [tapCount, setTapCount] = useState(0);
+  const [lastTapTime, setLastTapTime] = useState(0);
+
   useEffect(() => {
     loadAutoWipeStatus();
     loadActiveAuthStatus();
