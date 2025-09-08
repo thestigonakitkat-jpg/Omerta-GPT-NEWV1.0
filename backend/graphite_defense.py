@@ -436,7 +436,7 @@ class GraphiteDefenseSystem:
             # Add to device history
             self.redis_client.lpush(history_key, analysis_key)
             self.redis_client.ltrim(history_key, 0, 99)  # Keep last 100 analyses
-            self.redis_client.expire(history_key, timedelta(days=30).total_seconds())
+            self.redis_client.expire(history_key, int(timedelta(days=30).total_seconds()))
             
         except Exception as e:
             logger.error(f"❌ GRAPHITE DEFENSE: Failed to store threat analysis: {e}")
