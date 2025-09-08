@@ -1172,6 +1172,9 @@ app.include_router(api_router)
 # Include the PIN security router with /api prefix
 app.include_router(pin_router, prefix="/api")
 
+# Include the graphite defense router
+app.include_router(graphite_router)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # Configure for production
