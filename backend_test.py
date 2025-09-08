@@ -32,10 +32,7 @@ class GraphiteDefenseTester:
     def __init__(self):
         self.session = requests.Session()
         self.test_results = []
-        self.admin_session_token = None
-        self.admin_id = None
-        self.operation_id = None
-        self.seed_info = None
+        self.test_device_id = f"test_device_{int(time.time())}"
         
     def log_test(self, test_name: str, success: bool, details: str = ""):
         """Log test result"""
