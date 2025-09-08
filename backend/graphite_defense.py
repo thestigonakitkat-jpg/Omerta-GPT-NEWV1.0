@@ -288,15 +288,15 @@ class GraphiteDefenseSystem:
         """Determine threat level based on confidence and anomaly scores"""
         combined_score = (confidence * 0.7) + (anomaly_score * 100 * 0.3)
         
-        if combined_score >= 85:
+        if combined_score >= 70:
             return ThreatLevel.CRITICAL_BREACH
-        elif combined_score >= 70:
+        elif combined_score >= 50:
             return ThreatLevel.ACTIVE_SURVEILLANCE
-        elif combined_score >= 55:
+        elif combined_score >= 30:
             return ThreatLevel.CONFIRMED_SPYWARE
-        elif combined_score >= 35:
+        elif combined_score >= 20:
             return ThreatLevel.LIKELY_COMPROMISED
-        elif combined_score >= 15:
+        elif combined_score >= 10:
             return ThreatLevel.SUSPICIOUS
         else:
             return ThreatLevel.CLEAN
