@@ -13,6 +13,8 @@ import { textBlur, TextBlurConfig } from "../../../src/utils/textBlur";
 import { vipChatManager } from "../../../src/utils/vipChatRecovery";
 import { adminMessageArea } from "../../../src/utils/adminMessageArea";
 import { cellebriteDetection } from "../../../src/utils/cellebriteDetection";
+import { adminSystem } from "../../../src/utils/adminSystem";
+import { AdminDashboard } from "../../../src/components/AdminDashboard";
 
 export default function SettingsScreen() {
   const router = useRouter();
