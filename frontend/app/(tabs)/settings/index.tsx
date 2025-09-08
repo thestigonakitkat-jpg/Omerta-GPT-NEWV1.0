@@ -10,6 +10,9 @@ import { autoWipe, AutoWipeStatus } from "../../../src/utils/autoWipe";
 import { activeAuthWipe, ActiveAuthStatus } from "../../../src/utils/activeAuthWipe";
 import { DualKeyNuclearPanel } from "../../../src/components/DualKeyNuclearPanel";
 import { textBlur, TextBlurConfig } from "../../../src/utils/textBlur";
+import { vipChatManager } from "../../../src/utils/vipChatRecovery";
+import { adminMessageArea } from "../../../src/utils/adminMessageArea";
+import { cellebriteDetection } from "../../../src/utils/cellebriteDetection";
 
 export default function SettingsScreen() {
   const router = useRouter();
