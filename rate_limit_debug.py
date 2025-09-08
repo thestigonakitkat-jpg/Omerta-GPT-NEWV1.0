@@ -7,7 +7,7 @@ import requests
 import time
 import json
 
-BACKEND_URL = "https://stealth-comms-1.preview.emergentagent.com/api"
+BACKEND_URL = "https://omerta-shield.preview.emergentagent.com/api"
 
 def test_rate_limit_debug():
     """Debug rate limiting with detailed output"""

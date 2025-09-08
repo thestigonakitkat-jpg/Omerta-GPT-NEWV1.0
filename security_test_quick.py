@@ -9,7 +9,7 @@ import json
 import time
 import sys
 
-BACKEND_URL = "https://stealth-comms-1.preview.emergentagent.com/api"
+BACKEND_URL = "https://omerta-shield.preview.emergentagent.com/api"
 
 def test_rate_limiting_quick():
     """Quick test of rate limiting functionality"""
