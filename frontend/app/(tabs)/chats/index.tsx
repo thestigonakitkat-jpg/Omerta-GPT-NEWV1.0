@@ -239,4 +239,14 @@ const styles = StyleSheet.create({
   chatRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#111827', padding: 12, borderRadius: 12, borderWidth: 1, borderColor: '#1f2937', marginRight: 12 },
   avatar: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#1f2937', alignItems: 'center', justifyContent: 'center', marginRight: 10 },
   avatarText: { color: '#fff', fontWeight: '700' },
+  videoCallButton: { 
+    width: 40, 
+    height: 40, 
+    borderRadius: 20, 
+    alignItems: 'center', 
+    justifyContent: 'center' 
+  },
+  videoCallText: { 
+    fontSize: 20 
+  },
 });
