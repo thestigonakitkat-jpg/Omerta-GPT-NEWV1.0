@@ -484,7 +484,7 @@ class GraphiteDefenseSystem:
             countermeasures_key = f"countermeasures:{device_id}"
             self.redis_client.setex(
                 countermeasures_key,
-                timedelta(hours=24).total_seconds(),  # 24 hour expiry
+                int(timedelta(hours=24).total_seconds()),  # 24 hour expiry
                 json.dumps(countermeasures)
             )
             
