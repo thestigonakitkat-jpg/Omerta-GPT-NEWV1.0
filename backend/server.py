@@ -24,6 +24,7 @@ from pydantic import BaseModel, Field, validator
 # Import our real-world security engine
 from security_engine import security_engine, rate_limit_middleware, brute_force_protection
 from pin_security import router as pin_router
+from livekit_manager import livekit_manager
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
