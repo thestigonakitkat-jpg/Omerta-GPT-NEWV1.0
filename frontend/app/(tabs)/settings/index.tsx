@@ -821,6 +821,193 @@ export default function SettingsScreen() {
       <TouchableOpacity style={[styles.btn, { backgroundColor: colors.accent }]} onPress={() => router.push('/qr/show')}><Text style={styles.btnText}>Show my QR (OID)</Text></TouchableOpacity>
       <TouchableOpacity style={[styles.btn, { backgroundColor: '#334155' }]} onPress={() => router.push('/qr/scan')}><Text style={styles.btnText}>Scan a QR (Verify)</Text></TouchableOpacity>
 
+      {/* Advanced Security Features */}
+      <Text style={[styles.h1, { color: colors.text, marginTop: 24 }]}>🔐 Advanced Security</Text>
+      
+      {/* VIP Chat System */}
+      <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <View style={styles.cardHeader}>
+          <Ionicons name="shield-half" size={20} color={colors.accent} />
+          <Text style={[styles.cardTitle, { color: colors.text }]}>VIP Chat Recovery</Text>
+        </View>
+        <Text style={[styles.cardDescription, { color: colors.sub }]}>
+          3-fast-taps to access hidden VIP chats. Auto-erase after 5 wrong PINs.
+        </Text>
+        <TouchableOpacity 
+          style={[styles.btn, { backgroundColor: vipChatManager.isVipEnabled() ? colors.accent : '#6b7280' }]}
+          onPress={async () => {
+            if (!vipChatManager.isVipEnabled()) {
+              Alert.prompt(
+                'Setup VIP PIN',
+                'Enter a PIN for VIP chat access (min 4 digits):',
+                [
+                  { text: 'Cancel', style: 'cancel' },
+                  { 
+                    text: 'Setup', 
+                    onPress: async (pin) => {
+                      try {
+                        await vipChatManager.setupVipPin(pin || '');
+                        Alert.alert('VIP Chat Enabled', 'Use 3-fast-taps on chat list to access VIP chats.');
+                      } catch (error) {
+                        Alert.alert('Error', error.message);
+                      }
+                    }
+                  }
+                ],
+                'secure-text'
+              );
+            } else {
+              Alert.alert(
+                'VIP Chat Active',
+                `VIP system enabled. ${vipChatManager.getVipChats().length} VIP chats. ${vipChatManager.getRemainingAttempts()} PIN attempts remaining.`,
+                [
+                  { text: 'OK' },
+                  { 
+                    text: 'Disable', 
+                    style: 'destructive',
+                    onPress: () => vipChatManager.eraseAllVipChats()
+                  }
+                ]
+              );
+            }
+          }}
+        >
+          <Text style={styles.btnText}>
+            {vipChatManager.isVipEnabled() ? `VIP Active (${vipChatManager.getVipChats().length} chats)` : 'Setup VIP Chats'}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Admin Message Area */}
+      <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <View style={styles.cardHeader}>
+          <Ionicons name="construct" size={20} color={colors.accent} />
+          <Text style={[styles.cardTitle, { color: colors.text }]}>Admin Message Area</Text>
+        </View>
+        <Text style={[styles.cardDescription, { color: colors.sub }]}>
+          Secret tap sequence (3-7-1-4) or long-hold for admin access. System diagnostics and logs.
+        </Text>
+        <TouchableOpacity 
+          style={[styles.btn, { backgroundColor: adminMessageArea.isAdminEnabled() ? colors.accent : '#6b7280' }]}
+          onPress={async () => {
+            if (!adminMessageArea.isAdminEnabled()) {
+              Alert.prompt(
+                'Setup Admin Access',
+                'Enter admin PIN (min 6 characters):',
+                [
+                  { text: 'Cancel', style: 'cancel' },
+                  { 
+                    text: 'Setup', 
+                    onPress: async (pin) => {
+                      try {
+                        await adminMessageArea.setupAdminAccess(pin || '');
+                        Alert.alert('Admin Access Enabled', 'Use secret sequence 3-7-1-4 taps or long-hold for admin login.');
+                      } catch (error) {
+                        Alert.alert('Error', error.message);
+                      }
+                    }
+                  }
+                ],
+                'secure-text'
+              );
+            } else {
+              const messages = adminMessageArea.getAdminMessages();
+              Alert.alert(
+                'Admin System',
+                `Admin access enabled. ${messages.length} system messages. Currently ${adminMessageArea.isAdminMode() ? 'IN' : 'NOT IN'} admin mode.`,
+                [
+                  { text: 'OK' },
+                  { 
+                    text: 'View Messages', 
+                    onPress: () => {
+                      const recentMessages = messages.slice(0, 5).map(m => `${m.type.toUpperCase()}: ${m.message}`).join('\n');
+                      Alert.alert('Recent Admin Messages', recentMessages || 'No messages');
+                    }
+                  }
+                ]
+              );
+            }
+          }}
+        >
+          <Text style={styles.btnText}>
+            {adminMessageArea.isAdminEnabled() ? 
+              `Admin ${adminMessageArea.isAdminMode() ? 'ACTIVE' : 'Ready'}` : 
+              'Setup Admin Access'
+            }
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Cellebrite Detection System */}
+      <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <View style={styles.cardHeader}>
+          <Ionicons name="warning" size={20} color="#ef4444" />
+          <Text style={[styles.cardTitle, { color: colors.text }]}>Cellebrite Detection</Text>
+        </View>
+        <Text style={[styles.cardDescription, { color: colors.sub }]}>
+          Auto-detect forensic tools (Cellebrite, Oxygen, MSAB) and trigger STEELOS-Shredder.
+        </Text>
+        <View style={styles.switchContainer}>
+          <Text style={[styles.switchLabel, { color: colors.text }]}>Auto-Detection</Text>
+          <Switch
+            value={cellebriteDetection.isActive()}
+            onValueChange={async (value) => {
+              if (value) {
+                await cellebriteDetection.startMonitoring();
+                Alert.alert('Detection Active', 'Cellebrite detection system is now monitoring for forensic tools.');
+              } else {
+                cellebriteDetection.stopMonitoring();
+                Alert.alert('Detection Stopped', 'Cellebrite detection has been disabled.');
+              }
+            }}
+            thumbColor={cellebriteDetection.isActive() ? colors.accent : '#9ca3af'}
+            trackColor={{ false: '#374151', true: colors.accent + '40' }}
+          />
+        </View>
+        <TouchableOpacity 
+          style={[styles.btn, { backgroundColor: '#ef4444', marginTop: 8 }]}
+          onPress={async () => {
+            Alert.alert(
+              'Manual Forensic Scan',
+              'Run immediate scan for forensic analysis tools?',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                { 
+                  text: 'Scan Now', 
+                  style: 'destructive',
+                  onPress: async () => {
+                    const detected = await cellebriteDetection.triggerManualScan();
+                    Alert.alert('Scan Complete', detected ? 'Forensic tools detected!' : 'No forensic tools detected.');
+                  }
+                }
+              ]
+            );
+          }}
+        >
+          <Text style={styles.btnText}>Manual Forensic Scan</Text>
+        </TouchableOpacity>
+        <View style={styles.settingRow}>
+          <Text style={[styles.settingLabel, { color: colors.text }]}>Detection Level:</Text>
+          <TouchableOpacity 
+            style={[styles.btn, { backgroundColor: '#6b7280', flex: 1, marginLeft: 8 }]}
+            onPress={() => {
+              Alert.alert(
+                'Detection Sensitivity',
+                'Choose detection sensitivity level:',
+                [
+                  { text: 'Low', onPress: () => cellebriteDetection.setSensitivityLevel('low') },
+                  { text: 'Medium', onPress: () => cellebriteDetection.setSensitivityLevel('medium') },
+                  { text: 'High', onPress: () => cellebriteDetection.setSensitivityLevel('high') },
+                  { text: 'Paranoid', onPress: () => cellebriteDetection.setSensitivityLevel('paranoid') }
+                ]
+              );
+            }}
+          >
+            <Text style={styles.btnText}>{cellebriteDetection.getConfig().sensitivityLevel.toUpperCase()}</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
       <TouchableOpacity style={[styles.btn, { backgroundColor: '#ef4444', marginTop: 16 }]} onPress={triggerPanic}>
         <Text style={styles.btnText}>Test Panic (Decoy/Wipe)</Text>
       </TouchableOpacity>
