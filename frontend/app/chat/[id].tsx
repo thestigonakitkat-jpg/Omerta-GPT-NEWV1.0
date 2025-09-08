@@ -16,6 +16,7 @@ import { signalManager, EncryptedMessage } from "../../src/utils/signalCrypto";
 import { aesGcmEncrypt, aesGcmDecrypt, getRandomBytesAsync } from "../../src/utils/crypto";
 import { EncryptedImage, imageProcessor } from "../../src/utils/imageProcessor";
 import { useVault } from "../../src/state/vault";
+import { messageRedact } from "../../src/utils/messageRedact";
 
  type Msg = { 
    id: string; 
