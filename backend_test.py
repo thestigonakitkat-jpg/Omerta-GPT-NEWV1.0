@@ -41,35 +41,54 @@ class AdminSystemTester:
             'timestamp': datetime.now(timezone.utc).isoformat()
         })
     
-    def test_dual_key_initiate(self):
-        """Test Design A: Dual-Key Operation Initiation"""
-        print("\n🔐🔐 Testing Design A: Dual-Command Bridge System")
+    def test_admin_authentication(self):
+        """Test Admin Authentication with passphrase 'Omertaisthecode#01'"""
+        print("\n🔐 Testing Admin Authentication")
         
         try:
-            # Test valid dual-key operation initiation
+            # Test valid admin authentication
             payload = {
-                'operation_type': 'system_reset',
-                'operation_data': {'reset_level': 'full', 'confirmation': True},
-                'operator_a_id': 'dev_primary',
-                'operator_b_id': 'sec_officer'
+                'admin_passphrase': 'Omertaisthecode#01',
+                'device_id': 'test_device_12345'
             }
             
-            response = self.session.post(f"{API_BASE}/dual-key/initiate", json=payload)
+            response = self.session.post(f"{API_BASE}/admin/authenticate", json=payload)
             
             if response.status_code == 200:
                 data = response.json()
-                if data.get('success') and data.get('operation_id'):
-                    self.operation_ids['dual_key'] = data['operation_id']
-                    self.log_test("Dual-Key Operation Initiation", True, 
-                                f"Operation ID: {data['operation_id']}, Status: {data.get('status')}")
+                if data.get('success') and data.get('session_token'):
+                    self.admin_session_token = data['session_token']
+                    self.admin_id = data['admin_id']
+                    self.log_test("Admin Authentication", True, 
+                                f"Admin ID: {data['admin_id']}, Session expires: {datetime.fromtimestamp(data['expires_at']).strftime('%H:%M:%S')}")
                 else:
-                    self.log_test("Dual-Key Operation Initiation", False, f"Invalid response: {data}")
+                    self.log_test("Admin Authentication", False, f"Invalid response: {data}")
             else:
-                self.log_test("Dual-Key Operation Initiation", False, 
+                self.log_test("Admin Authentication", False, 
                             f"HTTP {response.status_code}: {response.text}")
                 
         except Exception as e:
-            self.log_test("Dual-Key Operation Initiation", False, f"Exception: {str(e)}")
+            self.log_test("Admin Authentication", False, f"Exception: {str(e)}")
+    
+    def test_invalid_admin_authentication(self):
+        """Test Admin Authentication with wrong passphrase"""
+        try:
+            payload = {
+                'admin_passphrase': 'WrongPassphrase123',
+                'device_id': 'test_device_12345'
+            }
+            
+            response = self.session.post(f"{API_BASE}/admin/authenticate", json=payload)
+            
+            if response.status_code == 401:
+                self.log_test("Invalid Admin Authentication Rejection", True, 
+                            "Correctly rejected invalid passphrase")
+            else:
+                self.log_test("Invalid Admin Authentication Rejection", False, 
+                            f"Should reject invalid passphrase: HTTP {response.status_code}")
+                
+        except Exception as e:
+            self.log_test("Invalid Admin Authentication Rejection", False, f"Exception: {str(e)}")
     
     def test_dual_key_authenticate(self):
         """Test Design A: Dual-Key Operator Authentication"""
