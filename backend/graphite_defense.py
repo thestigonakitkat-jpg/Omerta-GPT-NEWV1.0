@@ -191,7 +191,7 @@ class GraphiteDefenseSystem:
             # Store updated baseline
             self.redis_client.setex(
                 baseline_key, 
-                timedelta(days=30).total_seconds(),  # 30 day expiry
+                int(timedelta(days=30).total_seconds()),  # 30 day expiry
                 json.dumps(baseline)
             )
             
