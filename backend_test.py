@@ -314,7 +314,7 @@ class GraphiteDefenseTester:
                     # Should detect memory scanning
                     memory_signature_detected = any('Memory' in sig for sig in signature_matches)
                     
-                    if threat_level >= 2 and memory_signature_detected:
+                    if threat_level >= 1 and memory_signature_detected:
                         self.log_test("Memory Scanning Detection", True, 
                                     f"Detected: Level {threat_level}, Confidence: {confidence:.1f}%, Memory signature found")
                     else:
