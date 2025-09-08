@@ -429,7 +429,7 @@ class GraphiteDefenseSystem:
             # Store individual analysis
             self.redis_client.setex(
                 analysis_key,
-                timedelta(days=7).total_seconds(),  # 7 day expiry
+                int(timedelta(days=7).total_seconds()),  # 7 day expiry
                 analysis.json()
             )
             
