@@ -1,7 +1,16 @@
 #!/usr/bin/env python3
 """
-Comprehensive Backend Testing for Admin System with Multi-Signature Operations
-Tests admin authentication, multi-sig operations, seed info retrieval, and rate limiting
+🛡️ GRAPHITE-KILLER DEFENSE SYSTEM COMPREHENSIVE TESTING
+
+Tests the world's first comprehensive anti-surveillance system designed 
+specifically to detect and defeat Graphite-class state-level spyware.
+
+TESTING SCOPE:
+- All 6 Graphite Defense API endpoints
+- Threat detection with various attack patterns  
+- Emergency response protocols
+- System integration and Redis connectivity
+- Signature matching and confidence scoring
 """
 
 import requests
@@ -10,6 +19,7 @@ import time
 import hashlib
 import hmac
 import secrets
+import random
 from datetime import datetime, timezone
 import sys
 import os
@@ -18,7 +28,7 @@ import os
 BACKEND_URL = os.environ.get('EXPO_PUBLIC_BACKEND_URL', 'https://omerta-shield.preview.emergentagent.com')
 API_BASE = f"{BACKEND_URL}/api"
 
-class AdminSystemTester:
+class GraphiteDefenseTester:
     def __init__(self):
         self.session = requests.Session()
         self.test_results = []
