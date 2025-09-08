@@ -7,7 +7,7 @@ import requests
 import json
 import time
 
-BACKEND_URL = "https://crypto-vault-21.preview.emergentagent.com/api"
+BACKEND_URL = "https://stealth-comms.preview.emergentagent.com/api"
 
 def test_input_sanitization():
     """Test input sanitization"""

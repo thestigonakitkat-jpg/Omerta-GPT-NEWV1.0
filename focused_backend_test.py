@@ -11,7 +11,7 @@ import sys
 from datetime import datetime, timezone
 
 # Get backend URL from environment
-BACKEND_URL = "https://crypto-vault-21.preview.emergentagent.com/api"
+BACKEND_URL = "https://stealth-comms.preview.emergentagent.com/api"
 
 def test_secure_notes_endpoints():
     """Test Secure Notes endpoints (POST /api/notes, GET /api/notes/{id})"""
