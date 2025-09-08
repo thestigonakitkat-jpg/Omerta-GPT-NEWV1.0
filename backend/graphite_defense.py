@@ -518,7 +518,7 @@ class GraphiteDefenseSystem:
             emergency_key = f"emergency:{device_id}:{int(time.time())}"
             self.redis_client.setex(
                 emergency_key,
-                timedelta(days=1).total_seconds(),
+                int(timedelta(days=1).total_seconds()),
                 json.dumps(emergency_measures)
             )
             
