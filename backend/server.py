@@ -1025,6 +1025,146 @@ async def end_livekit_session(
         logger.error(f"LiveKit session end failed: {str(e)}")
         raise HTTPException(status_code=500, detail="Session end failed")
 
+# Admin System Endpoints
+@api_router.post("/admin/authenticate")
+@limiter.limit("5/minute")
+async def admin_authenticate(request: Request, auth_request: AdminAuthRequest):
+    """
+    Authenticate admin with passphrase
+    Rate limited to 5 requests per minute
+    """
+    try:
+        # Validate input
+        passphrase = sanitize_input(auth_request.admin_passphrase, 100)
+        device_id = sanitize_input(auth_request.device_id, 100)
+        
+        # Authenticate admin
+        auth_response = await admin_system.authenticate_admin(passphrase, device_id)
+        
+        security_logger.warning(f"Admin authentication: {auth_response.admin_id} from device {device_id}")
+        
+        return auth_response
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Admin authentication failed: {str(e)}")
+        raise HTTPException(status_code=500, detail="Authentication failed")
+
+@api_router.post("/admin/multisig/initiate")
+@limiter.limit("3/minute")
+async def initiate_multisig_operation(request: Request, multisig_request: MultiSigInitRequest):
+    """
+    Initiate multi-signature operation (kill, revoke, update)
+    Rate limited to 3 requests per minute
+    """
+    try:
+        # Validate session token
+        session_token = sanitize_input(multisig_request.session_token, 100)
+        
+        # Initiate multi-sig operation
+        operation_result = await admin_system.initiate_multisig_operation(multisig_request)
+        
+        security_logger.critical(f"Multi-sig operation initiated: {multisig_request.operation_type} - {operation_result.get('operation_id')}")
+        
+        return operation_result
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Multi-sig initiation failed: {str(e)}")
+        raise HTTPException(status_code=500, detail="Operation initiation failed")
+
+@api_router.post("/admin/multisig/sign")
+@limiter.limit("10/minute")
+async def sign_multisig_operation(request: Request, sign_request: MultiSigSignRequest):
+    """
+    Sign multi-signature operation with admin credentials
+    Rate limited to 10 requests per minute
+    """
+    try:
+        # Validate operation ID
+        operation_id = sanitize_input(sign_request.operation_id, 100)
+        admin_passphrase = sanitize_input(sign_request.admin_passphrase, 100)
+        admin_id = sanitize_input(sign_request.admin_id, 100)
+        
+        # Sign operation
+        sign_result = await admin_system.sign_multisig_operation(sign_request)
+        
+        if sign_result.get('operation_completed'):
+            security_logger.critical(f"Multi-sig operation EXECUTED: {operation_id} by admin {admin_id}")
+        else:
+            security_logger.warning(f"Multi-sig operation signed: {operation_id} by admin {admin_id}")
+        
+        return sign_result
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Multi-sig signing failed: {str(e)}")
+        raise HTTPException(status_code=500, detail="Operation signing failed")
+
+@api_router.get("/admin/multisig/status/{operation_id}")
+@limiter.limit("20/minute")
+async def get_multisig_operation_status(request: Request, operation_id: str):
+    """
+    Get status of multi-signature operation
+    Rate limited to 20 requests per minute
+    """
+    try:
+        operation_id = sanitize_input(operation_id, 100)
+        
+        status = await admin_system.get_operation_status(operation_id)
+        
+        return {"status": "success", "operation": status}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Multi-sig status check failed: {str(e)}")
+        raise HTTPException(status_code=500, detail="Status check failed")
+
+@api_router.get("/admin/seed/info")
+@limiter.limit("2/minute")
+async def get_admin_seed_info(request: Request):
+    """
+    Get admin seed phrase information (for setup)
+    Rate limited to 2 requests per minute
+    """
+    try:
+        seed_info = await admin_system.get_admin_seed_info()
+        
+        security_logger.warning("Admin seed information requested")
+        
+        return {"status": "success", "seed_info": seed_info}
+        
+    except Exception as e:
+        logger.error(f"Admin seed info retrieval failed: {str(e)}")
+        raise HTTPException(status_code=500, detail="Seed info retrieval failed")
+
+@api_router.post("/admin/passphrase/change")
+@limiter.limit("1/minute")
+async def change_admin_passphrase(request: Request, current_passphrase: str = Form(...), new_passphrase: str = Form(...)):
+    """
+    Change admin passphrase
+    Rate limited to 1 request per minute
+    """
+    try:
+        current_passphrase = sanitize_input(current_passphrase, 100)
+        new_passphrase = sanitize_input(new_passphrase, 100)
+        
+        change_result = await admin_system.change_admin_passphrase(current_passphrase, new_passphrase)
+        
+        security_logger.critical("Admin passphrase changed - all sessions invalidated")
+        
+        return change_result
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Admin passphrase change failed: {str(e)}")
+        raise HTTPException(status_code=500, detail="Passphrase change failed")
+
 # Include the router in the main app
 app.include_router(api_router)
 
