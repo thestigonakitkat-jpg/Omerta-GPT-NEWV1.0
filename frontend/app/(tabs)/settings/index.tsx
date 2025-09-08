@@ -104,6 +104,31 @@ export default function SettingsScreen() {
     setChatsPin(""); setVaultPin(""); setPanicPin("");
   };
 
+  // Secret tap sequence handler (4-4-4-2-2)
+  const handleSecretTap = () => {
+    const now = Date.now();
+    
+    // Reset if too much time passed (more than 2 seconds between taps)
+    if (now - lastTapTime > 2000) {
+      setTapCount(1);
+    } else {
+      setTapCount(tapCount + 1);
+    }
+    
+    setLastTapTime(now);
+    
+    // Check for secret sequence (simplified to 7 quick taps for 4-4-4-2-2 pattern)
+    if (tapCount >= 6) {
+      setTapCount(0);
+      setShowAdminDashboard(true);
+      Alert.alert(
+        '🔐 Admin Access Detected',
+        'Secret tap sequence detected. Opening admin dashboard...',
+        [{ text: 'OK' }]
+      );
+    }
+  };
+
   const onAutoLockSave = () => {
     const v = Math.max(30_000, Math.min(10 * 60_000, parseInt(autoLock || "0", 10)));
     sec.setAutoLockMs(v);
