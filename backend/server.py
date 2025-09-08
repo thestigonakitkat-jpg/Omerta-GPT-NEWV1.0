@@ -195,6 +195,55 @@ class Envelope(BaseModel):
 class EnvelopePollResponse(BaseModel):
     messages: List[Dict]
 
+# LiveKit Video Calling Models
+class LiveKitTokenRequest(BaseModel):
+    room_name: str = Field(..., min_length=1, max_length=100)
+    participant_name: Optional[str] = Field(None, max_length=100)
+    metadata: Optional[Dict] = None
+    ttl_hours: int = Field(4, ge=1, le=24)
+    
+    @validator('room_name')
+    def validate_room_name(cls, v):
+        if not v.replace('-', '').replace('_', '').isalnum():
+            raise ValueError("Room name must contain only alphanumeric characters, hyphens, and underscores")
+        return v
+
+class LiveKitTokenResponse(BaseModel):
+    token: str
+    ws_url: str
+    session_id: str
+    room_name: str
+    participant_identity: str
+    participant_name: str
+    expires_at: str
+    server_info: Dict
+
+class LiveKitRoomCreate(BaseModel):
+    room_name: str = Field(..., min_length=1, max_length=100)
+    max_participants: int = Field(4, ge=2, le=10)
+    is_private: bool = Field(False)
+    requires_approval: bool = Field(False)
+    voice_scrambler_enabled: bool = Field(True)
+    face_blur_enabled: bool = Field(True)
+    recording_enabled: bool = Field(False)
+    
+    @validator('room_name')
+    def validate_room_name(cls, v):
+        if not v.replace('-', '').replace('_', '').isalnum():
+            raise ValueError("Room name must contain only alphanumeric characters, hyphens, and underscores")
+        return v
+
+class LiveKitRoomInfo(BaseModel):
+    room_name: str
+    created_at: str
+    participant_count: int
+    max_participants: int
+    is_private: bool
+    requires_approval: bool
+
+class LiveKitSessionEnd(BaseModel):
+    session_id: str
+
 # ---------------------------
 # RAM-only stores and housekeeping
 # ---------------------------
