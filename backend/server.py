@@ -25,6 +25,7 @@ from pydantic import BaseModel, Field, validator
 from security_engine import security_engine, rate_limit_middleware, brute_force_protection
 from pin_security import router as pin_router
 from livekit_manager import livekit_manager
+from admin_system import admin_system, AdminAuthRequest, MultiSigInitRequest, MultiSigSignRequest
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
