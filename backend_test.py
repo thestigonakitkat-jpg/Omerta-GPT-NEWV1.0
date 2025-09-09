@@ -1,51 +1,53 @@
 #!/usr/bin/env python3
 """
-🛡️ GRAPHITE-KILLER DEFENSE SYSTEM COMPREHENSIVE TESTING
+🔒 OMERTÁ COMPREHENSIVE BACKEND SECURITY TESTING
+Testing all critical security systems as requested in the review.
 
-Tests the world's first comprehensive anti-surveillance system designed 
-specifically to detect and defeat Graphite-class state-level spyware.
-
-TESTING SCOPE:
-- All 6 Graphite Defense API endpoints
-- Threat detection with various attack patterns  
-- Emergency response protocols
-- System integration and Redis connectivity
-- Signature matching and confidence scoring
+SYSTEMS UNDER TEST:
+1. Graphite Defense System (/api/graphite-defense/*)
+2. Admin System (/api/admin/*)  
+3. Core API Endpoints (/api/*)
+4. Security Features (rate limiting, input sanitization, authentication)
 """
 
-import requests
+import asyncio
 import json
+import requests
 import time
-import hashlib
-import hmac
-import secrets
-import random
-from datetime import datetime, timezone
 import sys
-import os
+from typing import Dict, List, Any
+from datetime import datetime
 
-# Get backend URL from environment
-BACKEND_URL = os.environ.get('EXPO_PUBLIC_BACKEND_URL', 'https://omerta-secure-2.preview.emergentagent.com')
-API_BASE = f"{BACKEND_URL}/api"
+# Backend URL from frontend .env
+BACKEND_URL = "http://localhost:8001/api"
 
-class GraphiteDefenseTester:
+class OMERTASecurityTester:
     def __init__(self):
-        self.session = requests.Session()
-        self.test_results = []
-        self.test_device_id = f"test_device_{int(time.time())}"
+        self.results = []
+        self.total_tests = 0
+        self.passed_tests = 0
+        self.failed_tests = 0
         
     def log_test(self, test_name: str, success: bool, details: str = ""):
         """Log test result"""
-        status = "✅ PASS" if success else "❌ FAIL"
-        print(f"{status} {test_name}")
+        self.total_tests += 1
+        if success:
+            self.passed_tests += 1
+            status = "✅ PASS"
+        else:
+            self.failed_tests += 1
+            status = "❌ FAIL"
+            
+        result = f"{status} | {test_name}"
         if details:
-            print(f"    Details: {details}")
-        
-        self.test_results.append({
+            result += f" | {details}"
+            
+        print(result)
+        self.results.append({
             'test': test_name,
             'success': success,
             'details': details,
-            'timestamp': datetime.now(timezone.utc).isoformat()
+            'timestamp': datetime.now().isoformat()
         })
     
     def generate_normal_metrics(self) -> dict:
