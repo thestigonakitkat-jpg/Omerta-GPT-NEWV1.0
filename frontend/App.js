@@ -9,8 +9,11 @@ import DefconOnePanel from './src/components/DefconOnePanel';
 
 export default function App() {
   const [pin, setPin] = useState('');
-  const [currentView, setCurrentView] = useState('auth'); // auth, main, demo
+  const [currentView, setCurrentView] = useState('auth'); // auth, main, demo, defcon
   const [threatStatus, setThreatStatus] = useState('normal');
+  const [showDefconPanel, setShowDefconPanel] = useState(false);
+  const [tapSequence, setTapSequence] = useState([]);
+  const [lastTapTime, setLastTapTime] = useState(0);
   
   const { 
     isAuthenticated, 
