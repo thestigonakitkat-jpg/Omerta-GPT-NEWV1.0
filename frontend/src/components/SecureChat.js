@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { useSecurityStore } from '../state/security';
 import VanishMessage from './VanishMessage';
+import ThreatMonitor from './ThreatMonitor';
 import omertaAPI from '../utils/api';
 
 export default function SecureChat({ contactId = 'demo_contact', contactName = 'Demo Contact' }) {
