@@ -185,6 +185,7 @@ export default function App() {
   // Main Application
   return (
     <View style={styles.mainContainer}>
+      <MatrixBackground intensity={threatLevel === 'critical' ? 0.8 : 0.1} color="#ef4444" />
       <TouchableOpacity 
         style={[styles.header, threatLevel !== 'normal' && styles.threatHeader]}
         onPress={handleTapSequence}
