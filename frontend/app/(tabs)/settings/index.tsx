@@ -704,7 +704,7 @@ export default function SettingsScreen() {
         <View style={[styles.warningBox, { backgroundColor: '#fef2f2', borderColor: '#ef4444' }]}>
           <Ionicons name="nuclear" size={16} color="#ef4444" />
           <Text style={[styles.warningText, { color: '#dc2626' }]}>
-            NUCLEAR SUBMARINE PROTOCOL: Critical operations require two-person authorization. Use only in emergency scenarios or when developer recovery is needed.
+            DEFCON-1 PROTOCOL: Critical operations require two-person authorization. Use only in emergency scenarios or when developer recovery is needed.
           </Text>
         </View>
 
