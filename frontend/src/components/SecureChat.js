@@ -170,11 +170,15 @@ export default function SecureChat({ contactId = 'demo_contact', contactName = '
           </View>
         </View>
         
-        {isMonitoring && (
-          <View style={styles.monitoringIndicator}>
-            <Text style={styles.monitoringText}>🔍 MONITORING</Text>
-          </View>
-        )}
+        <ThreatMonitor 
+          onThreatDetected={(analysis) => {
+            console.log('🚨 Chat received threat alert:', analysis);
+            // Automatically reduce vanish time for critical threats
+            if (analysis.level === 'critical') {
+              console.log('⏰ Reducing message TTL due to critical threat');
+            }
+          }}
+        />
       </View>
 
       {/* Messages Area */}
