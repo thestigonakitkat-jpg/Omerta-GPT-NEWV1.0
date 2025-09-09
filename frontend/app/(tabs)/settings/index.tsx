@@ -645,7 +645,7 @@ export default function SettingsScreen() {
 
       {/* DEFCON-1 Protocol Section */}
       <View style={styles.autoWipeSection}>
-        <Text style={[styles.h1, { color: colors.text }]}>🚢⚛️ Nuclear Submarine Protocol</Text>
+        <Text style={[styles.h1, { color: colors.text }]}>🚨⚛️ DEFCON-1 Protocol</Text>
         <Text style={[styles.sectionSubtitle, { color: colors.sub }]}>
           Two-Person Integrity for critical system operations. Prevents single points of failure in security-critical scenarios.
         </Text>
