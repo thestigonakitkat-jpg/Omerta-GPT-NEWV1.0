@@ -164,7 +164,11 @@ export default function App() {
   // Main Application
   return (
     <View style={styles.mainContainer}>
-      <View style={[styles.header, threatLevel !== 'normal' && styles.threatHeader]}>
+      <TouchableOpacity 
+        style={[styles.header, threatLevel !== 'normal' && styles.threatHeader]}
+        onPress={handleTapSequence}
+        activeOpacity={1}
+      >
         <Text style={styles.headerTitle}>🔒 OMERTÁ</Text>
         <Text style={styles.headerSubtitle}>NUCLEAR RESET BUILD</Text>
         {threatLevel !== 'normal' && (
@@ -172,7 +176,12 @@ export default function App() {
             🚨 THREAT LEVEL: {threatLevel.toUpperCase()}
           </Text>
         )}
-      </View>
+        {tapSequence.length > 0 && (
+          <Text style={styles.tapSequenceIndicator}>
+            Sequence: {tapSequence.join('-')} {tapSequence.length >= 12 ? '(Almost there...)' : ''}
+          </Text>
+        )}
+      </TouchableOpacity>
       
       <ScrollView style={styles.content}>
         <View style={styles.statusPanel}>
