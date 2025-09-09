@@ -19,7 +19,7 @@ interface DualKeyNuclearPanelProps {
   operationType?: 'dual_key' | 'split_master_key';
 }
 
-export const DualKeyNuclearPanel: React.FC<DualKeyNuclearPanelProps> = ({
+export const DefconOnePanel: React.FC<DualKeyNuclearPanelProps> = ({
   visible,
   onClose,
   operationType = 'dual_key'
