@@ -555,4 +555,29 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
+  defconButton: {
+    backgroundColor: '#1a0a0a',
+    margin: 20,
+    paddingVertical: 15,
+    borderRadius: 25,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#ef4444',
+  },
+  defconButtonText: {
+    color: '#ef4444',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  defconButtonSubtext: {
+    color: '#666',
+    fontSize: 10,
+    marginTop: 5,
+  },
+  tapSequenceIndicator: {
+    color: '#ef4444',
+    fontSize: 10,
+    marginTop: 5,
+    textAlign: 'center',
+  },
 });
