@@ -304,6 +304,13 @@ export default function App() {
         visible={showDefconPanel}
         onClose={() => setShowDefconPanel(false)}
       />
+
+      {/* STEELOS-Shredder Modal */}
+      <SteeloshShredder
+        visible={showSteeloshShredder}
+        triggerType={shredderTrigger}
+        onClose={() => setShowSteeloshShredder(false)}
+      />
       
       <StatusBar style="light" />
     </View>
