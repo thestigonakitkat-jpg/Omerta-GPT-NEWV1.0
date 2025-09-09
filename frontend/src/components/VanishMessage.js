@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native
 import { useSecurityStore } from '../state/security';
 
 // OMERTÁ-SECURE'S VANISH PROTOCOL - Gold Standard Message Component
-export default function VanishMessage({ messageId, initialContent, ttl = 30000 }) {
+export default function VanishMessage({ messageId, initialContent, ttl = 30000, isOwn = false, timestamp }) {
   const [isVisible, setIsVisible] = useState(true);
   const [isRead, setIsRead] = useState(false);
   const [countdown, setCountdown] = useState(Math.floor(ttl / 1000));
