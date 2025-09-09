@@ -279,6 +279,13 @@ export default function App() {
         </TouchableOpacity>
 
         <TouchableOpacity 
+          style={[styles.actionButton, { backgroundColor: '#28a745' }]}
+          onPress={() => setShowContactManager(true)}
+        >
+          <Text style={styles.actionButtonText}>📇 Secure Contacts</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
           style={[styles.actionButton, { backgroundColor: '#666' }]}
           onPress={() => setCurrentView('demo')}
         >
