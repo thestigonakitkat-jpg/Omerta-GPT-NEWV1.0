@@ -21,6 +21,8 @@ export default function SecureChat({ contactId = 'demo_contact', contactName = '
   const [messageInput, setMessageInput] = useState('');
   const [messages, setMessages] = useState([]);
   const [isTyping, setIsTyping] = useState(false);
+  const [expiryMinutes, setExpiryMinutes] = useState(60); // Default 1 hour
+  const [showExpirySlider, setShowExpirySlider] = useState(false);
   const scrollViewRef = useRef(null);
 
   const { 
