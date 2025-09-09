@@ -34,6 +34,9 @@ export default function SecureChat({ contactId = 'demo_contact', contactName = '
   } = useSecurityStore();
 
   useEffect(() => {
+    // Initialize message expiration system
+    messageExpirationManager.initialize();
+    
     // Load demo messages for testing
     loadDemoMessages();
     
