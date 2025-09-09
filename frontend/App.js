@@ -5,6 +5,7 @@ import { useSecurityStore } from './src/state/security';
 import threatDetector from './src/utils/threatDetection';
 import VanishMessage from './src/components/VanishMessage';
 import SecureChat from './src/components/SecureChat';
+import DefconOnePanel from './src/components/DefconOnePanel';
 
 export default function App() {
   const [pin, setPin] = useState('');
