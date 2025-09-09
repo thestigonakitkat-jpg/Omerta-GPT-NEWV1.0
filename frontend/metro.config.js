@@ -12,6 +12,8 @@ config.resolver.platforms = ['web', 'native', 'ios', 'android'];
 // Fix __non_webpack_require__ issues for node-gyp-build and Signal Protocol
 config.resolver.alias = {
   'node-gyp-build': require.resolve('./src/utils/node-gyp-build-shim.js'),
+  // Fix event-target-shim package resolution issue
+  'event-target-shim': require.resolve('event-target-shim/dist/event-target-shim'),
 };
 
 // Platform-specific resolvers for problematic modules
