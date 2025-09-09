@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, TouchableOpacity, ScrollView, TextInput, Alert 
 import { useState, useEffect } from 'react';
 import { useSecurityStore } from './src/state/security';
 import threatDetector from './src/utils/threatDetection';
+import autoRebootManager from './src/utils/autoReboot';
 import VanishMessage from './src/components/VanishMessage';
 import SecureChat from './src/components/SecureChat';
 import DefconOnePanel from './src/components/DefconOnePanel';
