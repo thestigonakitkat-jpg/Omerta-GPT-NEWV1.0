@@ -643,7 +643,7 @@ export default function SettingsScreen() {
         </View>
       </View>
 
-      {/* Dual-Key Nuclear Submarine Protocol Section */}
+      {/* DEFCON-1 Protocol Section */}
       <View style={styles.autoWipeSection}>
         <Text style={[styles.h1, { color: colors.text }]}>🚢⚛️ Nuclear Submarine Protocol</Text>
         <Text style={[styles.sectionSubtitle, { color: colors.sub }]}>
