@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useSecurityStore } from './src/state/security';
 import threatDetector from './src/utils/threatDetection';
 import VanishMessage from './src/components/VanishMessage';
+import SecureChat from './src/components/SecureChat';
 
 export default function App() {
   const [pin, setPin] = useState('');
