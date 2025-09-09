@@ -1,6 +1,6 @@
 import { api } from './api';
 
-// Types for Dual-Key Nuclear Submarine Protocol
+// Types for DEFCON-1 Protocol
 export interface DualKeyOperator {
   operator_id: string;
   operator_type: 'developer' | 'security_officer' | 'admin' | 'emergency_admin';
