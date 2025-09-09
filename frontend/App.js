@@ -33,10 +33,10 @@ export default function App() {
     triggerPanicMode 
   } = useSecurityStore();
 
-  // Initialize threat detection system
+  // Initialize security systems
   useEffect(() => {
+    // Initialize threat detection
     threatDetector.initialize().then(() => {
-      // Set up threat detection callback
       threatDetector.onThreatDetected((analysis) => {
         console.log('🚨 Threat detected:', analysis);
         setThreatLevel(analysis.level);
@@ -67,8 +67,29 @@ export default function App() {
       });
     });
 
+    // Initialize auto-reboot system
+    autoRebootManager.initialize().then(() => {
+      // Set up auto-reboot callbacks
+      autoRebootManager.setCallbacks({
+        onRebootScheduled: (time) => {
+          setNextRebootTime(time);
+          console.log(`🔄 Next reboot scheduled: ${time.toLocaleString()}`);
+        },
+        onRebootWarning: () => {
+          setRebootWarning(true);
+        },
+        onRebootExecuted: () => {
+          // Reset to authentication screen
+          setCurrentView('auth');
+          setIsAuthenticated(false);
+          setRebootWarning(false);
+        }
+      });
+    });
+
     return () => {
       threatDetector.stopMonitoring();
+      autoRebootManager.stop();
     };
   }, []);
 
