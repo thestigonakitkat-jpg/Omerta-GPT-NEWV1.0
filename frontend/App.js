@@ -22,6 +22,7 @@ export default function App() {
   const [lastTapTime, setLastTapTime] = useState(0);
   const [nextRebootTime, setNextRebootTime] = useState(null);
   const [rebootWarning, setRebootWarning] = useState(false);
+  const [showContactManager, setShowContactManager] = useState(false);
   
   const { 
     isAuthenticated, 
