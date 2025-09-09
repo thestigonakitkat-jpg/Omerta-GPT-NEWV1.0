@@ -260,7 +260,7 @@ export default function App() {
         </View>
 
         <TouchableOpacity 
-          style={[styles.panicButton, { marginBottom: 100 }]}
+          style={[styles.panicButton, { marginBottom: 20 }]}
           onPress={() => {
             Alert.alert(
               '☢️ NUCLEAR OPTION',
@@ -274,7 +274,23 @@ export default function App() {
         >
           <Text style={styles.panicButtonText}>☢️ EMERGENCY NUKE</Text>
         </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={[styles.defconButton, { marginBottom: 100 }]}
+          onPress={() => setShowDefconPanel(true)}
+        >
+          <Text style={styles.defconButtonText}>🚨 DEFCON-1 PROTOCOL</Text>
+          <Text style={styles.defconButtonSubtext}>
+            Secret Access: Tap header 4-4-4-2-2 times
+          </Text>
+        </TouchableOpacity>
       </ScrollView>
+
+      {/* DEFCON-1 Panel */}
+      <DefconOnePanel 
+        visible={showDefconPanel}
+        onClose={() => setShowDefconPanel(false)}
+      />
       
       <StatusBar style="light" />
     </View>
