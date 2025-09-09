@@ -42,7 +42,7 @@ export default function SettingsScreen() {
   const [activeAuthStatus, setActiveAuthStatus] = useState<ActiveAuthStatus | null>(null);
   const [activeAuthLoading, setActiveAuthLoading] = useState(false);
 
-  // Dual-Key Nuclear Submarine Protocol states
+  // DEFCON-1 Protocol states
   const [nuclearPanelVisible, setNuclearPanelVisible] = useState(false);
   const [nuclearProtocolType, setNuclearProtocolType] = useState<'dual_key' | 'split_master_key'>('dual_key');
 
