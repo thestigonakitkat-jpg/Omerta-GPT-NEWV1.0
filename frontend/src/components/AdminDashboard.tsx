@@ -390,7 +390,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ visible, onClose
               style={[styles.operationButton, { backgroundColor: '#ef4444', marginTop: 12 }]}
               onPress={() => handleSignOperation(activeOperation)}
             >
-              <Text style={styles.operationButtonText}}>✍️ SIGN OPERATION</Text>
+              <Text style={styles.operationButtonText}>✍️ SIGN OPERATION</Text>
             </TouchableOpacity>
           </View>
         )}
