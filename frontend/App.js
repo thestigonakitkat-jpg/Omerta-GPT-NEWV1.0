@@ -281,17 +281,11 @@ export default function App() {
         <TouchableOpacity 
           style={[styles.panicButton, { marginBottom: 20 }]}
           onPress={() => {
-            Alert.alert(
-              '☢️ NUCLEAR OPTION',
-              'This will destroy ALL data and trigger STEELOS-Shredder. Continue?',
-              [
-                { text: 'Cancel', style: 'cancel' },
-                { text: 'EXECUTE', style: 'destructive', onPress: triggerPanicMode }
-              ]
-            );
+            setShredderTrigger('emergency_nuke');
+            setShowSteeloshShredder(true);
           }}
         >
-          <Text style={styles.panicButtonText}>☢️ EMERGENCY NUKE</Text>
+          <Text style={styles.panicButtonText}>🔥 STEELOS-SHREDDER</Text>
         </TouchableOpacity>
 
         <TouchableOpacity 
