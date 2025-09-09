@@ -18,7 +18,7 @@ import sys
 from typing import Dict, List, Any
 from datetime import datetime
 
-# Backend URL from frontend .env
+# Backend URL from frontend .env - Use the correct URL for testing
 BACKEND_URL = "http://localhost:8001/api"
 
 class OMERTASecurityTester:
