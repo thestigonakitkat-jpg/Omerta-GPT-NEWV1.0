@@ -19,6 +19,8 @@ export default function App() {
   const [shredderTrigger, setShredderTrigger] = useState('manual');
   const [tapSequence, setTapSequence] = useState([]);
   const [lastTapTime, setLastTapTime] = useState(0);
+  const [nextRebootTime, setNextRebootTime] = useState(null);
+  const [rebootWarning, setRebootWarning] = useState(false);
   
   const { 
     isAuthenticated, 
