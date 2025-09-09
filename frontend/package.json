@@ -37,6 +37,8 @@
   },
   "private": true,
   "resolutions": {
-    "event-target-shim": "6.0.2"
+    "event-target-shim": "6.0.2",
+    "react-native/event-target-shim": "6.0.2",
+    "abort-controller/event-target-shim": "6.0.2"
   }
 }
