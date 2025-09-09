@@ -713,7 +713,7 @@ export default function SettingsScreen() {
           onPress={() => setNuclearPanelVisible(true)}
         >
           <Text style={styles.btnText}>
-            🚢⚛️ ACTIVATE NUCLEAR SUBMARINE PROTOCOL
+            🚨⚛️ ACTIVATE DEFCON-1 PROTOCOL
           </Text>
         </TouchableOpacity>
       </View>
