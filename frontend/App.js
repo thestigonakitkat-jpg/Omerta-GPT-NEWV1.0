@@ -138,6 +138,7 @@ export default function App() {
   if (!isAuthenticated) {
     return (
       <View style={styles.container}>
+        <MatrixBackground intensity={0.2} color="#ef4444" />
         <Text style={styles.title}>🔒 OMERTÁ</Text>
         <Text style={styles.subtitle}>World's Most Secure Messaging</Text>
         <Text style={styles.tagline}>Making Pegasus Irrelevant</Text>
