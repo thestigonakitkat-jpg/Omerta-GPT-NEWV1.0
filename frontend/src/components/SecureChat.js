@@ -13,6 +13,7 @@ import {
 import { useSecurityStore } from '../state/security';
 import VanishMessage from './VanishMessage';
 import ThreatMonitor from './ThreatMonitor';
+import autoRebootManager from '../utils/autoReboot';
 import omertaAPI from '../utils/api';
 
 export default function SecureChat({ contactId = 'demo_contact', contactName = 'Demo Contact' }) {
