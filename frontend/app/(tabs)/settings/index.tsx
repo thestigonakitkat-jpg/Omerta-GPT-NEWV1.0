@@ -1056,7 +1056,7 @@ export default function SettingsScreen() {
       </TouchableOpacity>
 
       {/* DEFCON-1 Protocol Modal */}
-      <DualKeyNuclearPanel
+      <DefconOnePanel
         visible={nuclearPanelVisible}
         onClose={() => setNuclearPanelVisible(false)}
         operationType={nuclearProtocolType}
