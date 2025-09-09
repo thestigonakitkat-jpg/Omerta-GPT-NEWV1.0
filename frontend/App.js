@@ -61,13 +61,21 @@ export default function App() {
   }, []);
 
   const handleAuthentication = async () => {
+    // Check for panic PIN first
+    if (pin === '000000') {
+      setShredderTrigger('panic_pin');
+      setShowSteeloshShredder(true);
+      setPin('');
+      return;
+    }
+    
     const success = await authenticate(pin);
     if (success) {
       setCurrentView('main');
       startMonitoring();
       threatDetector.startMonitoring();
     } else {
-      Alert.alert('Authentication Failed', 'Invalid PIN or Panic Mode Activated');
+      Alert.alert('Authentication Failed', 'Invalid PIN entered');
       setPin('');
     }
   };
