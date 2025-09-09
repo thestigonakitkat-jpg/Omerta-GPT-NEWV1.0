@@ -6,6 +6,7 @@ import threatDetector from './src/utils/threatDetection';
 import VanishMessage from './src/components/VanishMessage';
 import SecureChat from './src/components/SecureChat';
 import DefconOnePanel from './src/components/DefconOnePanel';
+import SteeloshShredder from './src/components/SteeloshShredder';
 
 export default function App() {
   const [pin, setPin] = useState('');
