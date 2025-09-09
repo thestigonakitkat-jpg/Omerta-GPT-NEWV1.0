@@ -231,6 +231,12 @@ export default function SecureChat({ contactId = 'demo_contact', contactName = '
             onChangeText={(text) => {
               setMessageInput(text);
               setIsTyping(text.length > 0);
+              // Notify auto-reboot manager of chat activity
+              autoRebootManager.setChatActive();
+            }}
+            onFocus={() => {
+              // Mark chat as active when user focuses input
+              autoRebootManager.setChatActive();
             }}
             placeholder="Type secure message..."
             placeholderTextColor="#666"
