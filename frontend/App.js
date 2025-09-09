@@ -161,10 +161,23 @@ export default function App() {
 
         <TouchableOpacity 
           style={styles.actionButton}
+          onPress={() => setCurrentView('chat')}
+        >
+          <Text style={styles.actionButtonText}>💬 Open Secure Chat</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={[styles.actionButton, { backgroundColor: '#666' }]}
           onPress={() => setCurrentView('demo')}
         >
           <Text style={styles.actionButtonText}>🚀 Demo Vanish Protocol</Text>
         </TouchableOpacity>
+
+        {currentView === 'chat' && (
+          <View style={styles.chatSection}>
+            <SecureChat />
+          </View>
+        )}
 
         {currentView === 'demo' && (
           <View style={styles.demoSection}>
