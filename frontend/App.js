@@ -251,6 +251,21 @@ export default function App() {
               <Text style={styles.statusLabel}>STEELOS-Shredder</Text>
               <Text style={styles.statusValue}>🔥 READY</Text>
             </View>
+            <View style={styles.statusItem}>
+              <Text style={styles.statusLabel}>Auto-Reboot</Text>
+              <Text style={styles.statusValue}>
+                {nextRebootTime ? 
+                  `⏰ ${nextRebootTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}` : 
+                  '🔄 ACTIVE'
+                }
+              </Text>
+            </View>
+            <View style={styles.statusItem}>
+              <Text style={styles.statusLabel}>Next Schedule</Text>
+              <Text style={styles.statusValue}>
+                {rebootWarning ? '⚠️ WARNING' : '2AM/2PM'}
+              </Text>
+            </View>
           </View>
         </View>
 
