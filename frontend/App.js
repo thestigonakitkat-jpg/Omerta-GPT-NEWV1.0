@@ -420,6 +420,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
   },
+  chatSection: {
+    flex: 1,
+    margin: 10,
+    backgroundColor: '#000',
+    borderRadius: 15,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#ef4444',
+  },
   demoSection: {
     margin: 20,
   },
