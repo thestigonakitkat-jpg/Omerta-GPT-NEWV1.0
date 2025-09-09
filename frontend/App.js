@@ -362,6 +362,12 @@ export default function App() {
         triggerType={shredderTrigger}
         onClose={() => setShowSteeloshShredder(false)}
       />
+
+      {/* Contact Manager Modal */}
+      <ContactManager
+        visible={showContactManager}
+        onClose={() => setShowContactManager(false)}
+      />
       
       <StatusBar style="light" />
     </View>
