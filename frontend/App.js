@@ -45,9 +45,17 @@ export default function App() {
         if (analysis.level === 'critical') {
           Alert.alert(
             '🚨 CRITICAL THREAT DETECTED',
-            'Possible surveillance activity detected. OMERTÁ is activating countermeasures.',
+            'Possible Pegasus/Graphite surveillance detected. OMERTÁ recommends immediate action.',
             [
-              { text: 'Activate DEFCON-1', onPress: () => setCurrentView('defcon') },
+              { 
+                text: '🔥 STEELOS-Shredder', 
+                style: 'destructive',
+                onPress: () => {
+                  setShredderTrigger('threat_detected');
+                  setShowSteeloshShredder(true);
+                }
+              },
+              { text: 'Activate DEFCON-1', onPress: () => setShowDefconPanel(true) },
               { text: 'Continue Monitoring', style: 'cancel' }
             ]
           );
