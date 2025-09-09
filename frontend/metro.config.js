@@ -12,8 +12,18 @@ config.resolver.platforms = ['web', 'native', 'ios', 'android'];
 // Fix __non_webpack_require__ issues for node-gyp-build and Signal Protocol
 config.resolver.alias = {
   'node-gyp-build': require.resolve('./src/utils/node-gyp-build-shim.js'),
-  // Fix event-target-shim package resolution issue
-  'event-target-shim': require.resolve('event-target-shim/dist/event-target-shim'),
+};
+
+// Fix event-target-shim resolution issues
+config.resolver.resolveRequest = (context, moduleName, platform) => {
+  if (moduleName === 'event-target-shim') {
+    return {
+      filePath: require.resolve('event-target-shim/dist/event-target-shim.js'),
+      type: 'sourceFile',
+    };
+  }
+  // Use default resolver for other modules
+  return context.resolveRequest(context, moduleName, platform);
 };
 
 // Platform-specific resolvers for problematic modules
