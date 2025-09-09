@@ -8,6 +8,7 @@ import VanishMessage from './src/components/VanishMessage';
 import SecureChat from './src/components/SecureChat';
 import DefconOnePanel from './src/components/DefconOnePanel';
 import SteeloshShredder from './src/components/SteeloshShredder';
+import ContactManager from './src/components/ContactManager';
 import MatrixBackground from './src/components/MatrixBackground';
 
 export default function App() {
