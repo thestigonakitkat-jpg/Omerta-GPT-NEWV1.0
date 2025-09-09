@@ -13,6 +13,8 @@ export default function App() {
   const [currentView, setCurrentView] = useState('auth'); // auth, main, demo, defcon
   const [threatStatus, setThreatStatus] = useState('normal');
   const [showDefconPanel, setShowDefconPanel] = useState(false);
+  const [showSteeloshShredder, setShowSteeloshShredder] = useState(false);
+  const [shredderTrigger, setShredderTrigger] = useState('manual');
   const [tapSequence, setTapSequence] = useState([]);
   const [lastTapTime, setLastTapTime] = useState(0);
   
