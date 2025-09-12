@@ -399,55 +399,6 @@ export default function App() {
     </View>
   );
 }
-
-  const handleTapSequence = () => {
-    const now = Date.now();
-    
-    // Reset sequence if more than 2 seconds between taps
-    if (now - lastTapTime > 2000) {
-      setTapSequence([1]);
-    } else {
-      const newSequence = [...tapSequence, tapSequence.length + 1];
-      
-      // Check for 4-4-4-2-2 pattern completion
-      if (newSequence.length === 4 && newSequence[3] !== 4) {
-        setTapSequence([1]); // Reset if not 4
-      } else if (newSequence.length === 8 && newSequence[7] !== 4) {
-        setTapSequence([1]); // Reset if not 4
-      } else if (newSequence.length === 12 && newSequence[11] !== 4) {
-        setTapSequence([1]); // Reset if not 4
-      } else if (newSequence.length === 14 && newSequence[13] !== 2) {
-        setTapSequence([1]); // Reset if not 2
-      } else if (newSequence.length === 16) {
-        if (newSequence[15] === 2) {
-          // Success! 4-4-4-2-2 sequence completed
-          console.log('🚨 DEFCON-1 access sequence activated');
-          setShowDefconPanel(true);
-          setTapSequence([]);
-        } else {
-          setTapSequence([1]); // Reset
-        }
-      } else {
-        setTapSequence(newSequence);
-      }
-    }
-    
-    setLastTapTime(now);
-  };
-
-  const handlePINInput = (digit) => {
-    if (pin.length < 6) {
-      setPin(pin + digit);
-    }
-  };
-
-  const clearPIN = () => {
-    setPin('');
-  };
-
-  // Authentication Screen
-  if (!isAuthenticated) {
-    return (
       <View style={styles.container}>
         <MatrixBackground intensity={0.2} color="#ef4444" />
         <Text style={styles.title}>🔒 OMERTÁ</Text>
