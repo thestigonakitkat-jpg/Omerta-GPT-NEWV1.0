@@ -771,11 +771,12 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 40,
   },
-  hint: {
-    color: '#444',
+  securityStatus: {
+    color: '#ffd700',
     fontSize: 10,
     position: 'absolute',
-    bottom: 20,
+    bottom: 5,
+    textAlign: 'center',
   },
   mainContainer: {
     flex: 1,
