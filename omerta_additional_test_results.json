@@ -1,0 +1,71 @@
+{
+  "summary": {
+    "total_tests": 10,
+    "passed_tests": 8,
+    "failed_tests": 2,
+    "success_rate": 80.0,
+    "timestamp": "2025-09-12T17:17:43.821605"
+  },
+  "detailed_results": [
+    {
+      "test": "API Health Endpoint",
+      "success": true,
+      "details": "Root endpoint serving as health check",
+      "timestamp": "2025-09-12T17:17:43.773430"
+    },
+    {
+      "test": "Envelope Sending",
+      "success": true,
+      "details": "Envelope sent successfully: da467af6...",
+      "timestamp": "2025-09-12T17:17:43.777623"
+    },
+    {
+      "test": "Envelope Polling - First Poll",
+      "success": true,
+      "details": "Retrieved 1 message(s) with proper structure",
+      "timestamp": "2025-09-12T17:17:43.780259"
+    },
+    {
+      "test": "Envelope Delete-on-Delivery",
+      "success": true,
+      "details": "Second poll returns empty array (delete-on-delivery working)",
+      "timestamp": "2025-09-12T17:17:43.782644"
+    },
+    {
+      "test": "WebSocket Connection",
+      "success": false,
+      "details": "Connection failed: BaseEventLoop.create_connection() got an unexpected keyword argument 'timeout'",
+      "timestamp": "2025-09-12T17:17:43.804335"
+    },
+    {
+      "test": "LiveKit Token Generation",
+      "success": true,
+      "details": "JWT token generated for room test-room-001",
+      "timestamp": "2025-09-12T17:17:43.809105"
+    },
+    {
+      "test": "LiveKit Room Creation",
+      "success": true,
+      "details": "Room created: secure-room-002 with security features",
+      "timestamp": "2025-09-12T17:17:43.813226"
+    },
+    {
+      "test": "LiveKit Room Listing",
+      "success": true,
+      "details": "Retrieved 2 active rooms",
+      "timestamp": "2025-09-12T17:17:43.815839"
+    },
+    {
+      "test": "LiveKit Room Info Retrieval",
+      "success": true,
+      "details": "Room info retrieved with security features: True",
+      "timestamp": "2025-09-12T17:17:43.818291"
+    },
+    {
+      "test": "LiveKit Session Management",
+      "success": false,
+      "details": "HTTP 500",
+      "timestamp": "2025-09-12T17:17:43.821407"
+    }
+  ]
+}
