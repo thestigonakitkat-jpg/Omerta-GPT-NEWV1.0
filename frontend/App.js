@@ -399,3 +399,302 @@ export default function App() {
     </View>
   );
 }
+
+// Helper function for threat color mapping
+function getThreatColor(threatLevel) {
+  switch (threatLevel) {
+    case 'critical': return '#dc3545';
+    case 'high': return '#fd7e14';
+    case 'medium': return '#ffc107';
+    case 'low': return '#20c997';
+    default: return '#28a745';
+  }
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#0a0a0a',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  mainContainer: {
+    flex: 1,
+    backgroundColor: '#0a0a0a',
+  },
+  title: {
+    fontSize: 36,
+    fontWeight: 'bold',
+    color: '#ffffff',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#bfbfbf',
+    marginBottom: 5,
+    textAlign: 'center',
+  },
+  tagline: {
+    fontSize: 12,
+    color: '#888',
+    marginBottom: 30,
+    textAlign: 'center',
+    fontStyle: 'italic',
+  },
+  pinContainer: {
+    width: '100%',
+    maxWidth: 300,
+    alignItems: 'center',
+  },
+  pinLabel: {
+    fontSize: 14,
+    color: '#bfbfbf',
+    marginBottom: 15,
+  },
+  pinDisplay: {
+    fontSize: 24,
+    color: '#ffffff',
+    fontFamily: 'monospace',
+    marginBottom: 30,
+    letterSpacing: 8,
+  },
+  keypad: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    width: 200,
+    justifyContent: 'space-between',
+  },
+  keypadButton: {
+    width: 60,
+    height: 60,
+    backgroundColor: '#1a1a1a',
+    borderRadius: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    margin: 5,
+    borderWidth: 1,
+    borderColor: '#333',
+  },
+  keypadText: {
+    fontSize: 20,
+    color: '#ffffff',
+    fontWeight: 'bold',
+  },
+  pinActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginTop: 30,
+  },
+  clearButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    backgroundColor: '#333',
+    borderRadius: 8,
+  },
+  clearButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+  },
+  authButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    backgroundColor: '#666',
+    borderRadius: 8,
+  },
+  authButtonActive: {
+    backgroundColor: '#007bff',
+  },
+  authButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  footer: {
+    position: 'absolute',
+    bottom: 60,
+    fontSize: 10,
+    color: '#444',
+    textAlign: 'center',
+  },
+  hint: {
+    position: 'absolute',
+    bottom: 40,
+    fontSize: 10,
+    color: '#666',
+    textAlign: 'center',
+  },
+  securityStatus: {
+    position: 'absolute',
+    bottom: 20,
+    fontSize: 10,
+    color: '#ffd700',
+    textAlign: 'center',
+  },
+  header: {
+    backgroundColor: '#141414',
+    padding: 15,
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#333',
+  },
+  threatHeader: {
+    backgroundColor: '#2d1810',
+    borderBottomColor: '#dc3545',
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#ffffff',
+  },
+  headerSubtitle: {
+    fontSize: 12,
+    color: '#bfbfbf',
+    marginTop: 2,
+  },
+  threatIndicator: {
+    fontSize: 10,
+    color: '#dc3545',
+    marginTop: 5,
+    fontWeight: 'bold',
+  },
+  tapSequenceIndicator: {
+    fontSize: 8,
+    color: '#ffc107',
+    marginTop: 3,
+  },
+  content: {
+    flex: 1,
+    padding: 15,
+  },
+  statusPanel: {
+    backgroundColor: '#141414',
+    borderRadius: 10,
+    padding: 15,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#333',
+  },
+  statusTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#ffffff',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  statusGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  statusItem: {
+    width: '48%',
+    marginBottom: 10,
+  },
+  statusLabel: {
+    fontSize: 10,
+    color: '#888',
+    marginBottom: 2,
+  },
+  statusValue: {
+    fontSize: 12,
+    color: '#bfbfbf',
+    fontWeight: 'bold',
+  },
+  actionButton: {
+    backgroundColor: '#007bff',
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 10,
+    alignItems: 'center',
+  },
+  actionButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  chatSection: {
+    backgroundColor: '#141414',
+    borderRadius: 10,
+    padding: 15,
+    marginTop: 20,
+    borderWidth: 1,
+    borderColor: '#333',
+  },
+  demoSection: {
+    backgroundColor: '#141414',
+    borderRadius: 10,
+    padding: 15,
+    marginTop: 20,
+    borderWidth: 1,
+    borderColor: '#333',
+  },
+  demoTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#ffd700',
+    textAlign: 'center',
+    marginBottom: 5,
+  },
+  demoSubtitle: {
+    fontSize: 12,
+    color: '#888',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  features: {
+    backgroundColor: '#141414',
+    borderRadius: 10,
+    padding: 15,
+    marginTop: 20,
+    borderWidth: 1,
+    borderColor: '#333',
+  },
+  featureTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#ffffff',
+    marginBottom: 10,
+  },
+  feature: {
+    fontSize: 12,
+    color: '#bfbfbf',
+    marginBottom: 5,
+    paddingLeft: 10,
+  },
+  panicButton: {
+    backgroundColor: '#dc3545',
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  panicButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  defconButton: {
+    backgroundColor: '#fd7e14',
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  defconButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  defconButtonSubtext: {
+    color: '#ffffff',
+    fontSize: 10,
+    textAlign: 'center',
+    marginTop: 5,
+    opacity: 0.7,
+  },
+});
