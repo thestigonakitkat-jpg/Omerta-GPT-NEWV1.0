@@ -10,16 +10,37 @@
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "^2.2.0",
+    "@gorhom/bottom-sheet": "^4.6.3",
+    "@noble/hashes": "^1.4.0",
     "expo": "~53.0.22",
     "expo-clipboard": "^7.1.5",
+    "expo-crypto": "^13.0.2",
+    "expo-device": "^6.0.2",
+    "expo-application": "^5.9.1",
+    "expo-document-picker": "^12.0.2",
+    "expo-file-system": "^17.0.1",
+    "expo-screen-capture": "^6.0.2",
     "expo-secure-store": "^14.2.3",
     "expo-status-bar": "~2.2.3",
     "react": "19.0.0",
     "react-native": "0.79.6",
+    "react-native-device-info": "^10.10.0",
+    "react-native-get-random-values": "^1.11.0",
+    "react-native-gesture-handler": "^2.18.1",
+    "react-native-qrcode-svg": "^6.3.2",
+    "react-native-reanimated": "^3.16.1",
+    "react-native-root-check": "^1.0.0",
+    "react-native-screens": "^3.35.0",
+    "react-native-svg": "^15.8.0",
+    "tweetnacl": "^1.0.3",
+    "uuid": "^9.0.1",
     "zustand": "^5.0.8"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0"
   },
-  "private": true
+  "private": true,
+  "resolutions": {
+    "event-target-shim": "5.0.1"
+  }
 }
