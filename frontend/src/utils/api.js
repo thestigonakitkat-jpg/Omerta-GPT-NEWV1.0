@@ -1,89 +1,56 @@
-// OMERTÁ API Integration - Backend Communication
-const API_BASE_URL = 'http://localhost:8001/api';
+// API Utilities for OMERTA
 
-class OmertaAPI {
-  constructor() {
-    this.baseURL = API_BASE_URL;
-  }
-
-  async makeRequest(endpoint, options = {}) {
-    try {
-      const url = `${this.baseURL}${endpoint}`;
-      const response = await fetch(url, {
-        headers: {
-          'Content-Type': 'application/json',
-          ...options.headers,
-        },
-        ...options,
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error(`API Request failed: ${endpoint}`, error);
-      throw error;
+/**
+ * Send envelope with security headers
+ */
+export async function sendEnvelope(toOid, blob) {
+  try {
+    const nonce = crypto.getRandomValues(new Uint8Array(12));
+    const nonceB64 = btoa(String.fromCharCode(...nonce));
+    
+    const response = await fetch('/api/envelopes/send', {
+      method: 'POST',
+      headers: {
+        'x-omerta-ss': '1',
+        'x-omerta-to': toOid,
+        'x-ss-nonce': nonceB64,
+        'content-type': 'application/octet-stream',
+      },
+      body: blob,
+      keepalive: true,
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Send failed: ${response.status}`);
     }
-  }
-
-  // Graphite Defense System APIs
-  async getGraphiteStatus() {
-    return this.makeRequest('/graphite/status');
-  }
-
-  async reportThreat(threatData) {
-    return this.makeRequest('/graphite/report-threat', {
-      method: 'POST',
-      body: JSON.stringify(threatData),
-    });
-  }
-
-  async activateCountermeasures() {
-    return this.makeRequest('/graphite/activate-countermeasures', {
-      method: 'POST',
-    });
-  }
-
-  // Admin System APIs
-  async getAdminStatus() {
-    return this.makeRequest('/admin/status');
-  }
-
-  async authenticateAdmin(credentials) {
-    return this.makeRequest('/admin/authenticate', {
-      method: 'POST',
-      body: JSON.stringify(credentials),
-    });
-  }
-
-  // DEFCON-1 Protocol APIs
-  async initiateDefcon1(adminData) {
-    return this.makeRequest('/admin/defcon1/initiate', {
-      method: 'POST',
-      body: JSON.stringify(adminData),
-    });
-  }
-
-  async signOperation(operationData) {
-    return this.makeRequest('/admin/defcon1/sign', {
-      method: 'POST',
-      body: JSON.stringify(operationData),
-    });
-  }
-
-  // Health Check
-  async healthCheck() {
-    try {
-      const response = await fetch(`${this.baseURL}/health`);
-      return response.ok;
-    } catch (error) {
-      console.error('Health check failed:', error);
-      return false;
-    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('sendEnvelope failed:', error);
+    throw error;
   }
 }
 
-export const omertaAPI = new OmertaAPI();
-export default omertaAPI;
+/**
+ * Generic API call with error handling
+ */
+export async function apiCall(endpoint, options = {}) {
+  try {
+    const response = await fetch(`/api${endpoint}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+      ...options,
+    });
+    
+    if (!response.ok) {
+      throw new Error(`API call failed: ${response.status}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error(`API call to ${endpoint} failed:`, error);
+    throw error;
+  }
+}

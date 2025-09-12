@@ -1,182 +1,101 @@
+// Security State Management using Zustand
 import { create } from 'zustand';
-import * as SecureStore from 'expo-secure-store';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// OMERTÁ Security State Management
+// Create security store
 export const useSecurityStore = create((set, get) => ({
-  // Authentication State
-  isAuthenticated: false,
-  deviceId: null,
-  lastActivity: Date.now(),
+  // Security status
+  isSecureGatePassed: false,
+  lastSecurityCheck: null,
   
-  // Threat Detection State
-  threatLevel: 'normal', // normal, suspicious, critical
-  detectedThreats: [],
-  isMonitoring: false,
+  // Counters and session info
+  messageCounters: {},
+  activeSessions: {},
   
-  // Vanish Protocol State
-  activeMessages: new Map(),
-  messageTimers: new Map(),
-  
-  // DEFCON-1 State
-  defconLevel: 5,
-  adminAuthenticated: false,
+  // Threat detection
+  threatLevel: 'LOW', // LOW, MEDIUM, HIGH, CRITICAL
+  suspiciousActivity: [],
   
   // Actions
-  authenticate: async (pin) => {
+  setSecureGatePassed: (passed) => set({ 
+    isSecureGatePassed: passed,
+    lastSecurityCheck: Date.now()
+  }),
+  
+  updateThreatLevel: (level) => set({ threatLevel: level }),
+  
+  addSuspiciousActivity: (activity) => set((state) => ({
+    suspiciousActivity: [...state.suspiciousActivity.slice(-9), {
+      ...activity,
+      timestamp: Date.now()
+    }]
+  })),
+  
+  updateMessageCounter: (chatId, count) => set((state) => ({
+    messageCounters: {
+      ...state.messageCounters,
+      [chatId]: count
+    }
+  })),
+  
+  addActiveSession: (chatId, sessionInfo) => set((state) => ({
+    activeSessions: {
+      ...state.activeSessions,
+      [chatId]: sessionInfo
+    }
+  })),
+  
+  removeActiveSession: (chatId) => set((state) => {
+    const newSessions = { ...state.activeSessions };
+    delete newSessions[chatId];
+    return { activeSessions: newSessions };
+  }),
+  
+  // Clear all security data
+  clearSecurityData: () => set({
+    messageCounters: {},
+    activeSessions: {},
+    suspiciousActivity: [],
+    threatLevel: 'LOW'
+  }),
+  
+  // Persistence
+  hydrate: async () => {
     try {
-      // Basic authentication logic
-      if (pin === '123456') {
-        set({ 
-          isAuthenticated: true, 
-          lastActivity: Date.now(),
-          deviceId: Math.random().toString(36).substring(7)
+      const stored = await AsyncStorage.getItem('omerta-security-state');
+      if (stored) {
+        const data = JSON.parse(stored);
+        set({
+          messageCounters: data.messageCounters || {},
+          threatLevel: data.threatLevel || 'LOW',
+          // Don't restore sessions - they should be ephemeral
         });
-        return true;
       }
-      // Panic PIN detection
-      if (pin === '000000') {
-        get().triggerPanicMode();
-        return false;
-      }
-      return false;
     } catch (error) {
-      console.error('Authentication error:', error);
-      return false;
+      console.error('Failed to hydrate security state:', error);
     }
   },
   
-  updateActivity: () => {
-    set({ lastActivity: Date.now() });
-  },
-  
-  setThreatLevel: (level) => {
-    set({ threatLevel: level });
-    if (level === 'critical') {
-      get().triggerEmergencyProtocol();
+  persist: async () => {
+    try {
+      const state = get();
+      const dataToStore = {
+        messageCounters: state.messageCounters,
+        threatLevel: state.threatLevel,
+        lastUpdate: Date.now()
+      };
+      await AsyncStorage.setItem('omerta-security-state', JSON.stringify(dataToStore));
+    } catch (error) {
+      console.error('Failed to persist security state:', error);
     }
   },
-  
-  addThreat: (threat) => {
-    const threats = get().detectedThreats;
-    set({ detectedThreats: [...threats, { ...threat, timestamp: Date.now() }] });
-  },
-  
-  startMonitoring: () => {
-    set({ isMonitoring: true });
-    console.log('🛡️ OMERTÁ threat monitoring activated');
-  },
-  
-  stopMonitoring: () => {
-    set({ isMonitoring: false });
-    console.log('🛡️ OMERTÁ threat monitoring deactivated');
-  },
-  
-  // Vanish Protocol
-  addMessage: (messageId, content, ttl = 30000) => {
-    const messages = get().activeMessages;
-    const timers = get().messageTimers;
-    
-    messages.set(messageId, content);
-    
-    // Auto-destruct timer
-    const timer = setTimeout(() => {
-      messages.delete(messageId);
-      timers.delete(messageId);
-      set({ activeMessages: new Map(messages), messageTimers: new Map(timers) });
-      console.log(`💥 Message ${messageId} vanished via Vanish Protocol`);
-    }, ttl);
-    
-    timers.set(messageId, timer);
-    set({ activeMessages: new Map(messages), messageTimers: new Map(timers) });
-  },
-  
-  getMessage: (messageId) => {
-    const messages = get().activeMessages;
-    const message = messages.get(messageId);
-    
-    // One-time read - message self-destructs after reading
-    if (message) {
-      messages.delete(messageId);
-      const timers = get().messageTimers;
-      if (timers.has(messageId)) {
-        clearTimeout(timers.get(messageId));
-        timers.delete(messageId);
-      }
-      set({ activeMessages: new Map(messages), messageTimers: new Map(timers) });
-      console.log(`🔥 Message ${messageId} read and destroyed (Vanish Protocol)`);
-    }
-    
-    return message;
-  },
-  
-  // Emergency Protocols
-  triggerPanicMode: () => {
-    console.log('🚨 PANIC MODE ACTIVATED - STEELOS-SHREDDER DEPLOYED');
-    set({ 
-      threatLevel: 'critical',
-      defconLevel: 1,
-      isAuthenticated: false 
-    });
-    get().destroyAllData();
-  },
-  
-  triggerEmergencyProtocol: () => {
-    console.log('⚠️ EMERGENCY PROTOCOL ACTIVATED');
-    set({ defconLevel: 2 });
-    get().destroyAllMessages();
-  },
-  
-  destroyAllMessages: () => {
-    const messages = get().activeMessages;
-    const timers = get().messageTimers;
-    
-    // Clear all timers
-    timers.forEach(timer => clearTimeout(timer));
-    
-    // Destroy all messages
-    messages.clear();
-    timers.clear();
-    
-    set({ 
-      activeMessages: new Map(), 
-      messageTimers: new Map(),
-      defconLevel: 1 
-    });
-    
-    console.log('💀 ALL MESSAGES DESTROYED - STEELOS-SHREDDER COMPLETE');
-  },
-  
-  destroyAllData: () => {
-    get().destroyAllMessages();
-    
-    // Clear all authentication
-    set({
-      isAuthenticated: false,
-      deviceId: null,
-      adminAuthenticated: false,
-      detectedThreats: [],
-      defconLevel: 1
-    });
-    
-    // Clear secure storage
-    SecureStore.deleteItemAsync('@omerta_session').catch(() => {});
-    SecureStore.deleteItemAsync('@omerta_keys').catch(() => {});
-    
-    console.log('☢️ NUCLEAR OPTION EXECUTED - ALL DATA OBLITERATED');
-  },
-  
-  // DEFCON-1 Protocol
-  setDefconLevel: (level) => {
-    set({ defconLevel: level });
-    console.log(`🚨 DEFCON-${level} ACTIVATED`);
-  },
-  
-  authenticateAdmin: (passphrase) => {
-    if (passphrase === 'Omertaisthecode#01') {
-      set({ adminAuthenticated: true });
-      console.log('🔐 ADMIN AUTHENTICATED - DEFCON-1 ACCESS GRANTED');
-      return true;
-    }
-    return false;
-  }
 }));
+
+// Auto-persist on state changes
+let persistTimeout;
+useSecurityStore.subscribe((state) => {
+  clearTimeout(persistTimeout);
+  persistTimeout = setTimeout(() => {
+    state.persist();
+  }, 1000);
+});
